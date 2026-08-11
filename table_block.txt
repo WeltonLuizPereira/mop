@@ -1,0 +1,83 @@
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[13px] text-gray-600">
+                        <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
+                            <tr>
+                                <th className="p-4 w-12"></th>
+                                <th className="p-4">Nome</th>
+                                <th className="p-4">Data de entrada</th>
+                                <th className="p-4">Vencimento<br/>45 dias</th>
+                                <th className="p-4">Dias Restantes</th>
+                                <th className="p-4">Vencimento<br/>90 dias</th>
+                                <th className="p-4">Dias Restantes</th>
+                                <th className="p-4">Operação</th>
+                                <th className="p-4 text-center whitespace-nowrap">Efetivar?</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {filtered.map(c => {
+                                const opName = operations.find(o => o.id === c.operationId)?.nome || '-';
+                                
+                                const getStatus = (days: number) => {
+                                    if (days < 0) return { color: 'text-red-700', bg: 'bg-red-100' };
+                                    if (days <= 5) return { color: 'text-red-600', bg: 'bg-red-50' };
+                                    if (days <= 15) return { color: 'text-orange-600', bg: 'bg-orange-50' };
+                                    return { color: 'text-blue-600', bg: 'bg-blue-50' };
+                                };
+                                const st45 = getStatus(c.daysRemaining45);
+                                const st90 = getStatus(c.daysRemaining90);
+
+                                return (
+                                    <tr key={c.matricula} className="hover:bg-gray-50">
+                                        <td className="p-4">
+                                            <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 border-2 border-white shadow-sm flex items-center justify-center font-bold text-xs">
+                                                {getInitials(c.nome)}
+                                            </div>
+                                        </td>
+                                        <td className="p-4 font-medium min-w-[200px] break-words whitespace-normal">{c.nome}</td>
+                                        <td className="p-4">{formatDateString(c.dtEntradaProduto)}</td>
+                                        <td className="p-4 font-bold text-gray-800">{formatDateString(c.calc.vence45)}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${st45.bg} ${st45.color}`}>
+                                                {c.daysRemaining45 < 0 ? '-' : 
+                                                 c.daysRemaining45 === 0 ? 'Vence Hoje' : 
+                                                 `${c.daysRemaining45} dias`}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 font-bold text-gray-800">{formatDateString(c.calc.vence90)}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${st90.bg} ${st90.color}`}>
+                                                {c.daysRemaining90 < 0 ? '-' : 
+                                                 c.daysRemaining90 === 0 ? 'Vence Hoje' : 
+                                                 `${c.daysRemaining90} dias`}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">{opName}</td>
+                                        <td className="p-4 text-center whitespace-nowrap">
+                                            {canEdit ? (
+                                                <div className="flex justify-center gap-2">
+                                                    <button 
+                                                        onClick={() => handleEfetivacao(c, 'SIM')}
+                                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${c.efetivacao === 'SIM' ? 'bg-green-600 text-white shadow-sm' : 'bg-gray-100 text-gray-400 hover:bg-green-50 hover:text-green-600'}`}
+                                                    >
+                                                        SIM
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleEfetivacao(c, 'NÃO')}
+                                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${c.efetivacao === 'NÃO' ? 'bg-red-600 text-white shadow-sm' : 'bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-600'}`}
+                                                    >
+                                                        NÃO
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <Badge status={c.efetivacao || '-'} />
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                </table>
+               </div>
+           </div>
+      </div>

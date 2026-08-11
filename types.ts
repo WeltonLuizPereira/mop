@@ -1,6 +1,12 @@
+
 export enum UserRole {
   ADMIN = 'ADMIN',
-  VIEWER = 'VISUALIZADOR'
+  MANAGER = 'GERENTE',
+  VIEWER = 'VISUALIZADOR',
+  COORDINATOR = 'COORDENADOR',
+  SUPERVISOR = 'SUPERVISOR',
+  RH = 'RH',
+  SUPPORT = 'SUPORTE'
 }
 
 export enum EntityStatus {
@@ -13,15 +19,19 @@ export enum CollaboratorStatus {
   DESLIGADO = 'DESLIGADO',
   FERIAS = 'FÉRIAS',
   LICENCA_MATERNIDADE = 'LICENÇA MATERNIDADE',
-  REALOCADO = 'REALOCADO'
+  REALOCADO = 'REALOCADO',
+  AVISO_PREVIO = 'AVISO PRÉVIO',
+  AFASTADO = 'AFASTADO'
 }
 
 export interface User {
+  id: string; // Required for CrudPage compatibility
   matricula: string;
   nome: string;
   email: string;
   role: UserRole;
   password?: string; // Only for auth check
+  status: EntityStatus; // Required for CrudPage compatibility
 }
 
 export interface Coordinator {
@@ -33,7 +43,7 @@ export interface Coordinator {
 export interface Supervisor {
   id: string;
   nome: string;
-  coordinatorId: string;
+  coordinatorIds: string[];
   status: EntityStatus;
 }
 
@@ -41,6 +51,7 @@ export interface Client {
   id: string;
   nome: string;
   status: EntityStatus;
+  logo?: string;
 }
 
 export interface Operation {
@@ -55,8 +66,8 @@ export interface Ilha {
   nome: string;
   clientId: string;
   operationId: string;
-  coordinatorId: string;
-  supervisorId: string;
+  coordinatorIds: string[];
+  supervisorIds: string[];
   status: EntityStatus;
 }
 
@@ -65,6 +76,10 @@ export interface Collaborator {
   email: string;
   nome: string;
   
+  // Novos Campos VR
+  email_vr?: string;
+  senha?: string;
+
   // Relacionamentos (IDs para banco, mas nomes para exportação)
   ilhaId: string;
   supervisorId: string;   // Pode ser derivado da ilha ou override
@@ -76,7 +91,7 @@ export interface Collaborator {
   
   // Datas e Horários
   dtEntradaProduto: string; // "Data da Entrada no Produto"
-  dataFim?: string;         // "Data de Desligamento"
+  dataFim?: string;         // "Data de Desligamento" ou "Fim do Aviso"
   horarioEntrada: string;
   horarioSaida: string;
   dtNasc: string;
@@ -84,6 +99,20 @@ export interface Collaborator {
   // Controle de Férias (Interno)
   feriasInicio?: string;
   feriasFim?: string;
+
+  // Controle de Afastamento
+  dataAfastamento?: string;
+
+  // Controle de Contrato
+  efetivacao?: 'SIM' | 'NÃO';
+}
+
+export interface VacationHistory {
+  id: string;
+  collaborator_matricula: string;
+  start_date: string;
+  end_date: string;
+  created_at?: string;
 }
 
 export interface HistoryLog {
@@ -94,4 +123,14 @@ export interface HistoryLog {
   date: string;
   type: 'create' | 'update' | 'delete' | 'import';
   details?: string;
+}
+
+export interface ScheduledTask {
+  id: string;
+  matricula: string;
+  changes: Partial<Collaborator>;
+  scheduled_date: string; // YYYY-MM-DD
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  created_by: string;
+  created_at: string;
 }

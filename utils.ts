@@ -1,17 +1,18 @@
+
 export const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const calculateDaysDiff = (dateStr: string): number => {
   if (!dateStr) return 0;
-  const start = new Date(dateStr);
+  // Ajuste para garantir que a string YYYY-MM-DD seja interpretada corretamente no fuso local
+  const parts = dateStr.split('-');
+  const start = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   const now = new Date();
   
-  // Zerar horas para cálculo correto de dias
   start.setHours(0,0,0,0);
   now.setHours(0,0,0,0);
   
   const diffTime = now.getTime() - start.getTime();
-  // Math.floor para dias completos passados
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; 
 };
 
 export const formatDate = (date: Date): string => {
@@ -20,7 +21,6 @@ export const formatDate = (date: Date): string => {
 
 export const formatDateString = (dateStr: string | undefined): string => {
   if (!dateStr) return '-';
-  // Expects YYYY-MM-DD from input[type="date"]
   const parts = dateStr.split('-');
   if (parts.length === 3) {
       return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -38,65 +38,117 @@ export const addDays = (dateStr: string, days: number): string => {
 
 export const formatTime = (val: string | undefined): string => {
   if (!val) return '00:00';
-  // Remove segundos se existirem para ficar mais limpo na tabela
   return val.substring(0, 5);
 };
 
-// Excel Logic Implementation based on Screenshot Formulas
 export const getCollaboratorCalculations = (entryDate: string) => {
   if (!entryDate) {
-      return { tempoDeCasa: 0, experiencia: '-', vence: '-' };
+      return { tempoDeCasa: 0, experiencia: '-', vence: '-', vence45: '-', vence90: '-', contractMilestone: '-' };
   }
 
-  // Fórmula: HOJE() - G2 (Data Entrada)
   const days = calculateDaysDiff(entryDate);
-  
-  // Fórmula: SE(Tempo <= 90; "SIM"; "NÃO")
   const experience = days <= 90 ? "SIM" : "NÃO";
   
-  // Fórmula: SE(Dias<=45; Data+45; SE(Dias<=90; Data+90; "-"))
   let vence = "-";
+  let contractMilestone = "-";
+  
   if (days <= 45) {
-    vence = addDays(entryDate, 45); // 1º Período
+    vence = addDays(entryDate, 44);
+    contractMilestone = "45";
   } else if (days <= 90) {
-    vence = addDays(entryDate, 90); // 2º Período
+    vence = addDays(entryDate, 89);
+    contractMilestone = "90";
   }
+
+  const vence45 = addDays(entryDate, 44);
+  const vence90 = addDays(entryDate, 89);
 
   return {
     tempoDeCasa: days,
     experiencia: experience,
-    vence: vence
+    vence: vence,
+    vence45: vence45,
+    vence90: vence90,
+    contractMilestone: contractMilestone
   };
+};
+
+export const getInitials = (name: string) => {
+  const parts = name.trim().split(' ');
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
 // --- Parsers para Importação ---
 
 export const parseExcelTime = (val: any): string => {
     if (!val) return '00:00';
+    
     if (typeof val === 'number') {
         const totalSeconds = Math.round(val * 86400);
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     }
+    
     const strVal = String(val).trim();
-    if (strVal.includes(':')) {
-        return strVal.substring(0, 5);
+
+    if (strVal.includes('T') && strVal.includes(':')) {
+        const dateObj = new Date(strVal);
+        if (!isNaN(dateObj.getTime())) {
+            return `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+        }
     }
+    
+    if (strVal.includes(':')) {
+        const parts = strVal.split(':');
+        const h = parts[0].padStart(2, '0');
+        const m = parts[1] ? parts[1].padStart(2, '0') : '00';
+        return `${h}:${m}`;
+    }
+    
     return '00:00';
 };
 
 export const parseExcelDate = (val: any): string => {
   if (!val) return '';
-  if (typeof val === 'number') {
-    const date = new Date(Math.round((val - 25569) * 86400 * 1000));
-    return date.toISOString().split('T')[0];
+  
+  // Se for objeto Date nativo JS
+  if (val instanceof Date) {
+      return val.toISOString().split('T')[0];
   }
+
+  // Se for número serial do Excel
+  if (typeof val === 'number') {
+    // Ajuste de fuso: Adiciona 12 horas para evitar problemas de arredondamento para o dia anterior
+    // O Excel conta dias desde 1900. JS conta ms desde 1970.
+    // 25569 é a diferença de dias entre 01/01/1900 e 01/01/1970
+    const utcDays = Math.floor(val - 25569);
+    const utcValue = utcDays * 86400; 
+    const dateInfo = new Date(utcValue * 1000);
+
+    // Ajuste manual para pegar data UTC correta, ignorando timezone do navegador
+    const year = dateInfo.getUTCFullYear();
+    const month = String(dateInfo.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(dateInfo.getUTCDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  }
+
   const strVal = String(val).trim();
-  // Tenta converter DD/MM/YYYY para YYYY-MM-DD
+  
+  // Converter DD/MM/YYYY para YYYY-MM-DD
   if (strVal.includes('/')) {
      const parts = strVal.split('/');
+     // DD/MM/YYYY -> YYYY-MM-DD
      if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
   }
-  return strVal; // Assume que já está ISO ou retorna erro depois
+  
+  // Se já vier YYYY-MM-DD ou ISO
+  if (strVal.includes('-')) {
+      return strVal.split('T')[0];
+  }
+
+  return strVal;
 };

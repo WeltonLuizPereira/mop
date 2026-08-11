@@ -1,244 +1,658 @@
+
 import { 
   User, Coordinator, Supervisor, Client, Operation, Ilha, Collaborator, 
-  UserRole, EntityStatus, CollaboratorStatus, HistoryLog 
+  UserRole, EntityStatus, HistoryLog, ScheduledTask 
 } from '../types';
 import { generateId } from '../utils';
+import { supabase } from './supabase';
 
-const STORAGE_KEYS = {
-  USERS: 'qcc_users',
-  COORDINATORS: 'qcc_coordinators',
-  SUPERVISORS: 'qcc_supervisors',
-  CLIENTS: 'qcc_clients',
-  OPERATIONS: 'qcc_operations',
-  ILHAS: 'qcc_ilhas',
-  COLLABORATORS: 'qcc_collaborators',
-  HISTORY: 'qcc_history',
-  INIT: 'qcc_init'
-};
-
-// Seed Data
+// Seed Data para fallback
 const INITIAL_ADMIN: User = {
+  id: '3924',
   nome: 'Welton Luiz de Jesus Pereira',
   email: 'welton.pereira@qualitycontactcenter.com.br',
   matricula: '3924',
   role: UserRole.ADMIN,
-  password: 'Wljp.102002'
+  password: 'Wljp.102002',
+  status: EntityStatus.ACTIVE
 };
 
-class MockDbService {
-  constructor() {
-    this.init();
-  }
-
-  private init() {
-    if (!localStorage.getItem(STORAGE_KEYS.INIT)) {
-      // Seed Admin only
-      this.save(STORAGE_KEYS.USERS, [INITIAL_ADMIN]);
-      
-      // Initialize other lists as empty to avoid null issues
-      this.save(STORAGE_KEYS.COORDINATORS, []);
-      this.save(STORAGE_KEYS.SUPERVISORS, []);
-      this.save(STORAGE_KEYS.CLIENTS, []);
-      this.save(STORAGE_KEYS.OPERATIONS, []);
-      this.save(STORAGE_KEYS.ILHAS, []);
-      this.save(STORAGE_KEYS.COLLABORATORS, []);
-      this.save(STORAGE_KEYS.HISTORY, []);
-
-      localStorage.setItem(STORAGE_KEYS.INIT, 'true');
+class SupabaseService {
+  
+  // --- Reset Functionality ---
+  async resetDatabase() {
+    // Apagar dados em ordem de dependência (Foreign Keys)
+    await supabase.from('mop_scheduled_tasks').delete().neq('id', '0');
+    await supabase.from('mop_history').delete().neq('id', '0');
+    await supabase.from('mop_collaborators').delete().neq('matricula', '0');
+    await supabase.from('mop_ilhas').delete().neq('id', '0');
+    await supabase.from('mop_supervisors').delete().neq('id', '0');
+    await supabase.from('mop_coordinators').delete().neq('id', '0');
+    await supabase.from('mop_operations').delete().neq('id', '0');
+    await supabase.from('mop_clients').delete().neq('id', '0');
+    
+    // Manter admin padrão se não houver usuários
+    const { data: users } = await supabase.from('mop_users').select('*');
+    if (!users || users.length === 0) {
+       await this.addUser(INITIAL_ADMIN);
     }
-  }
 
-  private get<T>(key: string): T[] {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : [];
-  }
-
-  private save<T>(key: string, data: T[]) {
-    localStorage.setItem(key, JSON.stringify(data));
+    await this.addHistory({
+      action: 'RESET DO SISTEMA',
+      target: 'Todos os Dados',
+      user: 'Sistema',
+      date: new Date().toLocaleString('pt-BR'),
+      type: 'delete',
+      details: 'Limpeza geral realizada via Banco de Dados.'
+    });
   }
 
   // --- Users ---
-  getUsers(): User[] { return this.get<User>(STORAGE_KEYS.USERS); }
+  async getUsers(): Promise<User[]> {
+    const { data, error } = await supabase.from('mop_users').select('*');
+    if (error) console.error('Erro ao buscar usuários:', error);
+    // Fallback se não houver usuários (primeiro acesso)
+    if (!data || data.length === 0) return [INITIAL_ADMIN];
+    return data || [];
+  }
   
-  addUser(user: User) { 
-    const users = this.getUsers();
-    if (users.find(u => u.matricula === user.matricula)) throw new Error("Matrícula já existe");
-    this.save(STORAGE_KEYS.USERS, [...users, user]);
+  async addUser(user: User) { 
+    // Validação básica de unicidade de matrícula via backend seria melhor, mas mantendo simples
+    const newUser = { ...user, id: user.id || generateId(), status: user.status || EntityStatus.ACTIVE };
+    const { error } = await supabase.from('mop_users').insert(newUser);
+    if (error) throw error;
   }
 
-  updateUser(user: User) {
-    const users = this.getUsers();
-    const idx = users.findIndex(u => u.matricula === user.matricula);
-    if (idx >= 0) {
-        users[idx] = user;
-        this.save(STORAGE_KEYS.USERS, users);
-    }
+  async updateUser(user: User) {
+    const { error } = await supabase.from('mop_users').update(user).eq('id', user.id);
+    if (error) throw error;
   }
 
-  deleteUser(matricula: string) {
-    const users = this.getUsers().filter(u => u.matricula !== matricula);
-    this.save(STORAGE_KEYS.USERS, users);
+  async deleteUser(id: string) {
+    const { error } = await supabase.from('mop_users').delete().eq('id', id);
+    if (error) throw error;
   }
 
   // --- History ---
-  getHistory(): HistoryLog[] { return this.get<HistoryLog>(STORAGE_KEYS.HISTORY); }
+  async getHistory(): Promise<HistoryLog[]> { 
+    // Buscamos sem ordenação do banco pois o campo date é string DD/MM/YYYY e a ordenação SQL seria alfabética incorreta
+    const { data, error } = await supabase.from('mop_history').select('*');
+    if (error) {
+      console.error('Erro ao buscar histórico:', error);
+      return [];
+    }
+    
+    // Ordenação Client-Side para corrigir formato de data PT-BR
+    const sorted = (data || []).sort((a, b) => {
+        const getTimestamp = (dt: string) => {
+            if(!dt) return 0;
+            // Tenta formato ISO
+            if(dt.includes('T') && dt.includes('-')) return new Date(dt).getTime();
+            
+            // Tenta formato PT-BR (DD/MM/YYYY HH:MM:SS)
+            // Remove vírgula se houver (ex: toLocaleString em alguns browsers)
+            const clean = dt.replace(',', '');
+            const [datePart, timePart] = clean.split(' ');
+            
+            if (!datePart) return 0;
+            const dParts = datePart.split('/');
+            
+            if (dParts.length !== 3) return 0; // Formato desconhecido
+            
+            const tParts = timePart ? timePart.split(':') : [0,0,0];
+            
+            // year, monthIndex, day, hours, minutes, seconds
+            return new Date(
+                Number(dParts[2]), 
+                Number(dParts[1]) - 1, 
+                Number(dParts[0]),
+                Number(tParts[0]||0),
+                Number(tParts[1]||0),
+                Number(tParts[2]||0)
+            ).getTime();
+        };
+
+        return getTimestamp(b.date) - getTimestamp(a.date);
+    });
+
+    return sorted; 
+  }
   
-  addHistory(log: Omit<HistoryLog, 'id'>) {
-    const list = this.getHistory();
-    const newLog: HistoryLog = { ...log, id: generateId() };
-    list.unshift(newLog); // Add to top
-    this.save(STORAGE_KEYS.HISTORY, list);
+  async getVacationHistory(matricula?: string): Promise<any[]> {
+    let query = supabase.from('mop_vacation_history').select('*');
+    if (matricula) {
+        query = query.eq('collaborator_matricula', matricula);
+    }
+    const { data, error } = await query.order('start_date', { ascending: false });
+    if (error) {
+      console.error('Erro ao buscar histórico de férias:', error);
+      return [];
+    }
+    return data || [];
+  }
+
+  async addVacationHistory(matricula: string, startDate: string, endDate: string) {
+    const { error } = await supabase.from('mop_vacation_history').insert({
+        collaborator_matricula: matricula,
+        start_date: startDate,
+        end_date: endDate
+    });
+    if (error) {
+        console.error('Erro ao adicionar histórico de férias:', error);
+    }
+  }
+
+  async addHistory(log: Omit<HistoryLog, 'id'>) {
+    // Garante formato consistente se não fornecido
+    if (!log.date) {
+        const now = new Date();
+        const d = String(now.getDate()).padStart(2, '0');
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const y = now.getFullYear();
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        log.date = `${d}/${m}/${y} ${h}:${min}:${s}`;
+    }
+
+    const newLog = { ...log, id: generateId() };
+    const { error } = await supabase.from('mop_history').insert(newLog);
+    if (error) {
+      console.error('Erro CRÍTICO ao salvar histórico:', error);
+      // Log adicional para debug se necessário
+      console.log('Tentativa de log falha:', newLog);
+    }
+  }
+
+  // --- Helpers Genéricos de CRUD ---
+  private async getAll<T>(table: string): Promise<T[]> {
+    let query = supabase.from(table).select('*');
+    if (table !== 'mop_users') query = query.order('nome');
+    const { data } = await query;
+    return (data as T[]) || [];
+  }
+
+  private async saveItem<T extends { id: string }>(table: string, item: T) {
+    const { data } = await supabase.from(table).select('id').eq('id', item.id).single();
+    if (data) {
+      await supabase.from(table).update(item).eq('id', item.id);
+    } else {
+      await supabase.from(table).insert(item);
+    }
+  }
+
+  private async deleteItem(table: string, id: string) {
+    await supabase.from(table).delete().eq('id', id);
   }
 
   // --- Coordinators ---
-  getCoordinators() { return this.get<Coordinator>(STORAGE_KEYS.COORDINATORS); }
-  saveCoordinator(data: Coordinator) {
-    const list = this.getCoordinators();
-    const idx = list.findIndex(i => i.id === data.id);
-    if (idx >= 0) list[idx] = data; else list.push(data);
-    this.save(STORAGE_KEYS.COORDINATORS, list);
-  }
+  async getCoordinators() { return this.getAll<Coordinator>('mop_coordinators'); }
+  async saveCoordinator(data: Coordinator) { await this.saveItem('mop_coordinators', data); }
+  async deleteCoordinator(id: string) { await this.deleteItem('mop_coordinators', id); }
   
-  findOrCreateCoordinator(name: string): Coordinator {
-    const list = this.getCoordinators();
-    const existing = list.find(i => i.nome.trim().toUpperCase() === name.trim().toUpperCase());
-    if (existing) return existing;
-    const newCoord: Coordinator = { id: generateId(), nome: name, status: EntityStatus.ACTIVE };
-    this.saveCoordinator(newCoord);
-    return newCoord;
-  }
-  
-  deleteCoordinator(id: string) {
-    const list = this.getCoordinators().filter(i => i.id !== id);
-    this.save(STORAGE_KEYS.COORDINATORS, list);
+  async findOrCreateCoordinator(name: string): Promise<Coordinator> {
+    const { data } = await supabase.from('mop_coordinators').select('*').ilike('nome', name).single();
+    if (data) return data;
+    const newItem: Coordinator = { id: generateId(), nome: name, status: EntityStatus.ACTIVE };
+    await this.saveCoordinator(newItem);
+    return newItem;
   }
 
   // --- Supervisors ---
-  getSupervisors() { return this.get<Supervisor>(STORAGE_KEYS.SUPERVISORS); }
-  saveSupervisor(data: Supervisor) {
-    const list = this.getSupervisors();
-    const idx = list.findIndex(i => i.id === data.id);
-    if (idx >= 0) list[idx] = data; else list.push(data);
-    this.save(STORAGE_KEYS.SUPERVISORS, list);
+  // Mapping camelCase to snake_case for DB columns manually where names differ
+  async getSupervisors() { 
+    const { data } = await supabase.from('mop_supervisors').select('*').order('nome');
+    return data?.map(s => ({
+        ...s,
+        coordinatorIds: s.coordinator_ids || []
+    })) || []; 
   }
 
-  findOrCreateSupervisor(name: string, coordinatorId: string): Supervisor {
-    const list = this.getSupervisors();
-    const existing = list.find(i => i.nome.trim().toUpperCase() === name.trim().toUpperCase());
-    if (existing) return existing;
-    const newSup: Supervisor = { id: generateId(), nome: name, coordinatorId, status: EntityStatus.ACTIVE };
-    this.saveSupervisor(newSup);
-    return newSup;
+  async saveSupervisor(data: Supervisor) {
+    const payload = {
+        id: data.id,
+        nome: data.nome,
+        status: data.status,
+        coordinator_ids: data.coordinatorIds || []
+    };
+    const { data: existing } = await supabase.from('mop_supervisors').select('id').eq('id', data.id).single();
+    if(existing) await supabase.from('mop_supervisors').update(payload).eq('id', data.id);
+    else await supabase.from('mop_supervisors').insert(payload);
   }
 
-  deleteSupervisor(id: string) {
-    const list = this.getSupervisors().filter(i => i.id !== id);
-    this.save(STORAGE_KEYS.SUPERVISORS, list);
+  async deleteSupervisor(id: string) { await this.deleteItem('mop_supervisors', id); }
+
+  async findOrCreateSupervisor(name: string, coordinatorIds: string[]): Promise<Supervisor> {
+    const { data } = await supabase.from('mop_supervisors').select('*').ilike('nome', name).single();
+    if (data) return { ...data, coordinatorIds: data.coordinator_ids || [] };
+    const newItem: Supervisor = { id: generateId(), nome: name, coordinatorIds, status: EntityStatus.ACTIVE };
+    await this.saveSupervisor(newItem);
+    return newItem;
   }
 
   // --- Clients ---
-  getClients() { return this.get<Client>(STORAGE_KEYS.CLIENTS); }
-  saveClient(data: Client) {
-    const list = this.getClients();
-    const idx = list.findIndex(i => i.id === data.id);
-    if (idx >= 0) list[idx] = data; else list.push(data);
-    this.save(STORAGE_KEYS.CLIENTS, list);
-  }
+  async getClients() { return this.getAll<Client>('mop_clients'); }
+  async saveClient(data: Client) { await this.saveItem('mop_clients', data); }
+  async deleteClient(id: string) { await this.deleteItem('mop_clients', id); }
 
-  findOrCreateClient(name: string): Client {
-    const list = this.getClients();
-    const existing = list.find(i => i.nome.trim().toUpperCase() === name.trim().toUpperCase());
-    if (existing) return existing;
+  async findOrCreateClient(name: string): Promise<Client> {
+    const { data } = await supabase.from('mop_clients').select('*').ilike('nome', name).single();
+    if (data) return data;
     const newItem: Client = { id: generateId(), nome: name, status: EntityStatus.ACTIVE };
-    this.saveClient(newItem);
+    await this.saveClient(newItem);
     return newItem;
-  }
-
-  deleteClient(id: string) {
-    const list = this.getClients().filter(i => i.id !== id);
-    this.save(STORAGE_KEYS.CLIENTS, list);
   }
 
   // --- Operations ---
-  getOperations() { return this.get<Operation>(STORAGE_KEYS.OPERATIONS); }
-  saveOperation(data: Operation) {
-    const list = this.getOperations();
-    const idx = list.findIndex(i => i.id === data.id);
-    if (idx >= 0) list[idx] = data; else list.push(data);
-    this.save(STORAGE_KEYS.OPERATIONS, list);
+  async getOperations() { 
+    const { data } = await supabase.from('mop_operations').select('*').order('nome');
+    return data?.map(o => ({ ...o, clientId: o.client_id })) || [];
   }
+  async saveOperation(data: Operation) { 
+    const payload = { id: data.id, nome: data.nome, status: data.status, client_id: data.clientId || null };
+    const { data: existing } = await supabase.from('mop_operations').select('id').eq('id', data.id).single();
+    if(existing) await supabase.from('mop_operations').update(payload).eq('id', data.id);
+    else await supabase.from('mop_operations').insert(payload);
+  }
+  async deleteOperation(id: string) { await this.deleteItem('mop_operations', id); }
 
-  findOrCreateOperation(name: string, clientId: string): Operation {
-    const list = this.getOperations();
-    const existing = list.find(i => i.nome.trim().toUpperCase() === name.trim().toUpperCase());
-    if (existing) return existing;
+  async findOrCreateOperation(name: string, clientId: string): Promise<Operation> {
+    const { data } = await supabase.from('mop_operations').select('*').ilike('nome', name).single();
+    if (data) return { ...data, clientId: data.client_id };
     const newItem: Operation = { id: generateId(), nome: name, clientId, status: EntityStatus.ACTIVE };
-    this.saveOperation(newItem);
+    await this.saveOperation(newItem);
     return newItem;
   }
 
-  deleteOperation(id: string) {
-    const list = this.getOperations().filter(i => i.id !== id);
-    this.save(STORAGE_KEYS.OPERATIONS, list);
-  }
-
   // --- Ilhas ---
-  getIlhas() { return this.get<Ilha>(STORAGE_KEYS.ILHAS); }
-  saveIlha(data: Ilha) {
-    const list = this.getIlhas();
-    const idx = list.findIndex(i => i.id === data.id);
-    if (idx >= 0) list[idx] = data; else list.push(data);
-    this.save(STORAGE_KEYS.ILHAS, list);
+  async getIlhas() { 
+    const { data } = await supabase.from('mop_ilhas').select('*').order('nome');
+    return data?.map(i => ({
+        ...i,
+        clientId: i.client_id,
+        operationId: i.operation_id,
+        coordinatorIds: i.coordinator_ids || [],
+        supervisorIds: i.supervisor_ids || []
+    })) || [];
   }
+  async saveIlha(data: Ilha) { 
+    const payload = {
+        id: data.id,
+        nome: data.nome,
+        status: data.status,
+        client_id: data.clientId || null,
+        operation_id: data.operationId || null,
+        coordinator_ids: data.coordinatorIds || [],
+        supervisor_ids: data.supervisorIds || []
+    };
+    const { data: existing } = await supabase.from('mop_ilhas').select('id').eq('id', data.id).single();
+    if(existing) {
+        const { error } = await supabase.from('mop_ilhas').update(payload).eq('id', data.id);
+        if (error) console.error("Error updating Ilha:", error);
+    } else {
+        const { error } = await supabase.from('mop_ilhas').insert(payload);
+        if (error) console.error("Error inserting Ilha:", error);
+    }
+  }
+  async deleteIlha(id: string) { await this.deleteItem('mop_ilhas', id); }
 
-  findOrCreateIlha(name: string, clientId: string, opId: string, coordId: string, supId: string): Ilha {
-    const list = this.getIlhas();
-    const existing = list.find(i => i.nome.trim().toUpperCase() === name.trim().toUpperCase());
-    if (existing) return existing;
+  async findOrCreateIlha(name: string, clientId: string, opId: string, coordIds: string[], supIds: string[]): Promise<Ilha> {
+    const { data } = await supabase.from('mop_ilhas').select('*').ilike('nome', name).single();
+    if (data) return { ...data, clientId: data.client_id, operationId: data.operation_id, coordinatorIds: data.coordinator_ids || [], supervisorIds: data.supervisor_ids || [] };
     const newItem: Ilha = { 
       id: generateId(), 
       nome: name, 
       clientId, 
       operationId: opId,
-      coordinatorId: coordId,
-      supervisorId: supId,
+      coordinatorIds: coordIds,
+      supervisorIds: supIds,
       status: EntityStatus.ACTIVE 
     };
-    this.saveIlha(newItem);
+    await this.saveIlha(newItem);
     return newItem;
   }
 
-  deleteIlha(id: string) {
-    const list = this.getIlhas().filter(i => i.id !== id);
-    this.save(STORAGE_KEYS.ILHAS, list);
+  // --- Collaborators ---
+  async getCollaborators(): Promise<Collaborator[]> {
+    const { data } = await supabase.from('mop_collaborators').select('*').order('nome');
+    return data?.map(c => ({
+        ...c,
+        ilhaId: c.ilha_id,
+        supervisorId: c.supervisor_id,
+        coordinatorId: c.coordinator_id,
+        operationId: c.operation_id,
+        clientId: c.client_id,
+        dtEntradaProduto: c.dt_entrada_produto,
+        dataFim: c.data_fim,
+        horarioEntrada: c.horario_entrada,
+        horarioSaida: c.horario_saida,
+        dtNasc: c.dt_nasc,
+        feriasInicio: c.ferias_inicio,
+        feriasFim: c.ferias_fim,
+        dataAfastamento: c.data_afastamento,
+        efetivacao: c.efetivacao,
+        // Novos Campos
+        email_vr: c.email_vr,
+        senha: c.senha
+    })) || [];
+  }
+  
+  async saveCollaborator(data: Collaborator) {
+    const payload = {
+        matricula: data.matricula,
+        nome: data.nome,
+        email: data.email,
+        status: data.status,
+        ilha_id: data.ilhaId || null,
+        supervisor_id: data.supervisorId || null,
+        coordinator_id: data.coordinatorId || null,
+        operation_id: data.operationId || null,
+        client_id: data.clientId || null,
+        dt_entrada_produto: data.dtEntradaProduto,
+        data_fim: data.dataFim,
+        horario_entrada: data.horarioEntrada,
+        horario_saida: data.horarioSaida,
+        dt_nasc: data.dtNasc,
+        ferias_inicio: data.feriasInicio,
+        ferias_fim: data.feriasFim,
+        data_afastamento: data.dataAfastamento,
+        efetivacao: data.efetivacao,
+        // Novos Campos
+        email_vr: data.email_vr,
+        senha: data.senha
+    };
+    
+    // Check if exists to determine update vs insert (or upsert)
+    const { error } = await supabase.from('mop_collaborators').upsert(payload, { onConflict: 'matricula' });
+    if(error) console.error("Error saving collaborator", error);
+  }
+  
+  async deleteCollaborator(matricula: string) {
+    await supabase.from('mop_collaborators').delete().eq('matricula', matricula);
   }
 
-  // --- Collaborators ---
-  getCollaborators() { return this.get<Collaborator>(STORAGE_KEYS.COLLABORATORS); }
-  
-  saveCollaborator(data: Collaborator) {
-    const list = this.getCollaborators();
-    const idx = list.findIndex(i => i.matricula === data.matricula);
-    if (idx >= 0) list[idx] = data; else list.push(data);
-    this.save(STORAGE_KEYS.COLLABORATORS, list);
+  async updateCollaboratorEfetivacao(matricula: string, value: string) {
+    const { error } = await supabase.from('mop_collaborators').update({ efetivacao: value }).eq('matricula', matricula);
+    if(error) throw error;
   }
-  
-  deleteCollaborator(matricula: string) {
-    const list = this.getCollaborators().filter(c => c.matricula !== matricula);
-    this.save(STORAGE_KEYS.COLLABORATORS, list);
-  }
-  
-  bulkCreateCollaborators(collabs: Collaborator[]) {
-    const current = this.getCollaborators();
-    // Create a map for faster lookup/merge
-    const map = new Map(current.map(c => [c.matricula, c]));
-    
-    collabs.forEach(c => {
-      map.set(c.matricula, c);
+
+  async bulkUpdateCollaborators(matriculas: string[], field: string, value: string) {
+    // Chama a Procedure (RPC) no Supabase para garantir a lógica de cascata no servidor
+    const { error } = await supabase.rpc('bulk_update_collaborators', {
+        p_matriculas: matriculas,
+        p_field: field,
+        p_value: value
     });
 
-    this.save(STORAGE_KEYS.COLLABORATORS, Array.from(map.values()));
+    if (error) {
+        console.error("Bulk update error (RPC)", error);
+        throw new Error(error.message);
+    }
+  }
+  
+  async bulkCreateCollaborators(collabs: Collaborator[]) {
+    // Map to DB columns
+    const payload = collabs.map(data => ({
+        matricula: data.matricula,
+        nome: data.nome,
+        email: data.email,
+        status: data.status,
+        ilha_id: data.ilhaId,
+        supervisor_id: data.supervisorId,
+        coordinator_id: data.coordinatorId,
+        operation_id: data.operationId,
+        client_id: data.clientId,
+        dt_entrada_produto: data.dtEntradaProduto,
+        data_fim: data.dataFim,
+        horario_entrada: data.horarioEntrada,
+        horario_saida: data.horarioSaida,
+        dt_nasc: data.dtNasc,
+        ferias_inicio: data.feriasInicio,
+        ferias_fim: data.feriasFim,
+        data_afastamento: data.dataAfastamento,
+        efetivacao: data.efetivacao,
+        email_vr: data.email_vr,
+        senha: data.senha
+    }));
+
+    // Chunking to avoid payload too large errors
+    const chunkSize = 100;
+    for (let i = 0; i < payload.length; i += chunkSize) {
+        const chunk = payload.slice(i, i + chunkSize);
+        const { error } = await supabase.from('mop_collaborators').upsert(chunk, { onConflict: 'matricula' });
+        if(error) {
+            console.error("Bulk upload error in chunk " + i, error);
+            throw new Error("Erro no upload em massa: " + error.message);
+        }
+    }
+  }
+
+  // --- Scheduled Tasks ---
+
+  async scheduleTask(matricula: string, changes: Partial<Collaborator>, date: string, user: string) {
+    const task: Omit<ScheduledTask, 'id' | 'created_at'> = {
+        matricula,
+        changes,
+        scheduled_date: date,
+        status: 'PENDING',
+        created_by: user
+    };
+    const { error } = await supabase.from('mop_scheduled_tasks').insert({
+        ...task,
+        id: generateId()
+    });
+    if (error) throw error;
+  }
+
+  async getPendingTasks(): Promise<ScheduledTask[]> {
+    const { data, error } = await supabase.from('mop_scheduled_tasks')
+        .select('*')
+        .eq('status', 'PENDING')
+        .order('scheduled_date', { ascending: true });
+    
+    if (error) {
+        console.error("Error fetching scheduled tasks", error);
+        return [];
+    }
+    return data as ScheduledTask[];
+  }
+
+  async updateTask(id: string, changes: Partial<Collaborator>, date: string) {
+     const { error } = await supabase.from('mop_scheduled_tasks')
+        .update({ 
+            changes: changes,
+            scheduled_date: date
+        })
+        .eq('id', id);
+     if (error) throw error;
+  }
+
+  async cancelAllTasks() {
+     const { data, error: fetchError } = await supabase.from('mop_scheduled_tasks').select('id').eq('status', 'PENDING');
+     if (fetchError) throw fetchError;
+     if (!data || data.length === 0) return;
+     
+     for (const task of data) {
+         const { error } = await supabase.from('mop_scheduled_tasks').update({ status: 'CANCELLED' }).eq('id', task.id);
+         if (error) console.error("Failed to cancel task", task.id, error);
+     }
+  }
+
+  async cancelTask(id: string) {
+     const { error } = await supabase.from('mop_scheduled_tasks')
+        .update({ status: 'CANCELLED' })
+        .eq('id', id);
+     if (error) throw error;
+  }
+
+  async processDueTasks() {
+      // 1. Get Pending Tasks due today or earlier
+      const today = new Date().toISOString().split('T')[0];
+      const { data: dueTasks, error } = await supabase.from('mop_scheduled_tasks')
+          .select('*')
+          .eq('status', 'PENDING')
+          .lte('scheduled_date', today);
+
+      if (error || !dueTasks || dueTasks.length === 0) return;
+
+      console.log(`Processing ${dueTasks.length} due tasks...`);
+
+      // 2. Process each task
+      for (const task of dueTasks) {
+          try {
+              // A. Get current collaborator to merge (and ensure existence)
+              const { data: collabArray } = await supabase.from('mop_collaborators').select('*').eq('matricula', task.matricula);
+              
+              if (collabArray && collabArray.length > 0) {
+                  // --- UPDATE EXISTING ---
+                  const current = collabArray[0];
+                  
+                  // Convert existing DB row to TS object
+                  const currentTS: Collaborator = {
+                      ...current,
+                      ilhaId: current.ilha_id,
+                      supervisorId: current.supervisor_id,
+                      coordinatorId: current.coordinator_id,
+                      operationId: current.operation_id,
+                      clientId: current.client_id,
+                      dtEntradaProduto: current.dt_entrada_produto,
+                      dataFim: current.data_fim,
+                      horarioEntrada: current.horario_entrada,
+                      horarioSaida: current.horario_saida,
+                      dtNasc: current.dt_nasc,
+                      feriasInicio: current.ferias_inicio,
+                      feriasFim: current.ferias_fim,
+                      dataAfastamento: current.data_afastamento,
+                      efetivacao: current.efetivacao,
+                      email_vr: current.email_vr,
+                      senha: current.senha
+                  };
+
+                  const updatedTS = { ...currentTS, ...task.changes };
+
+                  // Save Update
+                  await this.saveCollaborator(updatedTS);
+
+                  // Log History
+                  await this.addHistory({
+                      action: 'Execução Automática',
+                      target: updatedTS.nome,
+                      user: 'Sistema (Agendado)',
+                      date: new Date().toLocaleString('pt-BR'),
+                      type: 'update',
+                      details: `Tarefa agendada executada. Alterações aplicadas automaticamente.`
+                  });
+              
+              } else {
+                  // --- CREATE NEW (Insert) ---
+                  // Assuming task.changes contains the full collaborator data for creation
+                  const newCollab = task.changes as Collaborator;
+                  
+                  if (newCollab.matricula && newCollab.nome) {
+                       await this.saveCollaborator(newCollab);
+                       
+                       // Log History for Creation
+                       await this.addHistory({
+                          action: 'Criação Automática',
+                          target: newCollab.nome,
+                          user: 'Sistema (Agendado)',
+                          date: new Date().toLocaleString('pt-BR'),
+                          type: 'create',
+                          details: `Tarefa agendada de inclusão executada com sucesso.`
+                      });
+                  } else {
+                      console.warn(`Insufficient data to create collaborator ${task.matricula}`);
+                  }
+              }
+              
+              // Mark Task Completed (common for both paths)
+              await supabase.from('mop_scheduled_tasks').update({ status: 'COMPLETED' }).eq('id', task.id);
+
+          } catch (e) {
+              console.error(`Failed to process task ${task.id}`, e);
+          }
+      }
+  }
+
+  // --- Automatic Status Checks ---
+  async checkVacationReturns() {
+    // Busca colaboradores em férias
+    const { data: vacationers } = await supabase
+        .from('mop_collaborators')
+        .select('*')
+        .eq('status', 'FÉRIAS');
+    
+    if (!vacationers) return;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    for (const c of vacationers) {
+        if (!c.ferias_fim) continue;
+        
+        // Parse date safely to local date
+        const parts = c.ferias_fim.split('-');
+        const endDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        
+        // Se hoje for maior que a data fim das férias, o colaborador já deveria ter retornado.
+        if (today > endDate) {
+            await supabase
+                .from('mop_collaborators')
+                .update({ 
+                    status: 'ATIVO',
+                    ferias_inicio: null, 
+                    ferias_fim: null 
+                })
+                .eq('matricula', c.matricula);
+
+            await this.addHistory({
+                action: 'Retorno Automático',
+                target: c.nome,
+                user: 'Sistema',
+                date: new Date().toLocaleString('pt-BR'),
+                type: 'update',
+                details: 'Status alterado para ATIVO após término das férias.'
+            });
+        }
+    }
+  }
+
+  async checkAvisoPrevioEnds() {
+    const { data: avisos } = await supabase
+        .from('mop_collaborators')
+        .select('*')
+        .eq('status', 'AVISO PRÉVIO');
+    
+    if (!avisos) return;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    for (const c of avisos) {
+        if (!c.data_fim) continue;
+        
+        const parts = c.data_fim.split('-');
+        const endDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        
+        if (today > endDate) {
+            await supabase
+                .from('mop_collaborators')
+                .update({ 
+                    status: 'DESLIGADO'
+                })
+                .eq('matricula', c.matricula);
+
+            await this.addHistory({
+                action: 'Desligamento Automático (Fim de Aviso Prévio)',
+                target: c.nome,
+                user: 'Sistema',
+                date: new Date().toLocaleString('pt-BR'),
+                type: 'update',
+                details: `Status alterado para Desligado. Data de desligamento: ${c.data_fim.split('-').reverse().join('/')}`
+            });
+        }
+    }
   }
 }
 
-export const db = new MockDbService();
+export const db = new SupabaseService();
