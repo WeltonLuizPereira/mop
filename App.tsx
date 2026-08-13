@@ -6,7 +6,7 @@ import {
   LogOut, Menu, X, Plus, Edit2, ChevronLeft, ChevronRight, ChevronDown, Search, Phone,
   ShieldCheck, Upload, FileSpreadsheet, Trash2, CheckCircle, AlertCircle,
   Bell, Info, AlertTriangle, Gift, ArrowUpRight, ArrowDownRight, Eye,
-  FileDown, Filter, CalendarDays, Wallet, Sun, Calendar as CalendarIcon, Clock, History, FileText, Check, XCircle, Lightbulb, Save,
+  FileDown, Filter, CalendarDays, Wallet, Sun, Moon, Calendar as CalendarIcon, Clock, History, FileText, Check, XCircle, Lightbulb, Save,
   User as UserIcon, Cake, Mail, Hash, BriefcaseBusiness, CalendarClock, UserPlus, Loader2, ArrowLeft, Activity, File,
   TrendingUp, TrendingDown, MoreHorizontal, BarChart3, PieChart, Timer, UserMinus, LineChart, ListChecks, Calendar, Network, Maximize, AlignJustify, GanttChartSquare,
   MousePointer2, Hand, Stethoscope, UserX, Key, HelpCircle
@@ -19,6 +19,7 @@ import {
   Client, Operation, Ilha, CollaboratorStatus, EntityStatus, HistoryLog, ScheduledTask 
 } from './types';
 import { db } from './services/mockDb';
+import { useTheme } from './contexts/ThemeContext';
 import { getCollaboratorCalculations, generateId, formatTime, parseExcelTime, parseExcelDate, calculateDaysDiff, formatDate, formatDateString, addDays, getInitials } from './utils';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -276,62 +277,62 @@ const NotificationCenter = () => {
 
     return (
         <div className="relative" ref={containerRef}>
-            <button 
-                onClick={() => setIsOpen(!isOpen)} 
-                className="relative p-2 rounded-full text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="relative p-2 rounded-full text-fg-muted hover:text-primary hover:bg-primary-tonal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
                 <Bell size={20} />
                 {totalAlerts > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface"></span>
                 )}
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-4 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                    <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                        <h3 className="font-bold text-gray-800 text-sm">Central de Notificações</h3>
-                        <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-bold">Hoje</span>
+                <div className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-surface rounded-2xl shadow-3 border border-border z-50 overflow-hidden">
+                    <div className="p-4 border-b border-border bg-surface-alt flex justify-between items-center">
+                        <h3 className="font-bold text-fg text-sm">Central de Notificações</h3>
+                        <span className="text-xs bg-primary-tonal text-primary px-2 py-0.5 rounded-full font-bold">Hoje</span>
                     </div>
 
                     <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
                         {(notifications.birthdays.length > 0 || notifications.expiring.length > 0 || notifications.avisoEnding.length > 0) && (
                             <div className="p-2">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 py-1">Atenção Hoje</p>
-                                
+                                <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider px-2 py-1">Atenção Hoje</p>
+
                                 {notifications.avisoEnding.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors bg-orange-50/50">
-                                        <div className="bg-orange-100 text-orange-600 p-2 rounded-lg">
+                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors bg-warning/10">
+                                        <div className="bg-warning/20 text-fg p-2 rounded-lg">
                                             <UserMinus size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-gray-800">Aviso Prévio Finalizando</p>
-                                            <p className="text-xs text-gray-500">Último dia de <span className="font-semibold">{c.nome}</span>.</p>
-                                            <p className="text-[10px] text-orange-600 font-medium mt-1">Realizar desligamento no sistema.</p>
+                                            <p className="text-sm font-bold text-fg">Aviso Prévio Finalizando</p>
+                                            <p className="text-xs text-fg-muted">Último dia de <span className="font-semibold">{c.nome}</span>.</p>
+                                            <p className="text-[10px] text-warning font-medium mt-1">Realizar desligamento no sistema.</p>
                                         </div>
                                     </div>
                                 ))}
 
                                 {notifications.birthdays.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                                        <div className="bg-pink-100 text-pink-600 p-2 rounded-lg">
+                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors">
+                                        <div className="bg-primary-tonal text-primary p-2 rounded-lg">
                                             <Gift size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-gray-800">Aniversariante do Dia!</p>
-                                            <p className="text-xs text-gray-500">Parabéns para <span className="font-semibold">{c.nome}</span></p>
+                                            <p className="text-sm font-bold text-fg">Aniversariante do Dia!</p>
+                                            <p className="text-xs text-fg-muted">Parabéns para <span className="font-semibold">{c.nome}</span></p>
                                         </div>
                                     </div>
                                 ))}
 
                                 {notifications.expiring.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors bg-red-50/50">
-                                        <div className="bg-red-100 text-red-600 p-2 rounded-lg">
+                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors bg-error/10">
+                                        <div className="bg-error/15 text-error p-2 rounded-lg">
                                             <AlertTriangle size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-gray-800">Contrato Vencendo Hoje</p>
-                                            <p className="text-xs text-gray-500">{c.nome} completa o período de experiência.</p>
-                                            <p className="text-[10px] text-red-600 font-medium mt-1">Ação necessária no sistema.</p>
+                                            <p className="text-sm font-bold text-fg">Contrato Vencendo Hoje</p>
+                                            <p className="text-xs text-fg-muted">{c.nome} completa o período de experiência.</p>
+                                            <p className="text-[10px] text-error font-medium mt-1">Ação necessária no sistema.</p>
                                         </div>
                                     </div>
                                 ))}
@@ -339,32 +340,32 @@ const NotificationCenter = () => {
                         )}
 
                         {notifications.birthdays.length === 0 && notifications.expiring.length === 0 && notifications.avisoEnding.length === 0 && (
-                            <div className="p-6 text-center text-gray-400">
-                                <CheckCircle className="mx-auto mb-2 text-gray-300" size={24} />
+                            <div className="p-6 text-center text-fg-subtle">
+                                <CheckCircle className="mx-auto mb-2 text-fg-subtle" size={24} />
                                 <p className="text-xs">Nenhuma pendência urgente para hoje.</p>
                             </div>
                         )}
 
-                        <div className="w-full h-px bg-gray-100 my-1"></div>
+                        <div className="w-full h-px bg-border my-1"></div>
 
                         <div className="p-2">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 py-1">Últimas Atualizações</p>
+                            <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider px-2 py-1">Últimas Atualizações</p>
                             {notifications.recentHistory.map(log => (
-                                <div key={log.id} className="flex gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                                    <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 
-                                        ${log.type === 'create' ? 'bg-green-500' : 
-                                          log.type === 'delete' ? 'bg-red-500' : 'bg-blue-500'}`} 
+                                <div key={log.id} className="flex gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors">
+                                    <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0
+                                        ${log.type === 'create' ? 'bg-success' :
+                                          log.type === 'delete' ? 'bg-error' : 'bg-primary'}`}
                                     />
                                     <div>
-                                        <p className="text-xs text-gray-800 leading-tight">
+                                        <p className="text-xs text-fg leading-tight">
                                             <span className="font-bold">{log.user}</span> {log.action.toLowerCase()}
                                         </p>
-                                        <p className="text-[10px] text-gray-500 mt-1">{log.target} • {log.date.split(' ')[1]}</p>
+                                        <p className="text-[10px] text-fg-muted mt-1">{log.target} • {log.date.split(' ')[1]}</p>
                                     </div>
                                 </div>
                             ))}
                              {notifications.recentHistory.length === 0 && (
-                                <p className="text-xs text-gray-400 p-3 text-center">Nenhum histórico recente.</p>
+                                <p className="text-xs text-fg-subtle p-3 text-center">Nenhum histórico recente.</p>
                             )}
                         </div>
                     </div>
@@ -374,24 +375,41 @@ const NotificationCenter = () => {
     );
 };
 
+const ThemeToggle = () => {
+    const { theme, toggleTheme } = useTheme();
+    const isDark = theme === 'dark';
+    return (
+        <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+            aria-pressed={isDark}
+            className="p-2 rounded-full text-fg-muted hover:text-primary hover:bg-primary-tonal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+    );
+};
+
 const Header = ({ title, user, children }: { title: string, user: User, children?: React.ReactNode }) => {
     const today = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
     return (
-        <header className="bg-white border-b border-gray-200 h-16 px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
+        <header className="bg-surface border-b border-border h-16 px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
             <div>
-                <h1 className="text-lg font-bold text-gray-900 capitalize leading-none">{title}</h1>
-                <p className="text-xs text-gray-500 capitalize mt-1">{today}</p>
+                <h1 className="text-lg font-bold text-fg capitalize leading-none">{title}</h1>
+                <p className="text-xs text-fg-muted capitalize mt-1">{today}</p>
             </div>
-            
+
             <div className="flex items-center gap-6">
+                <ThemeToggle />
                 {children}
-                <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
+                <div className="flex items-center gap-3 pl-6 border-l border-border">
                     <div className="text-right hidden md:block">
-                        <p className="text-sm font-bold text-gray-900 leading-tight">{user.nome.split(' ')[0]} {user.nome.split(' ').pop()}</p>
-                        <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wide">{user.role}</p>
+                        <p className="text-sm font-bold text-fg leading-tight">{user.nome.split(' ')[0]} {user.nome.split(' ').pop()}</p>
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-wide">{user.role}</p>
                     </div>
-                    <div className="w-9 h-9 rounded-full bg-brand-100 border-2 border-white shadow-sm text-brand-700 flex items-center justify-center font-bold text-sm">
+                    <div className="w-9 h-9 rounded-full bg-primary-tonal border-2 border-surface shadow-1 text-primary flex items-center justify-center font-bold text-sm">
                         {user.nome.charAt(0)}
                     </div>
                 </div>
