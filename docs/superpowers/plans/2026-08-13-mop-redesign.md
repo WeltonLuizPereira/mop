@@ -1676,7 +1676,7 @@ Run: `npx tsc --noEmit`
 Expected: nenhum erro novo.
 
 Run: `npm run dev`, login como Admin, navegar até "Clientes" (menu Cadastros).
-Expected: tabela com cabeçalho tonal, linhas com hover sutil; clicar em "Novo" abre modal com cantos de 16px e fundo/borda coerentes com o tema atual; apagar temporariamente todos os clientes (ou filtrar por um termo de busca sem resultados) mostra a ilustração pequena de arquipélago com "Nenhum registro encontrado".
+Expected: tabela com cabeçalho tonal, linhas com hover sutil; clicar em "Novo" abre o modal com cantos de 16px e fundo/borda coerentes com o tema atual (fechar com "Cancelar" ou X, sem salvar); digitar um termo de busca que não bate com nenhum cliente existente (ex.: "zzz_teste_vazio") mostra a ilustração pequena de arquipélago com "Nenhum registro encontrado" — não excluir nem criar nenhum registro real durante a verificação, o app conecta num Supabase real (services/supabase.ts), não num banco de teste.
 
 - [ ] **Step 3: Commit**
 
@@ -2054,7 +2054,7 @@ New:
 Run: `npx tsc --noEmit`
 Expected: nenhum erro novo.
 
-Run: `npm run dev`, login, ir em Colaboradores → editar um colaborador ativo → mudar o Status para "FÉRIAS", depois "DESLIGADO", depois "AVISO PRÉVIO", depois "LICENÇA MATERNIDADE" no formulário.
+Run: `npm run dev`, login, ir em Colaboradores → abrir o modal de edição de um colaborador ativo → mudar o Status para "FÉRIAS", depois "DESLIGADO", depois "AVISO PRÉVIO", depois "LICENÇA MATERNIDADE" no dropdown (isso só muda o estado local do formulário, ainda não gravado) → fechar o modal em "Cancelar" sem clicar em "Salvar". O app conecta num Supabase real (`services/supabase.ts`); não persistir nenhuma dessas mudanças de teste.
 Expected: cada mudança de status revela a seção correspondente com o tratamento de cor certo (amarelo tonal para férias, vermelho tonal para desligado, amarelo mais forte para aviso prévio, neutro para licença maternidade), legível em ambos os temas.
 
 - [ ] **Step 3: Commit**
@@ -2500,8 +2500,10 @@ Expected: build termina com sucesso (exit code 0).
 - [ ] **Step 2: Checklist manual em tema claro**
 
 Run: `npm run dev`, abrir no navegador.
-Percorrer, com o toggle de tema **desligado** (claro): Login (ilustração + formulário) → Dashboard (Visão Geral) → Clientes (CrudPage: criar, editar, excluir, busca sem resultado) → Colaboradores → abrir o modal de edição e alternar pelo menos 3 status diferentes (Férias, Desligado, Aviso Prévio) → Sidebar (todas as seções, usuário Admin) → sino de notificações no Header.
+Percorrer, com o toggle de tema **desligado** (claro): Login (ilustração + formulário) → Dashboard (Visão Geral) → Clientes (CrudPage: abrir o modal "Novo" e o de edição de um registro existente só para olhar, fechar sem salvar; digitar uma busca sem resultado para ver o estado vazio) → Colaboradores → abrir o modal de edição de um colaborador existente e alternar pelo menos 3 status diferentes no dropdown (Férias, Desligado, Aviso Prévio) só para ver as seções condicionais, fechar sem salvar → Sidebar (todas as seções, usuário Admin) → sino de notificações no Header.
 Expected: nenhum texto ilegível (contraste), nenhuma classe do Tailwind quebrada (sem `bg-brand-*`/`bg-gray-*` residual visível), foco de teclado visível ao tabular pelos campos e botões.
+
+**Importante:** o app conecta num Supabase real (`services/supabase.ts`), não há banco de teste isolado. Este checklist é somente leitura/navegação — nunca clicar em "Salvar", "Sim, Excluir", "Resetar Dados" nem em qualquer ação que persista uma mudança. Abrir modais e formulários para inspecionar visualmente é seguro; submetê-los não é.
 
 - [ ] **Step 3: Checklist manual em tema escuro**
 
