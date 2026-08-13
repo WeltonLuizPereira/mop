@@ -20,6 +20,7 @@ import {
 } from './types';
 import { db } from './services/mockDb';
 import { useTheme } from './contexts/ThemeContext';
+import { ArchipelagoIllustration } from './components/ArchipelagoIllustration';
 import { getCollaboratorCalculations, generateId, formatTime, parseExcelTime, parseExcelDate, calculateDaysDiff, formatDate, formatDateString, addDays, getInitials } from './utils';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -1548,20 +1549,29 @@ const LoginPage = ({ onLogin }: { onLogin: (u: User) => void }) => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-          <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm animate-in fade-in zoom-in duration-300">
-            <div className="text-center mb-8">
-               <div className="w-12 h-12 bg-brand-600 rounded-xl mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">M</div>
-               <h1 className="text-2xl font-bold text-gray-900">Bem-vindo</h1>
-               <p className="text-gray-500 text-sm">Entre com suas credenciais para acessar.</p>
+        <div className="min-h-screen flex items-center justify-center bg-bg p-4">
+          <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 bg-surface rounded-2xl shadow-3 overflow-hidden">
+            <div className="hidden md:flex flex-col items-center justify-center gap-6 bg-primary-tonal p-10 mop-fade-up">
+              <ArchipelagoIllustration variant="hero" />
+              <div className="text-center">
+                <h2 className="text-3xl font-black text-primary tracking-tight">Mapa Operacional</h2>
+                <p className="text-fg-muted text-sm mt-1">Visão completa das suas ilhas de operação.</p>
+              </div>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input label="Matrícula" value={matricula} onChange={(e: any) => setMatricula(e.target.value)} placeholder="Ex: 3924" />
-              <Input label="Senha" type="password" value={password} onChange={(e: any) => setPassword(e.target.value)} placeholder="••••••" />
-              {error && <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">{error}</div>}
-              <Button className="w-full justify-center py-3" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : 'Entrar na Plataforma'}</Button>
-            </form>
-            <p className="mt-6 text-center text-xs text-gray-400">© 2026 MOP System v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.1'}</p>
+
+            <div className="p-8 md:p-10 flex flex-col justify-center mop-fade-up" style={{ animationDelay: '120ms' }}>
+              <div className="text-center md:text-left mb-8">
+                 <h1 className="text-2xl font-bold text-fg">Bem-vindo</h1>
+                 <p className="text-fg-muted text-sm">Entre com suas credenciais para acessar.</p>
+              </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Input label="Matrícula" value={matricula} onChange={(e: any) => setMatricula(e.target.value)} placeholder="Ex: 3924" />
+                <Input label="Senha" type="password" value={password} onChange={(e: any) => setPassword(e.target.value)} placeholder="••••••" />
+                {error && <div className="text-error text-sm text-center bg-error/10 p-2 rounded-lg">{error}</div>}
+                <Button className="w-full justify-center py-3" type="submit" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : 'Entrar na Plataforma'}</Button>
+              </form>
+              <p className="mt-6 text-center md:text-left text-xs text-fg-subtle">© 2026 MOP System v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.1'}</p>
+            </div>
           </div>
         </div>
     );
