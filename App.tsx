@@ -1620,10 +1620,10 @@ const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initi
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
-            <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
-              <h3 className="font-bold text-lg">{initialData ? 'Editar' : 'Novo'} Colaborador</h3>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
+          <div className="mop-pop-in bg-surface rounded-2xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh]">
+            <div className="bg-surface-alt p-4 border-b border-border flex justify-between items-center shrink-0">
+              <h3 className="font-bold text-lg text-fg">{initialData ? 'Editar' : 'Novo'} Colaborador</h3>
+              <button onClick={onClose} className="text-fg-subtle hover:text-fg"><X size={20}/></button>
             </div>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
                 <Input label="Matrícula" value={formData.matricula} onChange={(e:any) => handleChange('matricula', e.target.value)} required disabled={!!initialData} />
@@ -1632,13 +1632,13 @@ const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initi
                 <Input label="Data Nascimento" type="date" value={formData.dtNasc} onChange={(e:any) => handleChange('dtNasc', e.target.value)} />
 
                 {/* Novos Campos VR */}
-                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 bg-primary-tonal p-3 rounded-lg border border-primary/20">
                     <Input label="Email VR" value={formData.email_vr || ''} onChange={(e:any) => handleChange('email_vr', e.target.value)} placeholder="Email para sistema VR" />
                     <Input label="Senha de Acesso" value={formData.senha || ''} onChange={(e:any) => handleChange('senha', e.target.value)} placeholder="Senha inicial" />
                 </div>
-                
-                <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Alocação</p>
+
+                <div className="col-span-1 md:col-span-2 bg-surface-alt p-4 rounded-lg border border-border">
+                    <p className="text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Alocação</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <Select label="Cliente" value={formData.clientId} onChange={(e:any) => {
                            handleChange('clientId', e.target.value);
@@ -1659,7 +1659,7 @@ const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initi
                             const ilha = ilhas.find(i => i.id === e.target.value);
                             if(ilha) {
                                 setFormData(p => ({
-                                    ...p, 
+                                    ...p,
                                     ilhaId: ilha.id,
                                     operationId: ilha.operationId,
                                     clientId: ilha.clientId,
@@ -1687,38 +1687,38 @@ const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initi
                     </div>
                 </div>
 
-                <div className="col-span-1 md:col-span-2 border-t border-gray-100 pt-4 mt-2">
+                <div className="col-span-1 md:col-span-2 border-t border-border pt-4 mt-2">
                     <Select label="Status" value={formData.status} onChange={(e:any) => handleChange('status', e.target.value)}>
                         {Object.values(CollaboratorStatus).map(s => <option key={s} value={s}>{s}</option>)}
                     </Select>
-                    
+
                     {formData.status === CollaboratorStatus.FERIAS && (
-                        <div className="grid grid-cols-2 gap-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200 animate-in slide-in-from-top-2">
+                        <div className="grid grid-cols-2 gap-4 bg-warning/15 p-4 rounded-lg border border-warning/40 mop-fade-up">
                              <Input label="Início Férias" type="date" value={formData.feriasInicio} onChange={(e:any) => handleChange('feriasInicio', e.target.value)} />
                              <Input label="Fim Férias" type="date" value={formData.feriasFim} onChange={(e:any) => handleChange('feriasFim', e.target.value)} />
                         </div>
                     )}
-                    
+
                     {formData.status === CollaboratorStatus.DESLIGADO && (
-                        <div className="bg-red-50 p-4 rounded-lg border border-red-200 animate-in slide-in-from-top-2">
+                        <div className="bg-error/10 p-4 rounded-lg border border-error/30 mop-fade-up">
                              <Input label="Data Desligamento" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
                         </div>
                     )}
 
                     {formData.status === CollaboratorStatus.AVISO_PREVIO && (
-                        <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 animate-in slide-in-from-top-2">
-                             <div className="flex items-center gap-2 mb-2 text-orange-800">
+                        <div className="bg-warning/25 p-4 rounded-lg border border-warning/50 mop-fade-up">
+                             <div className="flex items-center gap-2 mb-2 text-fg">
                                 <AlertTriangle size={16} />
                                 <p className="text-sm font-bold">Registro de Aviso Prévio</p>
                              </div>
-                             <p className="text-xs text-orange-600 mb-3">Informe a data prevista para o desligamento final. O sistema usará esta data para cálculos de turnover futuro.</p>
+                             <p className="text-xs text-fg-muted mb-3">Informe a data prevista para o desligamento final. O sistema usará esta data para cálculos de turnover futuro.</p>
                              <Input label="Data Fim do Aviso" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
                         </div>
                     )}
 
                     {formData.status === CollaboratorStatus.AFASTADO && (
-                        <div className="bg-red-50 p-4 rounded-lg border border-red-200 animate-in slide-in-from-top-2">
-                             <div className="flex items-center gap-2 mb-2 text-red-800">
+                        <div className="bg-error/10 p-4 rounded-lg border border-error/30 mop-fade-up">
+                             <div className="flex items-center gap-2 mb-2 text-error">
                                 <Activity size={16} />
                                 <p className="text-sm font-bold">Registro de Afastamento</p>
                              </div>
@@ -1727,8 +1727,8 @@ const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initi
                     )}
 
                     {formData.status === CollaboratorStatus.LICENCA_MATERNIDADE && (
-                        <div className="bg-pink-50 p-4 rounded-lg border border-pink-200 animate-in slide-in-from-top-2">
-                             <div className="flex items-center gap-2 mb-2 text-pink-800">
+                        <div className="bg-surface-alt p-4 rounded-lg border border-border-strong mop-fade-up">
+                             <div className="flex items-center gap-2 mb-2 text-fg">
                                 <Stethoscope size={16} />
                                 <p className="text-sm font-bold">Registro de Licença Maternidade</p>
                              </div>
@@ -1745,25 +1745,25 @@ const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initi
                     </div>
                 </div>
             </div>
-            <div className="p-4 bg-gray-50 flex items-center justify-between border-t border-gray-100 shrink-0">
+            <div className="p-4 bg-surface-alt flex items-center justify-between border-t border-border shrink-0">
                  {onSchedule ? (
                     <div className="flex items-center gap-2">
                         {!isScheduling ? (
-                            <Button variant="secondary" onClick={() => setIsScheduling(true)} className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">
+                            <Button variant="secondary" onClick={() => setIsScheduling(true)}>
                                 <CalendarClock size={16}/> {initialData ? "Agendar Alteração" : "Agendar Cadastro"}
                             </Button>
                         ) : (
-                            <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-200 animate-in fade-in slide-in-from-left-2">
-                                <span className="text-xs font-bold text-blue-700 uppercase">Para:</span>
-                                <input 
-                                    type="date" 
-                                    className="px-2 py-1 text-sm rounded border border-blue-300 focus:ring-1 focus:ring-blue-500 outline-none"
+                            <div className="flex items-center gap-2 bg-primary-tonal p-2 rounded-lg border border-primary/30 mop-fade-up">
+                                <span className="text-xs font-bold text-primary uppercase">Para:</span>
+                                <input
+                                    type="date"
+                                    className="px-2 py-1 text-sm rounded border border-primary/40 bg-surface text-fg focus:ring-1 focus:ring-primary outline-none"
                                     value={scheduleDate}
                                     onChange={(e) => setScheduleDate(e.target.value)}
                                 />
-                                <button 
-                                    onClick={() => setIsScheduling(false)} 
-                                    className="p-1 rounded-full text-blue-400 hover:text-blue-600"
+                                <button
+                                    onClick={() => setIsScheduling(false)}
+                                    className="p-1 rounded-full text-primary/70 hover:text-primary"
                                 >
                                     <X size={14} />
                                 </button>
@@ -1775,7 +1775,7 @@ const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initi
                 <div className="flex justify-end gap-3">
                     <Button variant="secondary" onClick={onClose}>Cancelar</Button>
                     {isScheduling ? (
-                        <Button onClick={handleConfirmSchedule} className="bg-blue-600 hover:bg-blue-700">
+                        <Button onClick={handleConfirmSchedule}>
                             Confirmar Agendamento
                         </Button>
                     ) : (
