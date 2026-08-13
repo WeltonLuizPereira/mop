@@ -5358,7 +5358,7 @@ const App = () => {
   const isManagementOrRh = currentUser.role !== UserRole.VIEWER;
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
+    <div className="flex h-screen bg-bg text-fg font-sans">
        <aside className="w-64 bg-surface border-r border-border flex flex-col fixed h-full z-10">
           <div className="h-16 flex items-center px-6 border-b border-border">
              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold mr-3">M</div>
@@ -5453,7 +5453,7 @@ const App = () => {
           </div>
        </aside>
 
-       <main className="flex-1 ml-64 overflow-y-auto h-full bg-gray-50 flex flex-col relative custom-scrollbar">
+       <main className="flex-1 ml-64 overflow-y-auto h-full bg-bg flex flex-col relative custom-scrollbar">
           <Header title={getPageTitle(currentPage)} user={currentUser}>
               <NotificationCenter />
           </Header>
