@@ -37,9 +37,9 @@
   --brand: #00747A;
   --brand-dark: #033E3F;
   --brand-tonal: #E6F1F2;
-  --success: #1B744E;
+  --success: #196A47;
   --warning: #E6CF42;
-  --error: #C12613;
+  --error: #B12311;
 }
 
 .dark {
@@ -56,7 +56,7 @@
   --brand-tonal: rgb(0 116 122 / 0.16);
   --success: #41D394;
   --warning: #E6CF42;
-  --error: #F07768;
+  --error: #F18476;
 }
 
 html, body {
