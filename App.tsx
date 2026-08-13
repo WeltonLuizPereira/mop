@@ -31,13 +31,13 @@ declare const __UPDATE_DATE__: string;
 // --- UI Components ---
 
 const Button = ({ children, onClick, variant = 'primary', className = '', ...props }: any) => {
-  const base = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 text-sm";
+  const base = "px-4 py-2 rounded-lg font-bold transition-colors duration-200 flex items-center gap-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
   const styles = {
-    primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed",
-    secondary: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
-    danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200",
-    "solid-danger": "bg-red-600 text-white hover:bg-red-700 shadow-md shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed",
-    ghost: "text-gray-500 hover:text-gray-900"
+    primary: "bg-primary text-white hover:bg-primary-dark shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
+    secondary: "bg-primary-tonal text-primary hover:bg-primary/20",
+    danger: "bg-error/10 text-error hover:bg-error/20 border border-error/30",
+    "solid-danger": "bg-error text-white hover:opacity-90 shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
+    ghost: "text-fg-muted hover:text-fg hover:bg-surface-alt"
   };
   return (
     <button type="button" className={`${base} ${styles[variant as keyof typeof styles]} ${className}`} onClick={onClick} {...props}>
@@ -48,19 +48,19 @@ const Button = ({ children, onClick, variant = 'primary', className = '', ...pro
 
 const Input = ({ label, className = '', ...props }: any) => (
   <div className="flex flex-col gap-1 mb-3">
-    {label && <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</label>}
-    <input 
-      className={`w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all disabled:bg-gray-100 disabled:text-gray-500 ${className}`}
-      {...props} 
+    {label && <label className="text-xs font-bold text-fg-muted uppercase tracking-wider">{label}</label>}
+    <input
+      className={`w-full px-3 py-2 bg-surface-alt border border-transparent rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-fg ${className}`}
+      {...props}
     />
   </div>
 );
 
 const Select = ({ label, children, className = '', ...props }: any) => (
   <div className="flex flex-col gap-1 mb-3">
-    {label && <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</label>}
-    <select 
-      className={`w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all disabled:bg-gray-100 disabled:text-gray-500 ${className}`}
+    {label && <label className="text-xs font-bold text-fg-muted uppercase tracking-wider">{label}</label>}
+    <select
+      className={`w-full px-3 py-2 bg-surface-alt border border-transparent rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-fg ${className}`}
       {...props}
     >
       {children}
