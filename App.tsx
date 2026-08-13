@@ -131,39 +131,39 @@ const MultiSelect = ({ label, options, value, onChange }: {
 
   return (
     <div className="relative group" ref={containerRef}>
-      <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">{label}</label>
-      <button 
+      <label className="text-[10px] font-bold text-fg-muted uppercase mb-1 block">{label}</label>
+      <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full text-left px-3 py-2 bg-gray-50 border rounded-lg text-xs focus:ring-1 focus:ring-brand-500 flex justify-between items-center h-[34px] transition-all ${isOpen ? 'border-brand-500 ring-1 ring-brand-500 bg-white' : 'border-gray-200 hover:bg-gray-100'}`}
+        className={`w-full text-left px-3 py-2 bg-surface-alt border rounded-lg text-xs focus:ring-1 focus:ring-primary flex justify-between items-center h-[34px] transition-colors ${isOpen ? 'border-primary ring-1 ring-primary bg-surface' : 'border-transparent hover:bg-border/30'}`}
       >
-        <span className="truncate block max-w-[90%] text-gray-700 font-medium">{displayText}</span>
-        <ChevronDown size={14} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="truncate block max-w-[90%] text-fg font-medium">{displayText}</span>
+        <ChevronDown size={14} className={`text-fg-subtle transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 flex flex-col min-w-[200px] animate-in fade-in zoom-in-95 duration-100">
-           <div className="p-2 border-b border-gray-100">
+        <div className="mop-pop-in absolute top-full left-0 w-full mt-1 bg-surface border border-border rounded-lg shadow-2 z-50 flex flex-col min-w-[200px]">
+           <div className="p-2 border-b border-border">
                <input
                    type="text"
                    placeholder="Buscar..."
-                   className="w-full px-2 py-1.5 border border-brand-500 rounded text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors"
+                   className="w-full px-2 py-1.5 bg-surface text-fg border border-primary rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
                    onClick={(e) => e.stopPropagation()}
                />
                <div className="flex justify-between items-center mt-2 px-1">
-                   <div 
+                   <div
                        className="flex items-center gap-2 cursor-pointer group/select"
                        onClick={(e) => { e.stopPropagation(); toggleAll(); }}
                    >
-                       <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${value.length === filteredOptions.length && filteredOptions.length > 0 ? 'bg-brand-500 border-brand-500' : 'border-gray-300 bg-white'}`}>
+                       <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${value.length === filteredOptions.length && filteredOptions.length > 0 ? 'bg-primary border-primary' : 'border-border-strong bg-surface'}`}>
                            {value.length === filteredOptions.length && filteredOptions.length > 0 && <Check size={10} className="text-white" />}
                        </div>
-                       <span className="text-xs text-brand-600 font-medium group-hover/select:underline">Selecionar todos</span>
+                       <span className="text-xs text-primary font-medium group-hover/select:underline">Selecionar todos</span>
                    </div>
-                   <span 
-                       className="text-[10px] uppercase font-bold text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+                   <span
+                       className="text-[10px] uppercase font-bold text-fg-subtle cursor-pointer hover:text-fg transition-colors"
                        onClick={(e) => { e.stopPropagation(); clearAll(); }}
                    >
                        Limpar
@@ -175,15 +175,15 @@ const MultiSelect = ({ label, options, value, onChange }: {
                  filteredOptions.map(opt => {
                     const isSelected = value.includes(opt.value);
                     return (
-                    <div key={opt.value} className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${isSelected ? 'bg-brand-50 text-brand-700' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => toggleOption(opt.value)}>
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-brand-500 border-brand-500' : 'border-gray-300 bg-white'}`}>
+                    <div key={opt.value} className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${isSelected ? 'bg-primary-tonal text-primary' : 'hover:bg-surface-alt text-fg'}`} onClick={() => toggleOption(opt.value)}>
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-border-strong bg-surface'}`}>
                           {isSelected && <Check size={10} className="text-white" />}
                       </div>
                       <span className="text-xs">{opt.label}</span>
                     </div>
                  )})
               ) : (
-                <div className="px-3 py-3 text-center text-xs text-gray-400">Nenhum resultado</div>
+                <div className="px-3 py-3 text-center text-xs text-fg-subtle">Nenhum resultado</div>
               )}
            </div>
         </div>
