@@ -195,11 +195,11 @@ const MultiSelect = ({ label, options, value, onChange }: {
 const NavItem = ({ icon: Icon, label, active, onClick }: any) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group ${
-      active ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      active ? 'bg-primary-tonal text-primary' : 'text-fg-muted hover:bg-surface-alt hover:text-fg'
     }`}
   >
-    <Icon size={18} className={active ? 'text-brand-600' : 'text-gray-400 group-hover:text-gray-600'} />
+    <Icon size={18} className={active ? 'text-primary' : 'text-fg-subtle group-hover:text-fg-muted'} />
     {label}
   </button>
 );
@@ -5324,22 +5324,22 @@ const App = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
-       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-10">
-          <div className="h-16 flex items-center px-6 border-b border-gray-100">
-             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">M</div>
-             <span className="font-bold text-lg tracking-tight">MOP System</span>
+       <aside className="w-64 bg-surface border-r border-border flex flex-col fixed h-full z-10">
+          <div className="h-16 flex items-center px-6 border-b border-border">
+             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold mr-3">M</div>
+             <span className="font-bold text-lg tracking-tight text-fg">MOP System</span>
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
              <nav className="space-y-1">
                 <div className="pb-2">
-                   <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Principal</p>
+                   <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Principal</p>
                    {/* Todos visualizam */}
                    <NavItem icon={LayoutDashboard} label="Visão Geral" active={currentPage === 'dashboard'} onClick={() => setCurrentPage('dashboard')} />
                 </div>
                 
                 <div className="pt-2 pb-2">
-                   <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Gestão</p>
+                   <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Gestão</p>
                    {/* Todos visualizam Colaboradores */}
                    <NavItem icon={Users} label="Colaboradores" active={currentPage === 'collaborators'} onClick={() => { setCurrentPage('collaborators'); setSelectedCollab(null); }} />
                    
@@ -5353,7 +5353,7 @@ const App = () => {
                 </div>
 
                 <div className="pt-2 pb-2">
-                   <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">RH</p>
+                   <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">RH</p>
                    {/* Aniversariantes: Todos visualizam */}
                    <NavItem icon={Cake} label="Aniversariantes" active={currentPage === 'birthdays'} onClick={() => setCurrentPage('birthdays')} />
                    <NavItem icon={UserX} label="Desligados" active={currentPage === 'desligados'} onClick={() => setCurrentPage('desligados')} />
@@ -5372,7 +5372,7 @@ const App = () => {
                 {isAdmin && (
                     <>
                         <div className="pt-2 pb-2">
-                            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Cadastros</p>
+                            <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Cadastros</p>
                             <NavItem icon={Building2} label="Clientes" active={currentPage === 'clients'} onClick={() => setCurrentPage('clients')} />
                             <NavItem icon={Globe} label="Operações" active={currentPage === 'operations'} onClick={() => setCurrentPage('operations')} />
                             <NavItem icon={MapPin} label="Ilhas" active={currentPage === 'ilhas'} onClick={() => setCurrentPage('ilhas')} />
@@ -5381,12 +5381,12 @@ const App = () => {
                         </div>
 
                         <div className="pt-2 pb-2">
-                            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Administração</p>
+                            <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Administração</p>
                             <NavItem icon={ShieldCheck} label="Usuários" active={currentPage === 'users'} onClick={() => setCurrentPage('users')} />
                         </div>
 
                         <div className="pt-2 pb-2">
-                            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sistema</p>
+                            <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Sistema</p>
                             <NavItem icon={Calendar} label="Tarefas Agendadas" active={currentPage === 'scheduled_tasks'} onClick={() => setCurrentPage('scheduled_tasks')} />
                             <NavItem icon={Upload} label="Importar Dados" active={currentPage === 'import'} onClick={() => setCurrentPage('import')} />
                             <NavItem icon={ListChecks} label="Update em Massa" active={currentPage === 'bulk_update'} onClick={() => setCurrentPage('bulk_update')} />
@@ -5397,22 +5397,22 @@ const App = () => {
                 )}
 
                 <div className="pt-2 pb-2">
-                   <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Ajuda</p>
+                   <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Ajuda</p>
                    <NavItem icon={Info} label="Sobre" active={currentPage === 'about'} onClick={() => setCurrentPage('about')} />
                 </div>
              </nav>
           </div>
-          <div className="p-4 border-t border-gray-100 bg-gray-50">
+          <div className="p-4 border-t border-border bg-surface-alt">
              <div className="flex items-center gap-3 mb-3">
-                 <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                 <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shadow-1">
                      {currentUser.nome.charAt(0)}
                  </div>
                  <div className="flex-1 overflow-hidden">
-                     <p className="text-xs font-bold text-gray-900 truncate">{currentUser.nome}</p>
-                     <p className="text-[10px] text-gray-500 truncate">{currentUser.email}</p>
+                     <p className="text-xs font-bold text-fg truncate">{currentUser.nome}</p>
+                     <p className="text-[10px] text-fg-muted truncate">{currentUser.email}</p>
                  </div>
              </div>
-             <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition-colors">
+             <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-error hover:bg-error/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error">
                  <LogOut size={14} /> Sair
              </button>
           </div>
