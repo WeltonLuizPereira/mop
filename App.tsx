@@ -1771,7 +1771,7 @@ const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collab
     // Date Filters
     const today = new Date();
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-    const [selectedMonth, setSelectedMonth] = useState(today.getMonth()); // 0-11
+    const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
 
     const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
     const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
@@ -1824,9 +1824,9 @@ const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collab
 
         const entryDate = safeDate(c.dtEntradaProduto);
         const exitDate = c.dataFim ? safeDate(c.dataFim) : null;
-        const enteredBeforeEnd = entryDate && entryDate <= endOfMonth;
+        const enteredBeforeEnd = !entryDate || entryDate <= endOfMonth;
         const stillActiveAfterStart = !exitDate || exitDate >= startOfMonth;
-        const isWithinDateRange = enteredBeforeEnd && stillActiveAfterStart;
+        const isWithinDateRange = selectedYear === -1 ? true : (enteredBeforeEnd && stillActiveAfterStart);
 
         return matchesSearch && matchesCoord && matchesSup && matchesIlha && matchesOp && matchesClient && matchesStatus && isWithinDateRange;
     }).sort((a, b) => {
@@ -2014,7 +2014,7 @@ const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collab
     const years = Array.from({length: 6}, (_, i) => (today.getFullYear() + 1) - i);
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500 h-[calc(100vh-120px)]">
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
                     <h2 className="text-2xl font-bold text-gray-800">Colaboradores</h2>
@@ -2024,7 +2024,7 @@ const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collab
                             {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
                         </select>
                         <div className="w-px bg-gray-200 my-1"></div>
-                        <select className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select>
+                        <select className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}><option value={-1}>Todos os Anos</option>{years.map(y => <option key={y} value={y}>{y}</option>)}</select>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -3476,7 +3476,9 @@ const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: User }>
     })
     .filter(c => c.calc.experiencia === "SIM")
     .sort((a, b) => {
-        return a.daysRemaining90 - b.daysRemaining90;
+        const nextA = a.daysRemaining45 >= 0 ? a.daysRemaining45 : a.daysRemaining90;
+        const nextB = b.daysRemaining45 >= 0 ? b.daysRemaining45 : b.daysRemaining90;
+        return nextA - nextB;
     });
 
     const ganttDates = useMemo(() => {
@@ -3533,7 +3535,7 @@ const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: User }>
     }, [viewMode, ganttDates]);
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500 h-full">
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                <div className="flex flex-wrap items-center gap-4">
                   <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>
