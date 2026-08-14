@@ -16,6 +16,21 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-error: var(--error);
+  --color-on-primary: var(--on-primary);
+  --color-on-error: var(--on-error);
+
+  /* Legacy Tailwind CDN `brand-*` scale compatibility shim.
+     Old inline tailwind.config defined brand.50/100/500/600/700/900; this
+     branch removed that config but ~94 App.tsx call sites (outside this
+     migration's restyle scope) still reference those class names. Map them
+     onto the new token system so they stay theme-aware instead of emitting
+     nothing (Tailwind v4 drops classes with no matching @theme entry). */
+  --color-brand-50: var(--brand-tonal);
+  --color-brand-100: var(--brand-tonal);
+  --color-brand-500: var(--brand);
+  --color-brand-600: var(--brand);
+  --color-brand-700: var(--brand-dark);
+  --color-brand-900: var(--brand-dark);
 
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.08), 0 1px 3px rgb(0 0 0 / 0.06);
   --shadow-2: 0 4px 8px rgb(0 0 0 / 0.10), 0 2px 4px rgb(0 0 0 / 0.06);
@@ -33,13 +48,15 @@
   --border-strong: #C7C7C7;
   --fg: #171919;
   --fg-muted: #4A4A4A;
-  --fg-subtle: #AAAAAA;
+  --fg-subtle: #767676;
   --brand: #00747A;
   --brand-dark: #033E3F;
   --brand-tonal: #E6F1F2;
   --success: #196A47;
   --warning: #E6CF42;
   --error: #B12311;
+  --on-primary: #FFFFFF;
+  --on-error: #FFFFFF;
 }
 
 .dark {
@@ -57,6 +74,8 @@
   --success: #41D394;
   --warning: #E6CF42;
   --error: #F18476;
+  --on-primary: #171919;
+  --on-error: #171919;
 }
 
 html, body {

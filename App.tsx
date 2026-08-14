@@ -35,10 +35,10 @@ declare const __UPDATE_DATE__: string;
 const Button = ({ children, onClick, variant = 'primary', className = '', ...props }: any) => {
   const base = "px-4 py-2 rounded-lg font-bold transition-colors duration-200 flex items-center gap-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
   const styles = {
-    primary: "bg-primary text-white hover:bg-primary-dark shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
+    primary: "bg-primary text-on-primary hover:bg-primary-dark shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
     secondary: "bg-primary-tonal text-primary hover:bg-primary/20",
     danger: "bg-error/10 text-error hover:bg-error/20 border border-error/30",
-    "solid-danger": "bg-error text-white hover:opacity-90 shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
+    "solid-danger": "bg-error text-on-error hover:opacity-90 shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
     ghost: "text-fg-muted hover:text-fg hover:bg-surface-alt"
   };
   return (
@@ -160,7 +160,7 @@ const MultiSelect = ({ label, options, value, onChange }: {
                        onClick={(e) => { e.stopPropagation(); toggleAll(); }}
                    >
                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${value.length === filteredOptions.length && filteredOptions.length > 0 ? 'bg-primary border-primary' : 'border-border-strong bg-surface'}`}>
-                           {value.length === filteredOptions.length && filteredOptions.length > 0 && <Check size={10} className="text-white" />}
+                           {value.length === filteredOptions.length && filteredOptions.length > 0 && <Check size={10} className="text-on-primary" />}
                        </div>
                        <span className="text-xs text-primary font-medium group-hover/select:underline">Selecionar todos</span>
                    </div>
@@ -179,7 +179,7 @@ const MultiSelect = ({ label, options, value, onChange }: {
                     return (
                     <div key={opt.value} className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${isSelected ? 'bg-primary-tonal text-primary' : 'hover:bg-surface-alt text-fg'}`} onClick={() => toggleOption(opt.value)}>
                       <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-border-strong bg-surface'}`}>
-                          {isSelected && <Check size={10} className="text-white" />}
+                          {isSelected && <Check size={10} className="text-on-primary" />}
                       </div>
                       <span className="text-xs">{opt.label}</span>
                     </div>
@@ -308,7 +308,7 @@ const NotificationCenter = () => {
                                         <div>
                                             <p className="text-sm font-bold text-fg">Aviso Prévio Finalizando</p>
                                             <p className="text-xs text-fg-muted">Último dia de <span className="font-semibold">{c.nome}</span>.</p>
-                                            <p className="text-[10px] text-warning font-medium mt-1">Realizar desligamento no sistema.</p>
+                                            <p className="text-[10px] text-fg-muted font-medium mt-1">Realizar desligamento no sistema.</p>
                                         </div>
                                     </div>
                                 ))}
@@ -2856,7 +2856,7 @@ const Dashboard: React.FC<{ currentUser: User, onNavigate: (page: string) => voi
                trend="down"
                trendValue=""
                icon={Sun}
-               colorClass="text-warning"
+               colorClass="text-fg"
            />
            <Card
                title="Desligados / Licença"
@@ -5361,7 +5361,7 @@ const App = () => {
     <div className="flex h-screen bg-bg text-fg font-sans">
        <aside className="w-64 bg-surface border-r border-border flex flex-col fixed h-full z-10">
           <div className="h-16 flex items-center px-6 border-b border-border">
-             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold mr-3">M</div>
+             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-on-primary font-bold mr-3">M</div>
              <span className="font-bold text-lg tracking-tight text-fg">MOP System</span>
           </div>
           
@@ -5439,7 +5439,7 @@ const App = () => {
           </div>
           <div className="p-4 border-t border-border bg-surface-alt">
              <div className="flex items-center gap-3 mb-3">
-                 <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shadow-1">
+                 <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs shadow-1">
                      {currentUser.nome.charAt(0)}
                  </div>
                  <div className="flex-1 overflow-hidden">
