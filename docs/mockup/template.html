@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOP — mockup de direção visual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   TOKENS
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --canvas:        #FFFFFF;
+  --canvas-soft:   #FAFAFA;
+  --canvas-sunk:   #F2F2F1;
+  --hairline:      #E4E4E4;
+  --hairline-2:    #CFCFCF;
+
+  --ink:           #191310;
+  --ink-2:         #453C38;
+  --ink-mute:      #6B615C;
+  --ink-faint:     #9A918C;
+
+  --brand:         #F27405;
+  --brand-hot:     #F54E00;
+  --brand-press:   #D04200;
+  --brand-text:    #D04200;
+  --brand-wash:    #FFF4EC;
+  --on-brand:      #191310;
+
+  --st-ativo:        #12794F;
+  --st-ferias:       #1264A3;
+  --st-afastado:     #6544C0;
+  --st-maternidade:  #B4008C;
+  --st-aviso:        #C4183C;
+  --st-realocado:    #00786F;
+  --st-desligado:    #6B615C;
+
+  --danger:  #C4183C;
+  --ok:      #12794F;
+
+  --r-xs: 4px;  --r-sm: 6px;  --r-md: 8px;
+  --r-lg: 12px; --r-xl: 16px; --r-tile: 20px;
+
+  --sh-1: 0 1px 3px rgb(0 0 0 / .06);
+  --sh-2: 0 8px 24px rgb(0 0 0 / .08);
+  --sh-3: 0 16px 48px rgb(0 0 0 / .12);
+
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-body:    'IBM Plex Sans', system-ui, sans-serif;
+  --font-data:    'IBM Plex Mono', ui-monospace, monospace;
+}
+
+[data-theme="dark"] {
+  --canvas:        #121110;
+  --canvas-soft:   #1A1817;
+  --canvas-sunk:   #0C0B0A;
+  --hairline:      #2E2A28;
+  --hairline-2:    #423D3A;
+
+  --ink:           #F5F1EF;
+  --ink-2:         #C4BCB7;
+  --ink-mute:      #948B86;
+  --ink-faint:     #6E6560;
+
+  --brand:         #F27405;
+  --brand-hot:     #FF6A1A;
+  --brand-press:   #C93E00;
+  --brand-text:    #F27405;
+  --brand-wash:    rgb(242 116 5 / .14);
+  --on-brand:      #191310;
+
+  --st-ativo:        #3FBE84;
+  --st-ferias:       #5AA9E6;
+  --st-afastado:     #9B8CFF;
+  --st-maternidade:  #E86FD8;
+  --st-aviso:        #FF4D6D;
+  --st-realocado:    #38B5A8;
+  --st-desligado:    #948B86;
+
+  --danger:  #FF4D6D;
+  --ok:      #3FBE84;
+
+  --sh-1: 0 1px 3px rgb(0 0 0 / .4);
+  --sh-2: 0 8px 24px rgb(0 0 0 / .5);
+  --sh-3: 0 16px 48px rgb(0 0 0 / .6);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── type registers ───────────────────────────────────────── */
+.display-xl { font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 1.08; letter-spacing: -.022em; }
+.display-lg { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.15; letter-spacing: -.02em; }
+.display-md { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.25; letter-spacing: -.015em; }
+.eyebrow {
+  font-family: var(--font-display); font-weight: 500; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .18em; line-height: 1;
+  color: var(--ink-faint);
+}
+.data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.micro { font-size: 11px; line-height: 1.4; }
+
+/* ── focus floor ──────────────────────────────────────────── */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ANEL Q — o path real do logo, revelado por uma cunha
+   ───────────────────────────────────────────────────────────── */
+.anel { display: block; color: var(--brand); }
+.anel--hot { color: var(--brand-hot); }
+.anel path.ring { fill: currentColor; }
+
+/* ─────────────────────────────────────────────────────────────
+   PRIMITIVOS
+   ───────────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-body); font-weight: 600; font-size: 13px; line-height: 1;
+  border: 1px solid transparent; border-radius: var(--r-sm);
+  padding: 9px 16px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.btn--primary { background: var(--brand); color: var(--on-brand); }
+.btn--primary:hover { background: var(--brand-hot); }
+.btn--primary:active { background: var(--brand-press); }
+.btn--ghost { background: transparent; color: var(--ink); border-color: var(--hairline-2); }
+.btn--ghost:hover { background: var(--canvas-soft); }
+.btn--danger { background: transparent; color: var(--danger); border-color: transparent; }
+.btn--danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.btn--block { width: 100%; justify-content: center; padding: 12px 16px; }
+
+.field { display: block; margin-bottom: 16px; }
+.field > label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--ink-2); margin-bottom: 6px;
+}
+.field > input, .field > select {
+  width: 100%; font-family: var(--font-body); font-size: 14px;
+  padding: 9px 12px; border: 1px solid var(--hairline-2);
+  border-radius: var(--r-sm); background: var(--canvas); color: var(--ink);
+}
+.field > input::placeholder { color: var(--ink-faint); }
+.field--data > input { font-family: var(--font-data); }
+
+.badge { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--ink-mute)); flex: none; }
+.badge--ativo       { --dot: var(--st-ativo); }
+.badge--ferias      { --dot: var(--st-ferias); }
+.badge--afastado    { --dot: var(--st-afastado); }
+.badge--maternidade { --dot: var(--st-maternidade); }
+.badge--aviso       { --dot: var(--st-aviso); }
+.badge--realocado   { --dot: var(--st-realocado); }
+.badge--desligado   { --dot: var(--st-desligado); }
+
+.card {
+  background: var(--canvas-soft); border: 1px solid var(--hairline);
+  border-radius: var(--r-lg); padding: 20px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SHELL
+   ───────────────────────────────────────────────────────────── */
+.shell { display: grid; grid-template-columns: 260px 1fr; min-height: 760px; }
+
+.sidebar {
+  background: var(--canvas-soft); border-right: 1px solid var(--hairline);
+  display: flex; flex-direction: column;
+}
+.sidebar__brand {
+  height: 56px; display: flex; align-items: center; gap: 10px;
+  padding: 0 18px; border-bottom: 1px solid var(--hairline);
+}
+.sidebar__brand .mark { width: 24px; height: 24px; flex: none; }
+.sidebar__brand .name { font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.sidebar__brand .sub  { font-size: 10px; color: var(--ink-faint); letter-spacing: .04em; }
+
+.nav { flex: 1; overflow-y: auto; padding: 18px 12px; }
+.nav__group + .nav__group { margin-top: 22px; }
+.nav__group > .eyebrow { padding: 0 10px; margin-bottom: 9px; display: block; }
+.nav__item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 500; color: var(--ink-2);
+  text-decoration: none; cursor: pointer;
+  border-left: 2px solid transparent; margin-left: -2px;
+}
+.nav__item:hover { background: var(--canvas-sunk); color: var(--ink); }
+.nav__item[aria-current="page"] {
+  background: var(--brand-wash); color: var(--ink);
+  border-left-color: var(--brand); font-weight: 600;
+}
+.nav__item .ic { width: 16px; height: 16px; flex: none; opacity: .75; }
+
+.sidebar__user {
+  border-top: 1px solid var(--hairline); padding: 14px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%; flex: none;
+  background: var(--brand); color: var(--on-brand);
+  display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 12px;
+}
+
+.topbar {
+  height: 56px; border-bottom: 1px solid var(--hairline);
+  display: flex; align-items: center; gap: 16px; padding: 0 28px;
+  background: var(--canvas);
+}
+.topbar__title { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -.015em; }
+.topbar__spacer { flex: 1; }
+.iconbtn {
+  width: 32px; height: 32px; border-radius: var(--r-sm);
+  border: 1px solid transparent; background: transparent; color: var(--ink-2);
+  display: grid; place-items: center; cursor: pointer;
+}
+.iconbtn:hover { background: var(--canvas-soft); color: var(--ink); }
+
+.main { background: var(--canvas); }
+.content { padding: 28px; max-width: 1440px; }
+
+/* ── faixa de totais ──────────────────────────────────────── */
+.totals { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 26px; margin-bottom: 26px; }
+.totals__item { display: flex; align-items: baseline; gap: 7px; }
+.totals__n { font-family: var(--font-display); font-weight: 700; font-size: 21px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.totals__l { font-size: 13px; color: var(--ink-mute); }
+.totals__sep { width: 1px; height: 15px; background: var(--hairline-2); }
+
+/* ── mapa de ilhas ────────────────────────────────────────── */
+.maphead { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.maphead .eyebrow { flex: 1; }
+.chip {
+  font-size: 12px; font-weight: 500; color: var(--ink-2);
+  border: 1px solid var(--hairline-2); border-radius: var(--r-sm);
+  padding: 5px 10px; background: var(--canvas); cursor: pointer;
+}
+
+.map { display: grid; grid-template-columns: repeat(auto-fill, minmax(286px, 1fr)); gap: 14px; }
+
+.tile {
+  background: var(--canvas-soft); border: 1px solid var(--hairline);
+  border-radius: var(--r-tile); padding: 18px;
+  cursor: pointer; transition: border-color .14s ease, box-shadow .14s ease, transform .14s ease;
+}
+.tile:hover { border-color: var(--hairline-2); box-shadow: var(--sh-2); transform: translateY(-1px); }
+
+/* identidade primeiro, largura inteira — o nome da ilha nunca trunca */
+.tile__head { padding-bottom: 13px; border-bottom: 1px solid var(--hairline); }
+.tile__name {
+  font-family: var(--font-display); font-weight: 700; font-size: 15px;
+  letter-spacing: -.01em; line-height: 1.25; margin: 0;
+}
+.tile__ctx { font-size: 12px; color: var(--ink-mute); margin-top: 2px; }
+
+.tile__gauge { display: flex; align-items: center; gap: 14px; padding: 14px 0 15px; }
+.tile__anel { width: 54px; height: 54px; flex: none; }
+.tile__pct { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -.022em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile__pctl { font-size: 12px; color: var(--ink-mute); margin-top: 5px; white-space: nowrap; }
+.tile__pctl b { font-family: var(--font-data); font-weight: 500; color: var(--ink-2); }
+
+.tile__dots { display: flex; flex-wrap: wrap; gap: 7px 14px; }
+.tile__dots .badge { font-size: 12px; }
+.tile__dots .badge b { font-family: var(--font-data); font-weight: 500; }
+
+/* ── tabela ───────────────────────────────────────────────── */
+.tablewrap { border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; background: var(--canvas-soft); }
+.toolbar { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--hairline); }
+.toolbar input {
+  flex: 1; min-width: 200px; max-width: 340px; font-family: var(--font-body); font-size: 13px;
+  padding: 7px 11px; border: 1px solid var(--hairline-2); border-radius: var(--r-sm);
+  background: var(--canvas); color: var(--ink);
+}
+table { width: 100%; border-collapse: collapse; background: var(--canvas); table-layout: auto; }
+thead th {
+  font-family: var(--font-display); font-weight: 500; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .18em; color: var(--ink-faint);
+  text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+/* uma linha por pessoa: nome e ilha não quebram */
+tbody td { padding: 9px 14px; border-bottom: 1px solid var(--hairline); font-size: 13px; vertical-align: middle; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--canvas-soft); }
+td.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+td.nome { font-weight: 500; }
+th.logo, td.logo { width: 1%; padding-right: 0; }
+
+/* logo do cliente: Client.logo quando existe, monograma quando não */
+.clogo {
+  width: 28px; height: 28px; border-radius: var(--r-xs);
+  background: var(--canvas-sunk); display: grid; place-items: center;
+  overflow: hidden; flex: none;
+}
+.clogo img { max-width: 24px; max-height: 24px; object-fit: contain; display: block; }
+.clogo span {
+  font-family: var(--font-display); font-weight: 700; font-size: 12px;
+  color: var(--ink-2); letter-spacing: -.01em;
+}
+
+/* ── login ────────────────────────────────────────────────── */
+.login { min-height: 760px; display: grid; grid-template-columns: 1.05fr .95fr; }
+/* palco sempre escuro, nos dois temas — o logo foi desenhado para fundo
+   escuro (a linha "Contact Center" é branca no arquivo original) */
+.login__stage {
+  background: #121110; color: #F5F1EF;
+  display: grid; place-items: center; padding: 48px; position: relative; overflow: hidden;
+}
+.login__lockup { width: min(430px, 84%); }
+/* a linha "Contact Center" foi vetorizada como contorno; um traço fino
+   devolve o peso sólido sem alterar a forma das letras */
+.login__lockup .sub { stroke: currentColor; stroke-width: 1.6; }
+.login__form { display: grid; place-items: center; padding: 48px; }
+.login__inner { width: 100%; max-width: 330px; }
+.login__eyebrow { display: block; margin-bottom: 12px; }
+.login__sub { color: var(--ink-mute); margin: 10px 0 30px; font-size: 14px; }
+.login__foot { margin-top: 26px; font-size: 12px; color: var(--ink-faint); }
+.alert {
+  font-size: 13px; padding: 9px 12px; border-radius: var(--r-sm); margin-bottom: 16px;
+  color: var(--danger); background: color-mix(in srgb, var(--danger) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 24%, transparent);
+}
+
+/* ── chrome do mockup (não faz parte do produto) ──────────── */
+.spec { max-width: 1400px; margin: 0 auto; padding: 46px 28px 14px; }
+.spec h2 { font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: -.01em; margin: 0 0 4px; }
+.spec p { margin: 0; color: var(--ink-mute); font-size: 13px; max-width: 70ch; }
+.frame { max-width: 1400px; margin: 16px auto 0; border: 1px solid var(--hairline-2); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-2); }
+.switch {
+  position: fixed; right: 20px; top: 20px; z-index: 20;
+  display: flex; gap: 4px; padding: 4px; border-radius: var(--r-sm);
+  background: var(--canvas-soft); border: 1px solid var(--hairline-2); box-shadow: var(--sh-2);
+}
+.switch button {
+  font-family: var(--font-display); font-weight: 500; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .12em;
+  padding: 6px 12px; border: 0; border-radius: var(--r-xs);
+  background: transparent; color: var(--ink-mute); cursor: pointer;
+}
+.switch button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .login { grid-template-columns: 1fr; }
+  .login__stage { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="switch">
+  <button type="button" data-set="light" aria-pressed="true">Claro</button>
+  <button type="button" data-set="dark" aria-pressed="false">Escuro</button>
+</div>
+
+<!-- ══════════════════════════ LOGIN ══════════════════════════ -->
+<section class="spec">
+  <h2>Entrar</h2>
+  <p>O lockup completo ocupa o palco à esquerda. O anel se desenha uma vez ao carregar — é o único movimento da tela.</p>
+</section>
+<div class="frame">
+  <div class="login">
+    <div class="login__stage">
+      <div class="login__lockup" id="lockup"></div>
+    </div>
+    <div class="login__form">
+      <div class="login__inner">
+        <span class="eyebrow login__eyebrow">Mapa Operacional</span>
+        <h1 class="display-xl">Entrar</h1>
+        <p class="login__sub">Use a matrícula e a senha que o RH cadastrou para você.</p>
+        <div class="alert">Matrícula ou senha incorreta.</div>
+        <label class="field field--data">
+          <label>Matrícula</label>
+          <input type="text" value="3924" inputmode="numeric">
+        </label>
+        <label class="field">
+          <label>Senha</label>
+          <input type="password" value="secretpass">
+        </label>
+        <button class="btn btn--primary btn--block" type="button">Entrar</button>
+        <p class="login__foot">Quality Contact Center · MOP v2.0</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MAPA OPERACIONAL ═══════════════════ -->
+<section class="spec">
+  <h2>Visão geral — o mapa</h2>
+  <p>Cada ilha é um tile. O anel mostra quanto da ilha está em operação hoje (ativos ÷ total) e vira do âmbar para o quente abaixo de 80%. Nenhum número da faixa de totais é estimado — todos saem da contagem real.</p>
+</section>
+<div class="frame">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="mark" id="mark"></div>
+        <div>
+          <div class="name">MOP</div>
+          <div class="sub">Quality Contact Center</div>
+        </div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="sidebar__user">
+        <div class="avatar">W</div>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Welton Pereira</div>
+          <div class="micro" style="color:var(--ink-faint)">Administrador</div>
+        </div>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar__title">Visão geral</div>
+        <div class="topbar__spacer"></div>
+        <button class="iconbtn" aria-label="Buscar">⌕</button>
+        <button class="iconbtn" aria-label="Alternar tema">☾</button>
+        <button class="iconbtn" aria-label="Avisos">☰</button>
+      </div>
+      <div class="content">
+        <div class="totals" id="totals"></div>
+        <div class="maphead">
+          <span class="eyebrow">Ilhas em operação</span>
+          <button class="chip">Cliente: todos</button>
+          <button class="chip">Ordenar: em operação ↑</button>
+        </div>
+        <div class="map" id="map"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ COLABORADORES ═══════════════════ -->
+<section class="spec">
+  <h2>Colaboradores — o tratamento de dado denso</h2>
+  <p>Cabeçalho no registro largo do logo, dado em mono com algarismos tabulares, linhas separadas por hairline sem zebra. Status é ponto mais rótulo, nunca cor sozinha.</p>
+</section>
+<div class="frame">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="mark" id="mark2"></div>
+        <div>
+          <div class="name">MOP</div>
+          <div class="sub">Quality Contact Center</div>
+        </div>
+      </div>
+      <nav class="nav" id="nav2"></nav>
+      <div class="sidebar__user">
+        <div class="avatar">W</div>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Welton Pereira</div>
+          <div class="micro" style="color:var(--ink-faint)">Administrador</div>
+        </div>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar__title">Colaboradores</div>
+        <div class="topbar__spacer"></div>
+        <button class="iconbtn" aria-label="Buscar">⌕</button>
+        <button class="iconbtn" aria-label="Alternar tema">☾</button>
+        <button class="iconbtn" aria-label="Avisos">☰</button>
+      </div>
+      <div class="content">
+        <div class="tablewrap">
+          <div class="toolbar">
+            <input type="search" placeholder="Buscar por nome ou matrícula">
+            <button class="chip">Ilha: todas</button>
+            <button class="chip">Status: ativos</button>
+            <div style="flex:1"></div>
+            <button class="btn btn--ghost">Exportar</button>
+            <button class="btn btn--primary">Novo colaborador</button>
+          </div>
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th class="logo">Cliente</th>
+                <th>Nome</th><th>Status</th><th>Supervisor</th><th>Ilha</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="height:56px"></div>
+
+<script>
+/* ─── paths reais extraídos de assets/brand/quality-logo.svg ─── */
+const RING = "__RING__";
+const WORD = "__WORD__";
+const SUB  = "__SUB__";
+
+/* geometria medida do anel: centro (503.5, 357), raio externo ~180 */
+const CX = 503.5, CY = 357, RSWEEP = 270;
+
+function wedge(v) {
+  const a0 = -Math.PI / 2;
+  const a1 = a0 + v * Math.PI * 2;
+  const x0 = CX + RSWEEP * Math.cos(a0), y0 = CY + RSWEEP * Math.sin(a0);
+  const x1 = CX + RSWEEP * Math.cos(a1), y1 = CY + RSWEEP * Math.sin(a1);
+  return `M ${CX} ${CY} L ${x0} ${y0} A ${RSWEEP} ${RSWEEP} 0 ${v > .5 ? 1 : 0} 1 ${x1} ${y1} Z`;
+}
+
+let uid = 0;
+function anel(v, cls) {
+  // v >= 1 dispensa máscara (arco de 360° é degenerado em SVG)
+  const id = "m" + (++uid);
+  const masked = v < 1;
+  return `<svg class="anel ${cls || ''}" viewBox="327 177 353 360" role="img" aria-label="${Math.round(v*100)}% em operação">
+    ${masked ? `<defs><mask id="${id}">
+      <rect x="327" y="177" width="353" height="360" fill="black"/>
+      <path d="${wedge(v)}" fill="white"/>
+    </mask></defs>` : ''}
+    <path class="ring" d="${RING}" ${masked ? `mask="url(#${id})"` : ''}/>
+  </svg>`;
+}
+
+function lockup() {
+  return `<svg viewBox="0 0 1024 1024" role="img" aria-label="Quality Contact Center">
+    <path fill="#ff8705" d="${RING}"/>
+    <path fill="#f7080d" d="${WORD}"/>
+    <path class="sub" fill="currentColor" d="${SUB}"/>
+  </svg>`;
+}
+
+document.getElementById('lockup').innerHTML = lockup();
+document.getElementById('mark').innerHTML  = anel(1);
+document.getElementById('mark2').innerHTML = anel(1);
+
+/* ─── navegação ─── */
+const NAV = [
+  ['Principal', [['Visão geral', 1]]],
+  ['Gestão',    [['Colaboradores', 0], ['Organograma', 0], ['Turnover', 0]]],
+  ['RH',        [['Aniversariantes', 0], ['Desligados', 0], ['Vencimento de contratos', 0], ['Férias', 0], ['Aviso prévio', 0], ['Afastados', 0]]],
+  ['Cadastros', [['Clientes', 0], ['Operações', 0], ['Ilhas', 0], ['Coordenadores', 0], ['Supervisores', 0]]],
+  ['Sistema',   [['Usuários', 0], ['Importar dados', 0], ['Histórico', 0]]],
+];
+function renderNav(el, activeLabel) {
+  el.innerHTML = NAV.map(([g, items]) => `
+    <div class="nav__group">
+      <span class="eyebrow">${g}</span>
+      ${items.map(([label]) => `<a class="nav__item" href="#" ${label === activeLabel ? 'aria-current="page"' : ''}>
+        <span class="ic">●</span>${label}</a>`).join('')}
+    </div>`).join('');
+}
+renderNav(document.getElementById('nav'),  'Visão geral');
+renderNav(document.getElementById('nav2'), 'Colaboradores');
+
+/* ─── faixa de totais ─── */
+const TOTALS = [[1284,'ativos'],[37,'em férias'],[12,'em aviso prévio'],[8,'afastados']];
+document.getElementById('totals').innerHTML = TOTALS.map(([n,l],i) =>
+  `${i ? '<div class="totals__sep"></div>' : ''}
+   <div class="totals__item"><span class="totals__n">${n.toLocaleString('pt-BR')}</span><span class="totals__l">${l}</span></div>`
+).join('');
+
+/* ─── ilhas ─── */
+const ILHAS = [
+  ['Ilha 04 — Retenção',   'Vivo · Móvel',      48, {ativo:41, ferias:4, afastado:2, aviso:1}],
+  ['Ilha 01 — SAC',        'Vivo · Móvel',      52, {ativo:49, ferias:2, aviso:1}],
+  ['Ilha 07 — Cobrança',   'Enel · Residencial',31, {ativo:19, ferias:5, afastado:4, aviso:3}],
+  ['Ilha 02 — Receptivo',  'Enel · Residencial',44, {ativo:38, ferias:3, maternidade:2, aviso:1}],
+  ['Ilha 09 — Backoffice', 'Sabesp · Corporativo',26,{ativo:24, ferias:2}],
+  ['Ilha 05 — Ativo',      'Porto Seguro · Auto',37,{ativo:26, ferias:4, afastado:3, aviso:4}],
+  ['Ilha 03 — Ouvidoria',  'Vivo · Fibra',       19, {ativo:18, ferias:1}],
+  ['Ilha 08 — Emergência', 'Enel · Rede',        58, {ativo:47, ferias:6, afastado:3, realocado:2}],
+  ['Ilha 06 — Chat',       'Sabesp · Corporativo',23,{ativo:15, ferias:3, afastado:2, aviso:3}],
+];
+const LABELS = {ativo:'ativos', ferias:'férias', afastado:'afastados', maternidade:'maternidade', aviso:'aviso', realocado:'realocados'};
+
+document.getElementById('map').innerHTML = ILHAS.map(([nome, ctx, total, mix]) => {
+  const v = mix.ativo / total;
+  const hot = v < .80;
+  return `<article class="tile" tabindex="0">
+    <header class="tile__head">
+      <h3 class="tile__name">${nome}</h3>
+      <div class="tile__ctx">${ctx}</div>
+    </header>
+    <div class="tile__gauge">
+      <div class="tile__anel">${anel(v, hot ? 'anel--hot' : '')}</div>
+      <div>
+        <div class="tile__pct">${Math.round(v*100)}%</div>
+        <div class="tile__pctl">em operação · <b>${total}</b> pessoas</div>
+      </div>
+    </div>
+    <div class="tile__dots">
+      ${Object.entries(mix).map(([k,n]) => `<span class="badge badge--${k}"><b>${n}</b>&nbsp;${LABELS[k]}</span>`).join('')}
+    </div>
+  </article>`;
+}).join('');
+
+/* ─── tabela ─── */
+/* cliente · nome · status · supervisor · ilha */
+const ROWS = [
+  ['Vivo','Adriana Lopes Ferreira','ativo','Ativo','Marcos Vinícius','Ilha 04 — Retenção'],
+  ['Vivo','Bruno Cardoso Alves','ativo','Ativo','Juliana Prado','Ilha 01 — SAC'],
+  ['Enel','Camila Souza Rocha','ferias','Férias','Marcos Vinícius','Ilha 07 — Cobrança'],
+  ['Enel','Diego Nunes Barbosa','aviso','Aviso prévio','Renata Lima','Ilha 02 — Receptivo'],
+  ['Sabesp','Eduarda Martins Pinto','ativo','Ativo','Juliana Prado','Ilha 09 — Backoffice'],
+  ['Porto Seguro','Fábio Henrique Costa','afastado','Afastado','Renata Lima','Ilha 05 — Ativo'],
+  ['Vivo','Gabriela Nascimento','maternidade','Licença maternidade','Marcos Vinícius','Ilha 04 — Retenção'],
+  ['Vivo','Henrique Dias Moreira','realocado','Realocado','Juliana Prado','Ilha 01 — SAC'],
+  ['Enel','Isabela Ramos Teixeira','desligado','Desligado','Renata Lima','Ilha 07 — Cobrança'],
+];
+/* no mockup todos caem no monograma; no app, Client.logo manda a imagem */
+document.querySelector('#tbl tbody').innerHTML = ROWS.map(r => `<tr tabindex="0">
+  <td class="logo"><div class="clogo" role="img" aria-label="${r[0]}" title="${r[0]}"><span>${r[0][0]}</span></div></td>
+  <td class="nome">${r[1]}</td>
+  <td><span class="badge badge--${r[2]}">${r[3]}</span></td>
+  <td>${r[4]}</td>
+  <td>${r[5]}</td>
+</tr>`).join('');
+
+/* ─── tema ─── */
+document.querySelectorAll('.switch button').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.set;
+  document.querySelectorAll('.switch button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>
