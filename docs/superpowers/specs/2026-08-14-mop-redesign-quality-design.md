@@ -85,7 +85,7 @@ passa:
 
 | Combinação | Contraste | |
 |---|---|---|
-| `#F27405` + `#191310` | **7.3:1** | ✅ o botão lê como brasa acesa |
+| `#F27405` + `#191310` | **6.4:1** | ✅ o botão lê como brasa acesa |
 | `#F27405` + `#FFFFFF` | 2.9:1 | ❌ reprova em AA |
 | `#F27405` sobre `#121110` | 6.5:1 | ✅ |
 | `#F27405` como texto sobre branco | 2.9:1 | ❌ — por isso existe `--brand-text` |
@@ -522,7 +522,7 @@ Um arquivo por peça. É delas que as levas 2 e 3 vivem.
 
 | Peça | Decisões |
 |---|---|
-| `Button` | raio 6px. `primary` (`--brand` + `--on-brand`), `ghost` (contorno em `--hairline-2`), `danger` (texto `--danger`, fundo só no hover), `block`. Altura mínima 36px. |
+| `Button` | raio 6px, altura mínima 36px, prop `block`. **Cinco variantes**, porque é o que os call sites existentes usam: `primary` (`--brand` + `--on-brand`), `secondary` (`--brand-wash` + `--brand-text`, 22 usos), `ghost` (contorno em `--hairline-2`), `danger` (texto `--danger`, fundo só no hover), `solid-danger` (`--danger` preenchido). Variante desconhecida cai em `secondary`. |
 | `Input` / `Select` | raio 6px, borda `--hairline-2`, foco = anel `--brand` de 2px com offset 2px. Variante `data` em mono. |
 | `MultiSelect` | mesma moldura do `Select`; seleções como chips removíveis em `--brand-wash`. |
 | `Badge` | ponto 8px + rótulo em tinta. Os 7 status + neutro. Nunca preenchimento colorido. |
