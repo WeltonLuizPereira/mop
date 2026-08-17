@@ -3,3 +3,6 @@ export { Input } from './Input';
 export { Select } from './Select';
 export { Badge } from './Badge';
 export { MultiSelect } from './MultiSelect';
+export { Card } from './Card';
+export { Modal } from './Modal';
+export { Table } from './Table';

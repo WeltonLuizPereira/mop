@@ -1,17 +1,32 @@
 import React from 'react';
+import { CollaboratorStatus, EntityStatus } from '../../types';
 
-export const Badge = ({ status }: { status: string }) => {
-  let color = 'bg-surface-alt text-fg-muted';
-  if (status === 'ATIVO' || status === 'SIM' || status === 'APROVADO') color = 'bg-success/15 text-success';
-  if (status === 'DESLIGADO' || status === 'INATIVO' || status === 'REJEITADO' || status === 'NÃO') color = 'bg-error/15 text-error';
-  if (status === 'FÉRIAS' || status === 'PENDENTE') color = 'bg-warning/20 text-fg';
-  if (status === 'AVISO PRÉVIO') color = 'bg-warning/30 text-fg border border-warning/50';
-  if (status === 'AFASTADO') color = 'bg-error/10 text-error border border-error/30';
-  if (status === 'LICENÇA MATERNIDADE') color = 'bg-surface-alt text-fg-muted border border-border-strong';
-
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${color}`}>
-      {status}
-    </span>
-  );
+const COR: Record<string, string> = {
+  [CollaboratorStatus.ATIVO]: 'var(--st-ativo)',
+  [CollaboratorStatus.FERIAS]: 'var(--st-ferias)',
+  [CollaboratorStatus.AFASTADO]: 'var(--st-afastado)',
+  [CollaboratorStatus.LICENCA_MATERNIDADE]: 'var(--st-maternidade)',
+  [CollaboratorStatus.AVISO_PREVIO]: 'var(--st-aviso)',
+  [CollaboratorStatus.REALOCADO]: 'var(--st-realocado)',
+  [CollaboratorStatus.DESLIGADO]: 'var(--st-desligado)',
+  [EntityStatus.INACTIVE]: 'var(--st-desligado)',
 };
+
+/** Rótulo em caixa de frase: "Aviso prévio", não "AVISO PRÉVIO". */
+function rotular(status: string) {
+  const s = status.toLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Ponto + rótulo. Cor nunca carrega significado sozinha (spec §4.4). */
+export const Badge = ({ status }: { status: string }) => (
+  <span className="inline-flex items-center gap-[7px] text-[13px] text-ink-2 whitespace-nowrap">
+    <span
+      data-dot
+      aria-hidden="true"
+      className="w-2 h-2 rounded-full shrink-0"
+      style={{ backgroundColor: COR[status] ?? 'var(--st-desligado)' }}
+    />
+    {rotular(status)}
+  </span>
+);

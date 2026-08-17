@@ -1,17 +1,35 @@
 import React from 'react';
 
-export const Button = ({ children, onClick, variant = 'primary', className = '', ...props }: any) => {
-  const base = "px-4 py-2 rounded-lg font-bold transition-colors duration-200 flex items-center gap-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
-  const styles = {
-    primary: "bg-primary text-on-primary hover:bg-primary-dark shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
-    secondary: "bg-primary-tonal text-primary hover:bg-primary/20",
-    danger: "bg-error/10 text-error hover:bg-error/20 border border-error/30",
-    "solid-danger": "bg-error text-on-error hover:opacity-90 shadow-1 disabled:opacity-50 disabled:cursor-not-allowed",
-    ghost: "text-fg-muted hover:text-fg hover:bg-surface-alt"
-  };
-  return (
-    <button type="button" className={`${base} ${styles[variant as keyof typeof styles]} ${className}`} onClick={onClick} {...props}>
-      {children}
-    </button>
-  );
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'solid-danger';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+  block?: boolean;
+}
+
+const BASE =
+  'inline-flex items-center justify-center gap-2 rounded-sm font-semibold text-[13px] ' +
+  'leading-none min-h-9 px-4 py-[9px] border border-transparent ' +
+  'transition-colors duration-100 disabled:opacity-50 disabled:pointer-events-none';
+
+const VARIANTES: Record<Variant, string> = {
+  primary:        'bg-brand text-on-brand hover:bg-brand-hot active:bg-brand-press',
+  secondary:      'bg-brand-wash text-brand-text hover:bg-brand/20',
+  ghost:          'bg-transparent text-ink border-hairline-2 hover:bg-canvas-soft',
+  danger:         'bg-transparent text-danger hover:bg-danger/10',
+  'solid-danger': 'bg-danger text-canvas hover:opacity-90',
 };
+
+export const Button = ({
+  children, variant = 'primary', block = false, className = '', type = 'button', ...props
+}: ButtonProps) => (
+  <button
+    type={type}
+    // variante desconhecida (`empty`, `hero`, `outline` ainda existem em 3 call
+    // sites das levas 2 e 3) cai em `secondary` em vez de emitir undefined
+    className={`${BASE} ${VARIANTES[variant] ?? VARIANTES.secondary} ${block ? 'w-full' : ''} ${className}`}
+    {...props}
+  >
+    {children}
+  </button>
+);
