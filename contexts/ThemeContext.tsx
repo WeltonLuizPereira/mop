@@ -4,9 +4,11 @@ type Theme = 'light' | 'dark';
 const STORAGE_KEY = 'mop-theme';
 
 function getInitialTheme(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === 'light' || stored === 'dark') return stored;
+  } catch { /* localStorage bloqueado */ }
+  return 'light'; // claro é o padrão do sistema (spec §2)
 }
 
 interface ThemeContextValue {
@@ -26,7 +28,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const toggleTheme = () => {
     setTheme(prev => {
       const next: Theme = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem(STORAGE_KEY, next);
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+      } catch { /* localStorage bloqueado */ }
       return next;
     });
   };
