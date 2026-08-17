@@ -4,6 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 
 describe('Button', () => {
+  it('keeps aria-busy true when a caller supplies false during loading', () => {
+    render(<Button loading aria-busy={false}>Salvar</Button>);
+
+    expect(screen.getByRole('button', { name: 'Salvar' })).toHaveAttribute('aria-busy', 'true');
+  });
+
   it('blocks the action and announces progress while loading', () => {
     render(<Button loading>Salvar</Button>);
     const button = screen.getByRole('button', { name: 'Salvar' });

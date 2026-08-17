@@ -38,14 +38,15 @@ export const Button = ({
   className = '',
   type = 'button',
   disabled = false,
+  'aria-busy': ariaBusy,
   ...props
 }: ButtonProps) => (
   <button
     type={type}
     className={`${BASE} ${SIZES[size]} ${VARIANTES[variant] ?? VARIANTES.secondary} ${block ? 'w-full' : ''} ${className}`}
     disabled={disabled || loading}
-    aria-busy={loading || undefined}
     {...props}
+    aria-busy={loading ? true : ariaBusy}
   >
     {children}
   </button>
