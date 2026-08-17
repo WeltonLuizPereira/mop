@@ -3,29 +3,28 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { 
   LayoutDashboard, Users, UserCog, Building2, Globe, MapPin, Briefcase, 
-  LogOut, Menu, X, Plus, Edit2, ChevronLeft, ChevronRight, ChevronDown, Search, Phone,
+  LogOut, Menu, X, Plus, ChevronLeft, ChevronRight, ChevronDown, Search, Phone,
   ShieldCheck, Upload, FileSpreadsheet, Trash2, CheckCircle, AlertCircle,
   Info, AlertTriangle, Gift, ArrowUpRight, ArrowDownRight, Eye,
   FileDown, Filter, CalendarDays, Wallet, Sun, Calendar as CalendarIcon, Clock, History, FileText, XCircle, Lightbulb, Save,
-  User as UserIcon, Cake, Mail, Hash, BriefcaseBusiness, CalendarClock, UserPlus, Loader2, ArrowLeft, Activity, File,
+  User as UserIcon, Cake, Hash, BriefcaseBusiness, CalendarClock, UserPlus, Loader2, ArrowLeft, Activity, File,
   TrendingUp, TrendingDown, MoreHorizontal, BarChart3, PieChart, Timer, UserMinus, LineChart, ListChecks, Calendar, Network, Maximize, AlignJustify, GanttChartSquare,
   MousePointer2, Hand, Stethoscope, UserX, Key, HelpCircle
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, AreaChart, Area, Cell, Line, ComposedChart
 } from 'recharts';
-import { 
-  User, UserRole, Collaborator, Coordinator, Supervisor, 
-  Client, Operation, Ilha, CollaboratorStatus, EntityStatus, HistoryLog, ScheduledTask 
+import {
+  User, UserRole, Collaborator, Coordinator, Supervisor,
+  Client, Operation, Ilha, CollaboratorStatus, EntityStatus
 } from './types';
 import { db } from './services/mockDb';
-import { ArchipelagoIllustration } from './components/ArchipelagoIllustration';
 import { getCollaboratorCalculations, generateId, formatTime, parseExcelTime, parseExcelDate, calculateDaysDiff, formatDate, formatDateString, addDays, getInitials } from './utils';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
-import { Button, Input, Select, Badge, MultiSelect } from './components/ui';
+import { Button, Badge, MultiSelect } from './components/ui';
 import { NavItem } from './components/shell/NavItem';
 import { ThemeToggle } from './components/shell/ThemeToggle';
 import { NotificationCenter } from './components/shell/NotificationCenter';
@@ -33,10 +32,12 @@ import { Header } from './components/shell/Header';
 import { LoginPage } from './pages/LoginPage';
 import { CollaboratorsPage } from './pages/CollaboratorsPage';
 import { CollaboratorDetailsPage } from './pages/CollaboratorDetailsPage';
-import { CollaboratorFormModal } from './components/collaborators/CollaboratorFormModal';
-
-declare const __APP_VERSION__: string;
-declare const __UPDATE_DATE__: string;
+import { CrudPage } from './pages/CrudPage';
+import { ScheduledTasksPage } from './pages/ScheduledTasksPage';
+import { HistoryPage } from './pages/HistoryPage';
+import { UsersPage } from './pages/UsersPage';
+import { ResetDataPage } from './pages/ResetDataPage';
+import { AboutPage } from './pages/AboutPage';
 
 // --- TurnoverPage ---
 const TurnoverPage = () => {
@@ -979,383 +980,8 @@ const OrganogramPage = () => {
     );
 };
 
-const CrudPage = <T extends { id: string, nome: string, status: string | EntityStatus }>({ 
-  title, data, onSave, onDelete, schema, currentUser, onRefresh
-}: { 
-  key?: any, title: string, data: Promise<T[]> | T[], onSave: (item: any) => Promise<void> | void, onDelete: (id: string) => Promise<void> | void, schema: { key: string, label: string, type: 'text' | 'select' | 'multiselect', options?: any[] | ((currentItem: any) => any[]) }[], currentUser: User, onRefresh: () => void
-}) => {
-    // ... same as original ...
-    const [isOpen, setIsOpen] = useState(false);
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState<T | null>(null);
-    const [currentItem, setCurrentItem] = useState<any>({});
-    const [search, setSearch] = useState('');
-    const [listData, setListData] = useState<T[]>([]); 
-    const [loading, setLoading] = useState(false);
-
-    const isAdmin = currentUser.role === UserRole.ADMIN;
-
-    useEffect(() => {
-        const load = async () => {
-            if (data instanceof Promise) setListData(await data);
-            else setListData(data);
-        }
-        load();
-    }, [data]);
-
-    const handleEdit = (item: any) => { setCurrentItem(item); setIsOpen(true); };
-    const handleDeleteRequest = (item: T) => { setItemToDelete(item); setIsDeleteOpen(true); };
-    const confirmDelete = async () => {
-        if (itemToDelete) {
-           await onDelete(itemToDelete.id);
-           await db.addHistory({ action: `Exclusão de ${title.slice(0, -1)}`, target: itemToDelete.nome, user: currentUser.nome, date: new Date().toLocaleString('pt-BR'), type: 'delete', details: `Registro removido permanentemente` });
-           setIsDeleteOpen(false); setItemToDelete(null); onRefresh();
-        }
-    };
-    const handleCreate = () => { setCurrentItem({ status: EntityStatus.ACTIVE }); setIsOpen(true); };
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault(); setLoading(true);
-        const isNew = !currentItem.id;
-        const payload = { ...currentItem, id: currentItem.id || generateId() };
-        await onSave(payload);
-        await db.addHistory({ action: isNew ? `Criação de ${title.slice(0, -1)}` : `Edição de ${title.slice(0, -1)}`, target: payload.nome, user: currentUser.nome, date: new Date().toLocaleString('pt-BR'), type: isNew ? 'create' : 'update', details: isNew ? 'Novo registro criado' : 'Atualização de dados cadastrais' });
-        setLoading(false); setIsOpen(false); onRefresh(); 
-    };
-
-    const filteredData = listData.filter(d => (d.nome || '').toLowerCase().includes(search.toLowerCase())).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-
-    return (
-        <div className="space-y-4 mop-fade-up">
-            {/* ... CRUD UI ... */}
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-fg">{title}</h2>
-                {isAdmin && <Button onClick={handleCreate}><Plus size={16} /> Novo</Button>}
-            </div>
-            {/* Table ... */}
-            <div className="bg-surface rounded-2xl shadow-1 border border-border overflow-hidden flex flex-col min-h-0 flex-1">
-                <div className="p-4 border-b border-border flex gap-4">
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" size={16} />
-                    <input className="pl-9 w-full px-3 py-2 bg-surface-alt border border-transparent rounded-lg text-sm text-fg focus:ring-2 focus:ring-primary outline-none transition-colors" placeholder={`Buscar ${title}...`} value={search} onChange={e => setSearch(e.target.value)} />
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-fg-muted">
-                    <thead className="bg-surface-alt text-fg-muted font-bold uppercase tracking-wider text-xs">
-                      <tr>
-                        <th className="p-4">Nome</th>
-                        <th className="p-4">Status</th>
-                        {schema.filter(s => s.key !== 'nome' && s.key !== 'status' && s.type === 'select').map(s => (<th key={s.key} className="p-4">{s.label}</th>))}
-                        {isAdmin && <th className="p-4 text-right">Ações</th>}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {filteredData.map((item) => (
-                        <tr key={item.id} className="hover:bg-surface-alt transition-colors">
-                          <td className="p-4 font-medium text-fg">{item.nome}</td>
-                          <td className="p-4"><Badge status={item.status} /></td>
-                          {schema.filter(s => s.key !== 'nome' && s.key !== 'status' && s.type === 'select').map(s => {
-    const opts = typeof s.options === 'function' ? s.options(item) : s.options;
-    const selectedOpt = opts?.find(o => o.value === (item as any)[s.key]);
-    return <td key={s.key} className="p-4">{selectedOpt?.label || '-'}</td>;
-})}
-                          {isAdmin && (<td className="p-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="text-primary hover:text-primary-dark p-1.5 bg-primary-tonal rounded-lg transition-colors"><Edit2 size={16} /></button><button onClick={() => handleDeleteRequest(item)} className="text-error hover:opacity-80 p-1.5 bg-error/10 rounded-lg transition-colors"><Trash2 size={16} /></button></div></td>)}
-                        </tr>
-                      ))}
-                      {filteredData.length === 0 && (
-                        <tr><td colSpan={10} className="p-10">
-                          <div className="flex flex-col items-center gap-3 text-center">
-                            <ArchipelagoIllustration variant="empty" />
-                            <p className="text-fg-subtle text-sm">Nenhum registro encontrado</p>
-                          </div>
-                        </td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-            </div>
-            {/* Modal ... */}
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                  <div className="mop-pop-in bg-surface rounded-2xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
-                    <div className="bg-surface-alt p-4 border-b border-border flex justify-between items-center shrink-0">
-                      <h3 className="font-bold text-lg text-fg">{currentItem.id ? 'Editar' : 'Novo'} {title}</h3>
-                      <button type="button" onClick={() => setIsOpen(false)} className="text-fg-subtle hover:text-fg"><X size={20}/></button>
-                    </div>
-                    <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto flex flex-col gap-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {schema.map(field => {
-                        const opts = typeof field.options === 'function' ? field.options(currentItem) : field.options;
-                        return (
-                        <div key={field.key} className={field.type === 'multiselect' ? 'col-span-1 md:col-span-2' : ''}>
-                          {field.type === 'text' && <Input label={field.label} value={currentItem[field.key] || ''} onChange={(e: any) => setCurrentItem({...currentItem, [field.key]: e.target.value})} required={field.key !== 'logo'} />}
-                          {field.type === 'select' && <Select label={field.label} value={currentItem[field.key] || ''} onChange={(e: any) => {
-                                const newVal = e.target.value;
-                                // se mudar cliente, limpa operacao.
-                                if (field.key === 'clientId') {
-                                    setCurrentItem({...currentItem, clientId: newVal, operationId: ''});
-                                } else {
-                                    setCurrentItem({...currentItem, [field.key]: newVal});
-                                }
-                          }} required><option value="">Selecione...</option>{opts?.map((opt: any) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}</Select>}
-                          {field.type === 'multiselect' && (
-                              <div className="mb-4">
-                                  <label className="text-xs font-bold text-fg-muted uppercase block mb-1">{field.label}</label>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-border rounded-lg bg-surface-alt">
-                                      {opts?.map((opt: any) => {
-                                          const isSelected = (currentItem[field.key] || []).includes(opt.value);
-                                          return (
-                                              <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-surface p-1 rounded text-fg">
-                                                  <input
-                                                      type="checkbox"
-                                                      checked={isSelected}
-                                                      onChange={(e) => {
-                                                          const curr = currentItem[field.key] || [];
-                                                          if (e.target.checked) {
-                                                              setCurrentItem({...currentItem, [field.key]: [...curr, opt.value]});
-                                                          } else {
-                                                              setCurrentItem({...currentItem, [field.key]: curr.filter(v => v !== opt.value)});
-                                                          }
-                                                      }}
-                                                      className="rounded text-primary focus:ring-primary border-border-strong"
-                                                  />
-                                                  {opt.label}
-                                              </label>
-                                          );
-                                      })}
-                                  </div>
-                              </div>
-                          )}
-                        </div>
-                      );
-                      })}
-                       </div>
-                      <div className="mt-2 pt-4 border-t border-border">
-                        <Select label="Status" value={currentItem.status || EntityStatus.ACTIVE} onChange={(e: any) => setCurrentItem({...currentItem, status: e.target.value})}><option value={EntityStatus.ACTIVE}>Ativo</option><option value={EntityStatus.INACTIVE}>Inativo</option></Select>
-                      </div>
-                      <div className="mt-4 flex justify-end gap-3 shrink-0">
-                        <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
-                        <Button type="submit" disabled={loading}>{loading ? 'Salvando...' : 'Salvar'}</Button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-            )}
-            {/* Delete Modal ... */}
-            {isDeleteOpen && itemToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="mop-pop-in bg-surface rounded-2xl shadow-3 w-full max-w-sm overflow-hidden">
-                    <div className="p-6 text-center">
-                       <div className="w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-4"><AlertTriangle size={32} /></div>
-                       <h3 className="text-xl font-bold text-fg mb-2">Excluir {title.slice(0, -1)}?</h3>
-                       <p className="text-fg-muted text-sm mb-6">Tem certeza que deseja remover <b>{itemToDelete.nome}</b>?</p>
-                       <div className="flex gap-3 justify-center"><Button variant="secondary" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button><Button variant="danger" onClick={confirmDelete}>Sim, Excluir</Button></div>
-                    </div>
-                  </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
 // ... ScheduledTasksPage, HistoryPage, Dashboard ...
 // (Reusing existing components for brevity)
-const ScheduledTasksPage = () => {
-    const [tasks, setTasks] = useState<ScheduledTask[]>([]);
-    const [collabNames, setCollabNames] = useState<Record<string, string>>({});
-    
-    // New State for Editing
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editingTask, setEditingTask] = useState<ScheduledTask | null>(null);
-    const [initialData, setInitialData] = useState<Partial<Collaborator>>({});
-
-    const loadTasks = async () => {
-        const pending = await db.getPendingTasks();
-        setTasks(pending);
-        
-        // Fetch Names
-        const collabs = await db.getCollaborators();
-        const names: Record<string, string> = {};
-        pending.forEach(t => {
-            const c = collabs.find(col => col.matricula === t.matricula);
-            if (c) names[t.matricula] = c.nome;
-            // Fallback para tarefas de criação onde o colaborador ainda não existe
-            else if (t.changes && t.changes.nome) names[t.matricula] = t.changes.nome + " (Novo)";
-        });
-        setCollabNames(names);
-    };
-
-    useEffect(() => { loadTasks(); }, []);
-
-    const handleCancel = async (id: string) => {
-        if(confirm("Deseja cancelar esta tarefa agendada?")) {
-            await db.cancelTask(id);
-            loadTasks();
-        }
-    }
-
-    const handleCancelAll = async () => {
-        if(confirm("Atenção: Esta ação irá excluir TODAS as tarefas agendadas. Deseja continuar?")) {
-            try {
-                await db.cancelAllTasks();
-                loadTasks();
-            } catch (err: any) {
-                alert("Erro ao excluir tarefas: " + err.message);
-                console.error(err);
-            }
-        }
-    }
-
-    const handleEdit = async (task: ScheduledTask) => {
-        setEditingTask(task);
-        
-        const collabs = await db.getCollaborators();
-        const existing = collabs.find(c => c.matricula === task.matricula);
-        
-        if (existing) {
-            setInitialData({ ...existing, ...task.changes });
-        } else {
-            setInitialData(task.changes);
-        }
-        
-        setIsEditOpen(true);
-    };
-
-    const handleUpdateTask = async (data: Collaborator, date: string) => {
-        if (!editingTask) return;
-        
-        await db.updateTask(editingTask.id, data, date);
-        
-        await db.addHistory({
-            action: 'Edição de Tarefa Agendada',
-            target: data.nome || 'N/A',
-            user: 'Sistema', // Or current user if passed
-            date: new Date().toLocaleString('pt-BR'),
-            type: 'update',
-            details: `Tarefa reagendada para ${formatDateString(date)}`
-        });
-
-        setIsEditOpen(false);
-        setEditingTask(null);
-        loadTasks();
-    };
-
-    return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-gray-800">Tarefas Agendadas</h2>
-                    <span className="bg-brand-100 text-brand-700 text-sm font-bold px-3 py-1 rounded-full">
-                        {tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
-                    </span>
-                </div>
-                {tasks.length > 0 && (
-                    <Button variant="solid-danger" onClick={handleCancelAll}>
-                        <Trash2 size={16} className="mr-2" /> Excluir Todas
-                    </Button>
-                )}
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
-                        <tr>
-                            <th className="p-4">Data Programada</th>
-                            <th className="p-4">Matrícula</th>
-                            <th className="p-4">Colaborador</th>
-                            <th className="p-4">Resumo Alterações</th>
-                            <th className="p-4">Criado Por</th>
-                            <th className="p-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {tasks.map(task => (
-                            <tr key={task.id} className="hover:bg-gray-50">
-                                <td className="p-4 font-bold text-brand-700">{formatDateString(task.scheduled_date)}</td>
-                                <td className="p-4 font-mono text-xs">{task.matricula}</td>
-                                <td className="p-4 font-medium text-gray-900">{collabNames[task.matricula] || '...'}</td>
-                                <td className="p-4 text-xs text-gray-500">
-                                    {Object.keys(task.changes).length > 5 ? 'Alteração Completa (Cadastro)' : Object.keys(task.changes).join(', ')}
-                                </td>
-                                <td className="p-4 text-xs">{task.created_by}</td>
-                                <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="secondary" className="px-2 py-1 text-xs text-brand-600 border-brand-200 bg-brand-50 hover:bg-brand-100" onClick={() => handleEdit(task)}>
-                                            <Edit2 size={14} className="mr-1"/> Editar
-                                        </Button>
-                                        <Button variant="danger" className="px-2 py-1 text-xs" onClick={() => handleCancel(task.id)}>
-                                            Cancelar
-                                        </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {tasks.length === 0 && (
-                            <tr>
-                                <td colSpan={6} className="p-8 text-center text-gray-400">Nenhuma tarefa pendente.</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {isEditOpen && (
-                <CollaboratorFormModal 
-                    initialData={initialData} 
-                    onClose={() => setIsEditOpen(false)} 
-                    onSave={() => {}} 
-                    onSchedule={handleUpdateTask}
-                    initialScheduleDate={editingTask?.scheduled_date}
-                />
-            )}
-        </div>
-    );
-};
-
-const HistoryPage: React.FC = () => {
-    // ... same as original ...
-    const [logs, setLogs] = useState<HistoryLog[]>([]);
-    
-    useEffect(() => {
-        db.getHistory().then(setLogs);
-    }, []);
-
-    return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">Histórico de Atividades</h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
-                        <tr>
-                            <th className="p-4 w-32">Data/Hora</th>
-                            <th className="p-4 w-40">Usuário</th>
-                            <th className="p-4 w-40">Ação</th>
-                            <th className="p-4 w-48">Alvo</th>
-                            <th className="p-4">Detalhes</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {logs.map(log => (
-                            <tr key={log.id}>
-                                <td className="p-4 text-xs text-gray-500">{log.date}</td>
-                                <td className="p-4 font-bold text-xs">{log.user}</td>
-                                <td className="p-4">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase
-                                        ${log.type === 'create' ? 'bg-green-100 text-green-700' : 
-                                          log.type === 'delete' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                        {log.action}
-                                    </span>
-                                </td>
-                                <td className="p-4 text-xs font-bold text-gray-800">{log.target}</td>
-                                <td className="p-4 text-xs text-gray-600">{log.details || '-'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
 const Dashboard: React.FC<{ currentUser: User, onNavigate: (page: string) => void }> = ({ currentUser, onNavigate }) => {
     // ... same as original ...
   const [stats, setStats] = useState({
@@ -2065,37 +1691,6 @@ const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> = ({ cu
     );
 };
 
-const UsersPage = ({ currentUser, onRefresh }: any) => {
-    return <CrudPage 
-        title="Usuários" 
-        data={db.getUsers()} 
-        onSave={(u: User) => {
-             db.getUsers().then(users => {
-                 if(users.find(x => x.id === u.id)) db.updateUser(u);
-                 else db.addUser(u);
-             });
-        }} 
-        onDelete={(id: string) => db.deleteUser(id)}
-        schema={[
-            {key: 'matricula', label: 'Matrícula', type: 'text'},
-            {key: 'nome', label: 'Nome', type: 'text'},
-            {key: 'email', label: 'Email', type: 'text'},
-            {key: 'password', label: 'Senha', type: 'text'},
-            {key: 'role', label: 'Função', type: 'select', options: [
-                {value: UserRole.ADMIN, label: 'Admin'}, 
-                {value: UserRole.MANAGER, label: 'Gerente'},
-                {value: UserRole.COORDINATOR, label: 'Coordenador'},
-                {value: UserRole.SUPERVISOR, label: 'Supervisor'},
-                {value: UserRole.RH, label: 'RH'},
-                {value: UserRole.VIEWER, label: 'Visualizador'},
-                {value: UserRole.SUPPORT, label: 'Suporte'}
-            ]}
-        ]}
-        currentUser={currentUser}
-        onRefresh={onRefresh}
-    />;
-};
-
 const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: User }> = ({ onBack, currentUser }) => {
     const [collabs, setCollabs] = useState<Collaborator[]>([]);
     const [operations, setOperations] = useState<Operation[]>([]);
@@ -2553,30 +2148,6 @@ const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: User }>
             )}
            </div>
       </div>
-    );
-}
-
-const ResetDataPage = () => {
-    const handleReset = async () => {
-        if(confirm("ATENÇÃO: Isso apagará TODOS os dados! Continuar?")) {
-            await db.resetDatabase();
-            window.location.reload();
-        }
-    }
-    return (
-        <div className="space-y-6 animate-in fade-in duration-500 flex flex-col items-center justify-center h-full">
-            <div className="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
-                 <AlertTriangle size={48} />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900">Zona de Perigo</h2>
-            <p className="text-gray-500 max-w-md text-center">
-                Esta ação irá apagar todos os dados do banco de dados e restaurar o usuário Admin padrão.
-                Isso não pode ser desfeito.
-            </p>
-            <Button variant="danger" onClick={handleReset} className="px-8 py-4 text-lg">
-                RESETAR SISTEMA COMPLETO
-            </Button>
-        </div>
     );
 }
 
@@ -3850,39 +3421,6 @@ const DesligadosPage = ({ onBack, onViewDetails }: any) => {
         </div>
     );
 }
-
-const AboutPage = () => (
-    <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center animate-in fade-in duration-500">
-      <div className="w-24 h-24 bg-brand-100 text-brand-600 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
-        <Info size={48} />
-      </div>
-      <h1 className="text-4xl font-bold text-gray-900 mb-2">MOP - Mapa Operacional</h1>
-      <p className="text-xl text-gray-500 mb-8">Desenvolvido para simplificar o seu dia a dia.</p>
-
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-lg w-full space-y-6">
-        <div className="flex justify-between items-center border-b border-gray-50 pb-4">
-          <span className="text-gray-500 font-medium">Versão</span>
-          <span className="font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-full text-sm">{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.1'}</span>
-        </div>
-        <div className="flex justify-between items-center border-b border-gray-50 pb-4">
-          <span className="text-gray-500 font-medium">Última Atualização</span>
-          <span className="font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-full text-sm">{typeof __UPDATE_DATE__ !== 'undefined' ? __UPDATE_DATE__ : 'N/A'}</span>
-        </div>
-        <div className="flex justify-between items-center border-b border-gray-50 pb-4">
-           <span className="text-gray-500 font-medium">Desenvolvedor</span>
-           <span className="font-bold text-gray-900">Welton Luiz Pereira</span>
-        </div>
-        <div className="flex flex-col gap-2 pt-2">
-           <span className="text-gray-500 font-medium text-left">Precisa de ajuda?</span>
-           <a href="mailto:welton.pereira@qualitycontactcenter.com.br" className="text-brand-600 font-bold hover:underline flex items-center justify-center gap-2 p-3 bg-brand-50 rounded-xl transition-colors">
-              <Mail size={18} /> welton.pereira@qualitycontactcenter.com.br
-           </a>
-        </div>
-      </div>
-
-      <p className="mt-12 text-sm text-gray-400">© 2026 Todos os direitos reservados.</p>
-    </div>
-);
 
 const App = () => {
     // ... same as original ...
