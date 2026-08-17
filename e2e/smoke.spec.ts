@@ -29,9 +29,9 @@ const ROTAS: Array<[string, string]> = [
 
 async function entrar(page: Page) {
   await page.goto('/');
-  await page.getByPlaceholder(/3924/i).fill('3924');
-  await page.locator('input[type="password"]').fill('senha-de-teste');
-  await page.getByRole('button', { name: /entrar/i }).click();
+  await page.getByLabel('Matrícula').fill('3924');
+  await page.getByLabel('Senha').fill('senha-de-teste');
+  await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page.getByText('Visão geral').first()).toBeVisible();
 }
 
