@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { User, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
-import { ArchipelagoIllustration } from '../components/ArchipelagoIllustration';
 import { Input, Button } from '../components/ui';
 
 declare const __APP_VERSION__: string;
@@ -27,7 +26,6 @@ export const LoginPage = ({ onLogin }: { onLogin: (u: User) => void }) => {
         <div className="min-h-screen flex items-center justify-center bg-bg p-4">
           <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 bg-surface rounded-2xl shadow-3 overflow-hidden">
             <div className="hidden md:flex flex-col items-center justify-center gap-6 bg-primary-tonal p-10 mop-fade-up">
-              <ArchipelagoIllustration variant="hero" />
               <div className="text-center">
                 <h2 className="text-3xl font-black text-primary tracking-tight">Mapa Operacional</h2>
                 <p className="text-fg-muted text-sm mt-1">Visão completa das suas ilhas de operação.</p>

@@ -3,7 +3,6 @@ import { Plus, Search, Edit2, Trash2, AlertTriangle, X } from 'lucide-react';
 import { User, UserRole, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { generateId } from '../utils';
-import { ArchipelagoIllustration } from '../components/ArchipelagoIllustration';
 import { Button, Input, Select, Badge } from '../components/ui';
 
 export const CrudPage = <T extends { id: string, nome: string, status: string | EntityStatus }>({
@@ -92,7 +91,6 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                       {filteredData.length === 0 && (
                         <tr><td colSpan={10} className="p-10">
                           <div className="flex flex-col items-center gap-3 text-center">
-                            <ArchipelagoIllustration variant="empty" />
                             <p className="text-fg-subtle text-sm">Nenhum registro encontrado</p>
                           </div>
                         </td></tr>
