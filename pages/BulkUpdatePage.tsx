@@ -340,7 +340,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                             ))}
                             
                             <Button 
-                                variant="outline" 
+                                variant="secondary" 
                                 className="w-full border-dashed border-2 text-brand-600 hover:bg-brand-50 hover:text-brand-700 justify-center flex items-center gap-2"
                                 onClick={() => setUpdates([...updates, { field: '', value: '' }])}
                             >

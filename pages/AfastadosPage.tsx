@@ -81,7 +81,7 @@ export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
                                      <td className="p-4 text-xs">{ilha}</td>
                                      <td className="p-4 text-xs">{sup}</td>
                                      <td className="p-4 text-right">
-                                        <Button variant="ghost" size="sm"><Eye size={16}/></Button>
+                                        <Button variant="ghost"><Eye size={16}/></Button>
                                      </td>
                                  </tr>
                              );

@@ -292,7 +292,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                         if (!globalThis.scheduledCountUpdate) globalThis.scheduledCountUpdate = 0;
                         globalThis.scheduledCountUpdate++;
                     } else {
-                        await db.updateCollaborator(collab.matricula, updatePayload);
+                        await db.saveCollaborator({ ...collab, ...updatePayload });
                     }
                     updates.push(collab.matricula);
                 }

@@ -82,11 +82,10 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
         const dataToExport = filtered.map(c => ({
             "Matrícula": c.matricula,
             "Nome": c.nome,
-            "Data de Admissão": c.dataInicio ? formatDateString(c.dataInicio) : '-',
+            "Data de Admissão": c.dtEntradaProduto ? formatDateString(c.dtEntradaProduto) : '-',
             "Data de Desligamento": c.dataFim ? formatDateString(c.dataFim) : '-',
             "Ilha": ilhas.find(i => i.id === c.ilhaId)?.nome || '-',
             "Supervisor": supervisors.find(s => s.id === c.supervisorId)?.nome || '-',
-            "Motivo do Desligamento": c.motivoDesligamento || '-',
             "EMAIL VR": c.email_vr || '-',
             "SENHA": c.senha || '-'
         }));
@@ -243,7 +242,7 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                                     <td className="p-4 text-xs">{supName}</td>
                                     <td className="p-4 font-bold text-gray-800">{formatDateString(c.dataFim)}</td>
                                     <td className="p-4 text-right">
-                                        <Button variant="ghost" size="sm"><Eye size={16}/></Button>
+                                        <Button variant="ghost"><Eye size={16}/></Button>
                                     </td>
                                 </tr>
                             );
