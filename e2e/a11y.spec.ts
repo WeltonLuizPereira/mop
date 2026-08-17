@@ -33,6 +33,30 @@ test('abaixo do desktop a navegação continua alcançável', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Colaboradores', exact: true })).toBeHidden();
 });
 
+test('a lista de colaboradores rola até o último nome', async ({ page }) => {
+  // 60 pessoas: o suficiente para passar da altura da janela em qualquer tela
+  const muitos = Array.from({ length: 60 }, (_, i) => ({
+    matricula: String(1000 + i),
+    nome: `Colaborador ${String(i).padStart(2, '0')}`,
+    status: 'ATIVO',
+    dt_entrada_produto: '2025-01-10',
+  }));
+  await page.route('**/rest/v1/mop_collaborators*', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(muitos) }));
+
+  await entrar(page);
+  await page.getByRole('button', { name: 'Colaboradores', exact: true }).click();
+  await expect(page.getByText('Colaborador 00')).toBeVisible();
+
+  // rola como gente rola: roda do mouse sobre a lista. `scrollIntoView` nao
+  // serve aqui — ele alcanca conteudo mesmo dentro de `overflow: hidden`, que
+  // e justamente o que prende a lista, e o teste passaria com o bug em pe.
+  await page.getByText('Colaborador 00').hover();
+  for (let i = 0; i < 12; i++) await page.mouse.wheel(0, 800);
+
+  await expect(page.getByText('Colaborador 59')).toBeInViewport();
+});
+
 test('a navegação por teclado chega aos tiles com foco visível', async ({ page }) => {
   await entrar(page);
   await page.keyboard.press('Tab');

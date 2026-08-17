@@ -281,8 +281,12 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const years = Array.from({length: 6}, (_, i) => (today.getFullYear() + 1) - i);
 
+    // Sem altura fixa aqui: quem rola é o container do AppShell. Prender a
+    // página em `100vh - 120px` (a medida do cabeçalho antigo, de 64px)
+    // encolhia o cartão da tabela e, como ele tem `overflow-hidden`, as linhas
+    // além do corte ficavam inalcançáveis — a lista simplesmente terminava.
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500 h-[calc(100vh-120px)]">
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
                     <h2 className="text-2xl font-bold text-gray-800">Colaboradores</h2>
