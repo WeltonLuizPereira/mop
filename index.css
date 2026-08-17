@@ -1,126 +1,116 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap');
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-alt: var(--surface-alt);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
-  --color-fg: var(--fg);
-  --color-fg-muted: var(--fg-muted);
-  --color-fg-subtle: var(--fg-subtle);
-  --color-primary: var(--brand);
-  --color-primary-dark: var(--brand-dark);
-  --color-primary-tonal: var(--brand-tonal);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --color-on-primary: var(--on-primary);
-  --color-on-error: var(--on-error);
+  --color-canvas:      var(--canvas);
+  --color-canvas-soft: var(--canvas-soft);
+  --color-canvas-sunk: var(--canvas-sunk);
+  --color-hairline:    var(--hairline);
+  --color-hairline-2:  var(--hairline-2);
 
-  /* Legacy Tailwind CDN `brand-*` scale compatibility shim.
-     Old inline tailwind.config defined brand.50/100/500/600/700/900; this
-     branch removed that config but ~94 App.tsx call sites (outside this
-     migration's restyle scope) still reference those class names. Map them
-     onto the new token system so they stay theme-aware instead of emitting
-     nothing (Tailwind v4 drops classes with no matching @theme entry). */
-  --color-brand-50: var(--brand-tonal);
-  --color-brand-100: var(--brand-tonal);
+  --color-ink:       var(--ink);
+  --color-ink-2:     var(--ink-2);
+  --color-ink-mute:  var(--ink-mute);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-brand:       var(--brand);
+  --color-brand-hot:   var(--brand-hot);
+  --color-brand-press: var(--brand-press);
+  --color-brand-text:  var(--brand-text);
+  --color-brand-wash:  var(--brand-wash);
+  --color-on-brand:    var(--on-brand);
+
+  --color-st-ativo:       var(--st-ativo);
+  --color-st-ferias:      var(--st-ferias);
+  --color-st-afastado:    var(--st-afastado);
+  --color-st-maternidade: var(--st-maternidade);
+  --color-st-aviso:       var(--st-aviso);
+  --color-st-realocado:   var(--st-realocado);
+  --color-st-desligado:   var(--st-desligado);
+
+  --color-danger: var(--danger);
+  --color-ok:     var(--ok);
+
+  /* Shim legado. 60 call sites de `brand-*` vivem nas páginas das levas 2 e 3;
+     removê-lo agora quebraria essas telas. Sai ao fim da leva 3.
+     Os passos 200/300/800 não existiam antes e 7 call sites de App.tsx não
+     emitiam CSS nenhum — corrigido aqui. */
+  --color-brand-50:  var(--brand-wash);
+  --color-brand-100: var(--brand-wash);
+  --color-brand-200: var(--brand-wash);
+  --color-brand-300: var(--brand-hot);
   --color-brand-500: var(--brand);
   --color-brand-600: var(--brand);
-  --color-brand-700: var(--brand-dark);
-  --color-brand-900: var(--brand-dark);
+  --color-brand-700: var(--brand-text);
+  --color-brand-800: var(--brand-text);
+  --color-brand-900: var(--brand-press);
 
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.08), 0 1px 3px rgb(0 0 0 / 0.06);
-  --shadow-2: 0 4px 8px rgb(0 0 0 / 0.10), 0 2px 4px rgb(0 0 0 / 0.06);
-  --shadow-3: 0 8px 16px rgb(0 0 0 / 0.12), 0 4px 8px rgb(0 0 0 / 0.08);
-  --shadow-4: 0 16px 32px rgb(0 0 0 / 0.16), 0 8px 16px rgb(0 0 0 / 0.10);
+  --radius-xs: 4px;  --radius-sm: 6px;   --radius-md: 8px;
+  --radius-lg: 12px; --radius-xl: 16px;  --radius-tile: 20px;
 
-  --font-sans: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  --shadow-1: 0 1px 3px rgb(0 0 0 / .06);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / .08);
+  --shadow-3: 0 16px 48px rgb(0 0 0 / .12);
+
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-sans:    'IBM Plex Sans', system-ui, sans-serif;
+  --font-data:    'IBM Plex Mono', ui-monospace, monospace;
 }
 
 :root {
-  --bg: #F4F4F4;
-  --surface: #FFFFFF;
-  --surface-alt: #EEEEEE;
-  --border: #E0E0E0;
-  --border-strong: #C7C7C7;
-  --fg: #171919;
-  --fg-muted: #4A4A4A;
-  --fg-subtle: #767676;
-  --brand: #00747A;
-  --brand-dark: #033E3F;
-  --brand-tonal: #E6F1F2;
-  --success: #196A47;
-  --warning: #E6CF42;
-  --error: #B12311;
-  --on-primary: #FFFFFF;
-  --on-error: #FFFFFF;
+  --canvas: #FFFFFF; --canvas-soft: #FAFAFA; --canvas-sunk: #F2F2F1;
+  --hairline: #E4E4E4; --hairline-2: #CFCFCF;
+  --ink: #191310; --ink-2: #453C38; --ink-mute: #6B615C; --ink-faint: #9A918C;
+  --brand: #F27405; --brand-hot: #F54E00; --brand-press: #D04200;
+  --brand-text: #D04200; --brand-wash: #FFF4EC; --on-brand: #191310;
+  --st-ativo: #12794F; --st-ferias: #1264A3; --st-afastado: #6544C0;
+  --st-maternidade: #B4008C; --st-aviso: #C4183C; --st-realocado: #00786F;
+  --st-desligado: #6B615C;
+  --danger: #C4183C; --ok: #12794F;
 }
 
 .dark {
-  --bg: #171919;
-  --surface: #202323;
-  --surface-alt: #262929;
-  --border: #333636;
-  --border-strong: #4A4A4A;
-  --fg: #FFFFFF;
-  --fg-muted: #C7C7C7;
-  --fg-subtle: #AAAAAA;
-  --brand: #3DA5A5;
-  --brand-dark: #245859;
-  --brand-tonal: rgb(0 116 122 / 0.16);
-  --success: #41D394;
-  --warning: #E6CF42;
-  --error: #F18476;
-  --on-primary: #171919;
-  --on-error: #171919;
+  --canvas: #121110; --canvas-soft: #1A1817; --canvas-sunk: #0C0B0A;
+  --hairline: #2E2A28; --hairline-2: #423D3A;
+  --ink: #F5F1EF; --ink-2: #C4BCB7; --ink-mute: #948B86; --ink-faint: #6E6560;
+  --brand: #F27405; --brand-hot: #FF6A1A; --brand-press: #C93E00;
+  --brand-text: #F27405; --brand-wash: rgb(242 116 5 / .14); --on-brand: #191310;
+  --st-ativo: #3FBE84; --st-ferias: #5AA9E6; --st-afastado: #9B8CFF;
+  --st-maternidade: #E86FD8; --st-aviso: #FF4D6D; --st-realocado: #38B5A8;
+  --st-desligado: #948B86;
+  --danger: #FF4D6D; --ok: #3FBE84;
+
+  --shadow-1: 0 1px 3px rgb(0 0 0 / .4);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / .5);
+  --shadow-3: 0 16px 48px rgb(0 0 0 / .6);
 }
 
 html, body {
-  background-color: var(--bg);
-  color: var(--fg);
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
 }
 
-* {
-  transition: background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out;
+/* registros tipográficos — os dois do logo */
+.t-display-xl { font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 1.08; letter-spacing: -.022em; }
+.t-display-lg { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.15; letter-spacing: -.02em; }
+.t-display-md { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.25; letter-spacing: -.015em; }
+.t-eyebrow {
+  font-family: var(--font-display); font-weight: 500; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .18em; line-height: 1;
 }
+.t-data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
 
-@keyframes mop-node-pulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
-}
-
-.mop-node {
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: mop-node-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes mop-fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.mop-fade-up {
-  animation: mop-fade-up 420ms ease-out both;
-}
-
-@keyframes mop-pop-in {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.mop-pop-in {
-  animation: mop-pop-in 180ms ease-out both;
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-  }
-  .mop-node, .mop-fade-up, .mop-pop-in {
-    animation: none !important;
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

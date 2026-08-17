@@ -85,7 +85,7 @@ passa:
 
 | Combinação | Contraste | |
 |---|---|---|
-| `#F27405` + `#191310` | **6.4:1** | ✅ o botão lê como brasa acesa |
+| `#F27405` + `#191310` | **6.37:1** | ✅ o botão lê como brasa acesa |
 | `#F27405` + `#FFFFFF` | 2.9:1 | ❌ reprova em AA |
 | `#F27405` sobre `#121110` | 6.5:1 | ✅ |
 | `#F27405` como texto sobre branco | 2.9:1 | ❌ — por isso existe `--brand-text` |
