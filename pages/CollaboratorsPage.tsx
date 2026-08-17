@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FileSpreadsheet, FileText, Plus, Search, Eye, Filter } from 'lucide-react';
 import { Collaborator, User, UserRole, Coordinator, Supervisor, Ilha, Operation, Client, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
@@ -6,7 +6,9 @@ import { getCollaboratorCalculations, formatDate, formatDateString } from '../ut
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Badge, Button, MultiSelect } from '../components/ui';
+import { Badge, Button, MultiSelect, Table } from '../components/ui';
+import { ClientLogo } from '../components/collaborators/ClientLogo';
+import { resolveClient } from '../lib/clientLogo';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
 export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collaborator) => void, onRefresh: () => void }> = ({ currentUser, onViewDetails, onRefresh }) => {
@@ -14,6 +16,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const [collabs, setCollabs] = useState<Collaborator[]>([]);
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [falhouCarga, setFalhouCarga] = useState(false);
     
     // Filtros
     const [filterCoord, setFilterCoord] = useState<string[]>([]);
@@ -36,22 +39,29 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
 
     const isAdmin = currentUser.role === UserRole.ADMIN;
     
-    useEffect(() => {
-    const load = async () => {
-        setCollabs(await db.getCollaborators());
-        const coords = await db.getCoordinators();
-        setCoordinators(coords.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-        const supers = await db.getSupervisors();
-        setSupervisors(supers.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-        const ilhasList = await db.getIlhas();
-        setIlhas(ilhasList.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-        const ops = await db.getOperations();
-        setOperations(ops.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-        const cli = await db.getClients();
-        setClients(cli.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-    };
-    load();
-}, []);
+    const load = useCallback(async () => {
+        const porNome = <T extends { nome?: string }>(a: T, b: T) =>
+            (a.nome || '').localeCompare(b.nome || '');
+        try {
+            setFalhouCarga(false);
+            const [colabs, coords, supers, ilhasList, ops, cli] = await Promise.all([
+                db.getCollaborators(), db.getCoordinators(), db.getSupervisors(),
+                db.getIlhas(), db.getOperations(), db.getClients(),
+            ]);
+            setCollabs(colabs);
+            setCoordinators([...coords].sort(porNome));
+            setSupervisors([...supers].sort(porNome));
+            setIlhas([...ilhasList].sort(porNome));
+            setOperations([...ops].sort(porNome));
+            setClients([...cli].sort(porNome));
+        } catch {
+            // sem isso a tela ficava para sempre vazia, indistinguivel de
+            // "nenhum colaborador cadastrado"
+            setFalhouCarga(true);
+        }
+    }, []);
+
+    useEffect(() => { load(); }, [load]);
 
     const filtered = collabs.filter(c => {
         const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) || c.matricula.includes(search);
@@ -79,7 +89,10 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
 
         const entryDate = safeDate(c.dtEntradaProduto);
         const exitDate = c.dataFim ? safeDate(c.dataFim) : null;
-        const enteredBeforeEnd = entryDate && entryDate <= endOfMonth;
+        // Sem data de entrada não dá para afirmar que a pessoa entrou depois do
+        // período — e sumir com ela esconderia justamente o cadastro incompleto
+        // que alguém precisa achar para corrigir.
+        const enteredBeforeEnd = !entryDate || entryDate <= endOfMonth;
         const stillActiveAfterStart = !exitDate || exitDate >= startOfMonth;
         const isWithinDateRange = enteredBeforeEnd && stillActiveAfterStart;
 
@@ -311,55 +324,57 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                 <div className="p-4 border-b border-gray-100 flex gap-4">
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input className="pl-9 w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-brand-500" placeholder="Buscar por nome ou matrícula..." value={search} onChange={e => setSearch(e.target.value)} />
+                        <input className="pl-9 w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-brand-500" placeholder="Buscar por nome ou matrícula" value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500 ml-auto"><span className="font-bold">{filtered.length}</span> resultados</div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-600">
-                        <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
-                            <tr>
-                                <th className="p-4 w-16"></th>
-                                <th className="p-4">Nome</th>
-                                <th className="p-4">Status</th>
-                                <th className="p-4">Supervisor</th>
-                                <th className="p-4">Ilha</th>
-                                <th className="p-4 text-right">Ações</th>
+                {falhouCarga ? (
+                    <div className="p-10 text-center">
+                        <p className="text-sm text-ink-2">Não foi possível carregar os colaboradores.</p>
+                        <Button variant="secondary" className="mt-3" onClick={() => load()}>Tentar de novo</Button>
+                    </div>
+                ) : collabs.length === 0 ? (
+                    <p className="p-10 text-center text-sm text-ink-mute">
+                        Nenhum colaborador cadastrado. Importe uma planilha ou cadastre o primeiro.
+                    </p>
+                ) : filtered.length === 0 ? (
+                    <div className="p-10 text-center">
+                        <p className="text-sm text-ink-mute">Nenhum colaborador encontrado para esses filtros.</p>
+                        <Button variant="secondary" className="mt-3" onClick={clearFilters}>Limpar filtros</Button>
+                    </div>
+                ) : (
+                    <Table>
+                      <Table.Head>
+                        <Table.Th className="w-px pr-0">Cliente</Table.Th>
+                        <Table.Th>Nome</Table.Th>
+                        <Table.Th>Status</Table.Th>
+                        <Table.Th>Supervisor</Table.Th>
+                        <Table.Th>Ilha</Table.Th>
+                      </Table.Head>
+                      <tbody>
+                        {filtered.map(c => {
+                          const cliente = resolveClient(c, ilhas, clients);
+                          const ilha = ilhas.find(i => i.id === c.ilhaId);
+                          const supervisor = supervisors.find(s => s.id === c.supervisorId);
+                          return (
+                            <tr
+                              key={c.matricula}
+                              tabIndex={0}
+                              onClick={() => onViewDetails(c)}
+                              onKeyDown={e => { if (e.key === 'Enter') onViewDetails(c); }}
+                              className="cursor-pointer hover:bg-canvas-soft"
+                            >
+                              <Table.Td className="w-px pr-0"><ClientLogo client={cliente} /></Table.Td>
+                              <Table.Td className="font-medium text-ink">{c.nome}</Table.Td>
+                              <Table.Td><Badge status={c.status} /></Table.Td>
+                              <Table.Td>{supervisor?.nome ?? '—'}</Table.Td>
+                              <Table.Td>{ilha?.nome ?? '—'}</Table.Td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filtered.map(c => {
-                                const sup = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';
-                                const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
-                                const client = clients.find(cl => cl.id === c.clientId);
-                                const clientLogo = client?.logo;
-                                return (
-                                    <tr key={c.matricula} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => onViewDetails(c)}>
-                                        <td className="p-4">
-                                            {clientLogo ? (
-                                                <img src={clientLogo} alt={`Logo ${client?.nome}`} className="w-9 h-9 rounded-full object-cover object-center bg-white border border-gray-200" referrerPolicy="no-referrer" />
-                                            ) : (
-                                                <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 border-2 border-white shadow-sm flex items-center justify-center font-bold text-xs">
-                                                    {getInitials(c.nome)}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="p-4 font-medium text-gray-900">{c.nome}</td>
-                                        <td className="p-4"><Badge status={c.status} /></td>
-                                        <td className="p-4 text-xs">{sup}</td>
-                                        <td className="p-4 text-xs">{ilhaName}</td>
-                                        <td className="p-4 text-right">
-                                            <Button variant="ghost" className="p-1 h-auto" onClick={(e: any) => { e.stopPropagation(); onViewDetails(c); }}>
-                                                <Eye size={16}/>
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                            {filtered.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-400">Nenhum colaborador encontrado com os filtros selecionados.</td></tr>}
-                        </tbody>
-                    </table>
-                </div>
+                          );
+                        })}
+                      </tbody>
+                    </Table>
+                )}
              </div>
 
              {isCreateOpen && (
