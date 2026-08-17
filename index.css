@@ -107,6 +107,41 @@ html, body {
   border-radius: var(--radius-xs);
 }
 
+/* Shim legado de animação, nos mesmos termos do shim de cor `--color-brand-*`
+   acima. `CollaboratorFormModal.tsx` (7 usos) e `CrudPage.tsx` (3 usos) são
+   telas de leva 1 que ficam fora do escopo de restilo desta leva e ainda
+   referenciam estas classes; removê-las agora deixaria essas telas com
+   animações mortas pelo resto das levas 2 e 3. Sai ao fim da leva 3, junto
+   do shim de cor. */
+@keyframes mop-node-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.mop-node {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: mop-node-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes mop-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mop-fade-up {
+  animation: mop-fade-up 420ms ease-out both;
+}
+
+@keyframes mop-pop-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.mop-pop-in {
+  animation: mop-pop-in 180ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: .01ms !important;
