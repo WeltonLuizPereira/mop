@@ -75,9 +75,11 @@ export const MultiSelect = ({
     if (disabled) return;
     if (event.key === 'Escape' && isOpen) {
       event.preventDefault();
+      event.stopPropagation();
       close();
       return;
     }
+    if (event.target instanceof HTMLInputElement) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       if (!isOpen) open();
