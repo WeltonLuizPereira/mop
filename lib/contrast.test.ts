@@ -7,6 +7,17 @@ const T = {
   canvasEscuro: '#121110', inkEscuro: '#F5F1EF', inkMuteEscuro: '#948B86',
 };
 
+describe('control tokens', () => {
+  it.each([
+    ['light focus ring', '#D04200', '#FFFFFF'],
+    ['dark focus ring', '#F27405', '#121110'],
+    ['light control border', '#9A918C', '#FFFFFF'],
+    ['dark control border', '#6E6560', '#121110'],
+  ])('%s maintains at least 3:1 contrast', (_token, foreground, background) => {
+    expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe('contrastRatio', () => {
   it('dá 21 para preto sobre branco', () => {
     expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 1);

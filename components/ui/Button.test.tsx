@@ -4,6 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 
 describe('Button', () => {
+  it('blocks the action and announces progress while loading', () => {
+    render(<Button loading>Salvar</Button>);
+    const button = screen.getByRole('button', { name: 'Salvar' });
+
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+  });
+
   it('dispara o clique', async () => {
     const onClick = vi.fn();
     render(<Button onClick={onClick}>Salvar alterações</Button>);

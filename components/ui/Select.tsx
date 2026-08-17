@@ -1,19 +1,17 @@
-import React, { useId } from 'react';
-import { CAMPO, ROTULO } from './Input';
+import React from 'react';
+import { Field } from './Field';
+import { CAMPO } from './Input';
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
+  hint?: React.ReactNode;
+  error?: React.ReactNode;
 }
 
-export const Select = ({ label, children, className = '', id, ...props }: SelectProps) => {
-  const gerado = useId();
-  const campoId = id ?? gerado;
-  return (
-    <div className="mb-3">
-      {label && <label htmlFor={campoId} className={ROTULO}>{label}</label>}
-      <select id={campoId} className={`${CAMPO} ${className}`} {...props}>
-        {children}
-      </select>
-    </div>
-  );
+export const Select = ({ label, hint, error, children, className = '', ...props }: SelectProps) => {
+  const control = <select className={`${CAMPO} ${className}`} {...props}>{children}</select>;
+
+  return label ? (
+    <Field label={label} hint={hint} error={error}>{control}</Field>
+  ) : control;
 };

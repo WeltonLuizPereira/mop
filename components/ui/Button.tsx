@@ -1,33 +1,50 @@
 import React from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'solid-danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'solid-danger';
+export type ButtonSize = 'sm' | 'md' | 'touch';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   block?: boolean;
+  loading?: boolean;
 }
 
 const BASE =
   'inline-flex items-center justify-center gap-2 rounded-sm font-semibold text-[13px] ' +
-  'leading-none min-h-9 px-4 py-[9px] border border-transparent ' +
-  'transition-colors duration-100 disabled:opacity-50 disabled:pointer-events-none';
+  'leading-none border border-transparent transition-colors duration-100 ' +
+  'disabled:opacity-50 disabled:pointer-events-none';
 
-const VARIANTES: Record<Variant, string> = {
-  primary:        'bg-brand text-on-brand hover:bg-brand-hot active:bg-brand-press',
-  secondary:      'bg-brand-wash text-brand-text hover:bg-brand/20',
-  ghost:          'bg-transparent text-ink border-hairline-2 hover:bg-canvas-soft',
-  danger:         'bg-transparent text-danger hover:bg-danger/10',
+const SIZES: Record<ButtonSize, string> = {
+  sm: 'min-h-8 px-3 py-2',
+  md: 'min-h-9 px-4 py-[9px]',
+  touch: 'min-h-11 px-4 py-3',
+};
+
+const VARIANTES: Record<ButtonVariant, string> = {
+  primary: 'bg-brand text-on-brand hover:bg-brand-hot active:bg-brand-press',
+  secondary: 'bg-brand-wash text-brand-text hover:bg-brand/20',
+  ghost: 'bg-transparent text-ink border-hairline-2 hover:bg-canvas-soft',
+  danger: 'bg-transparent text-danger hover:bg-danger/10',
   'solid-danger': 'bg-danger text-canvas hover:opacity-90',
 };
 
 export const Button = ({
-  children, variant = 'primary', block = false, className = '', type = 'button', ...props
+  children,
+  variant = 'primary',
+  size = 'md',
+  block = false,
+  loading = false,
+  className = '',
+  type = 'button',
+  disabled = false,
+  ...props
 }: ButtonProps) => (
   <button
     type={type}
-    // variante desconhecida (`empty`, `hero`, `outline` ainda existem em 3 call
-    // sites das levas 2 e 3) cai em `secondary` em vez de emitir undefined
-    className={`${BASE} ${VARIANTES[variant] ?? VARIANTES.secondary} ${block ? 'w-full' : ''} ${className}`}
+    className={`${BASE} ${SIZES[size]} ${VARIANTES[variant] ?? VARIANTES.secondary} ${block ? 'w-full' : ''} ${className}`}
+    disabled={disabled || loading}
+    aria-busy={loading || undefined}
     {...props}
   >
     {children}
