@@ -21,6 +21,7 @@ playwright-report/
 !.vscode/extensions.json
 .idea
 .DS_Store
+.worktrees/
 *.suo
 *.ntvs*
 *.njsproj

@@ -149,3 +149,78 @@ html, body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Levas 2/3 — normalização das páginas operacionais legadas.
+   Estas regras mantêm a marcação funcional existente, mas fazem todas as
+   superfícies consumirem o mesmo sistema de tokens do mockup Quality. */
+@layer utilities {
+  .bg-white { background-color: var(--canvas); }
+  .bg-gray-50, .bg-gray-50\/50 { background-color: var(--canvas-soft); }
+  .bg-gray-100 { background-color: var(--canvas-sunk); }
+
+  .text-gray-900, .text-gray-800, .text-gray-700 { color: var(--ink); }
+  .text-gray-600, .text-gray-500 { color: var(--ink-mute); }
+  .text-gray-400, .text-gray-300 { color: var(--ink-faint); }
+
+  .border-gray-100, .border-gray-200, .border-gray-300 {
+    border-color: var(--hairline);
+  }
+  .divide-gray-100 > :not(:last-child),
+  .divide-gray-200 > :not(:last-child) { border-color: var(--hairline); }
+
+  .hover\:bg-gray-50:hover, .hover\:bg-gray-50\/50:hover,
+  .hover\:bg-gray-100:hover { background-color: var(--canvas-sunk); }
+  .hover\:text-gray-600:hover, .hover\:text-gray-700:hover {
+    color: var(--ink);
+  }
+
+  /* Acentos históricos passam a obedecer à regra: laranja = ação. */
+  .bg-blue-50, .bg-orange-50, .bg-indigo-50 { background-color: var(--brand-wash); }
+  .text-blue-600, .text-blue-700, .text-indigo-600, .text-indigo-700,
+  .text-purple-600, .text-orange-600 { color: var(--brand-text); }
+  .border-blue-100, .border-indigo-100, .border-orange-100 {
+    border-color: var(--hairline);
+  }
+}
+
+/* Ritmo de página compartilhado pelas rotas extraídas do monólito. */
+main > div > h2,
+main > div > div:first-child h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--ink);
+}
+
+main table thead {
+  background-color: var(--canvas-soft);
+  color: var(--ink-mute);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+main table tbody tr {
+  border-color: var(--hairline);
+  transition: background-color 140ms ease;
+}
+
+main table tbody tr:hover { background-color: var(--canvas-soft); }
+
+main select,
+main input:not([type='checkbox']):not([type='radio']),
+main textarea {
+  background-color: var(--canvas);
+  border-color: var(--hairline-2);
+  color: var(--ink);
+}
+
+main select:focus,
+main input:not([type='checkbox']):not([type='radio']):focus,
+main textarea:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px var(--brand);
+}
+
+main ::placeholder { color: var(--ink-faint); }
