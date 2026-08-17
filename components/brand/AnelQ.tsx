@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { RING_PATH, RING_VIEWBOX } from './logoPaths';
 import { wedgePath } from './wedge';
 
@@ -20,23 +20,16 @@ const prefereMenosMovimento = () =>
  * O "Q" do logo usado como medidor: o path real do pincel, revelado por uma
  * cunha giratória. A irregularidade da tinta está na geometria — não há filtro.
  *
- * A montagem inicial já nasce no valor-alvo (sem animação): evita tanto o
- * "flash" de conteúdo vazio em leitores de tela/telas lentas quanto a
- * violação implícita de `prefers-reduced-motion` no primeiro paint. A
- * animação de preenchimento só entra em cena quando `value` muda depois de
- * montado — aí sim, respeitando `prefers-reduced-motion`.
+ * Uma animação, uma vez (spec §7.5): a cunha vai de 0 ao valor final em 700ms
+ * ease-out na montagem. Sob `prefers-reduced-motion: reduce`, renderiza no
+ * valor final direto, sem transição.
  */
 export const AnelQ = ({ value, threshold = 0.8, className = '', label }: AnelQProps) => {
   const alvo = Math.min(1, Math.max(0, value));
   const maskId = useId();
-  const [desenhado, setDesenhado] = useState(alvo);
-  const montado = useRef(false);
+  const [desenhado, setDesenhado] = useState(() => (prefereMenosMovimento() ? alvo : 0));
 
   useEffect(() => {
-    if (!montado.current) {
-      montado.current = true;
-      return;
-    }
     if (prefereMenosMovimento()) { setDesenhado(alvo); return; }
     let raf = 0;
     const inicio = performance.now();
