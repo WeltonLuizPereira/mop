@@ -1,14 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { LogOut } from 'lucide-react';
 import {
   User, Collaborator
 } from './types';
 import { db } from './services/mockDb';
-import { visibleGroups, pageTitle } from './lib/navigation';
-import { NavItem } from './components/shell/NavItem';
-import { NotificationCenter } from './components/shell/NotificationCenter';
-import { Header } from './components/shell/Header';
+import { AppShell } from './components/shell/AppShell';
 import { LoginPage } from './pages/LoginPage';
 import { CollaboratorsPage } from './pages/CollaboratorsPage';
 import { CollaboratorDetailsPage } from './pages/CollaboratorDetailsPage';
@@ -129,59 +125,14 @@ const App = () => {
   if (!currentUser) return <LoginPage onLogin={handleLogin} />;
 
   return (
-    <div className="flex h-screen bg-bg text-fg font-sans">
-       <aside className="w-64 bg-surface border-r border-border flex flex-col fixed h-full z-10">
-          <div className="h-16 flex items-center px-6 border-b border-border">
-             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-on-primary font-bold mr-3">M</div>
-             <span className="font-bold text-lg tracking-tight text-fg">MOP System</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-             <nav className="space-y-1">
-                {visibleGroups(currentUser.role).map((group, idx) => (
-                   <div key={group.group} className={idx === 0 ? 'pb-2' : 'pt-2 pb-2'}>
-                      <p className="px-3 text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">{group.group}</p>
-                      {group.items.map(item => (
-                         <NavItem
-                            key={item.key}
-                            icon={item.icon}
-                            label={item.label}
-                            active={currentPage === item.key}
-                            onClick={() => {
-                               setCurrentPage(item.key);
-                               if (item.key === 'collaborators') setSelectedCollab(null);
-                            }}
-                         />
-                      ))}
-                   </div>
-                ))}
-             </nav>
-          </div>
-          <div className="p-4 border-t border-border bg-surface-alt">
-             <div className="flex items-center gap-3 mb-3">
-                 <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs shadow-1">
-                     {currentUser.nome.charAt(0)}
-                 </div>
-                 <div className="flex-1 overflow-hidden">
-                     <p className="text-xs font-bold text-fg truncate">{currentUser.nome}</p>
-                     <p className="text-[10px] text-fg-muted truncate">{currentUser.email}</p>
-                 </div>
-             </div>
-             <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-error hover:bg-error/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error">
-                 <LogOut size={14} /> Sair
-             </button>
-          </div>
-       </aside>
-
-       <main className="flex-1 ml-64 overflow-y-auto h-full bg-bg flex flex-col relative custom-scrollbar">
-          <Header title={pageTitle(currentPage)} user={currentUser}>
-              <NotificationCenter />
-          </Header>
-          <div className="p-6 md:p-8 max-w-[1600px] w-full mx-auto flex-1">
-              {renderContent()}
-          </div>
-       </main>
-    </div>
+    <AppShell
+      currentUser={currentUser}
+      currentPage={currentPage}
+      onNavigate={p => { setCurrentPage(p); setSelectedCollab(null); }}
+      onLogout={handleLogout}
+    >
+      {renderContent()}
+    </AppShell>
   );
 };
 
