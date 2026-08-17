@@ -19,7 +19,11 @@ function rotular(status: string) {
 }
 
 /** Ponto + rótulo. Cor nunca carrega significado sozinha (spec §4.4). */
-export const Badge = ({ status }: { status: string }) => (
+/**
+ * Mantém a entrada textual enquanto páginas antigas ainda fornecem categorias
+ * além de CollaboratorStatus. A migração final poderá estreitar este contrato.
+ */
+export const Badge = ({ status }: { status: CollaboratorStatus | EntityStatus | string }) => (
   <span className="inline-flex items-center gap-[7px] text-[13px] text-ink-2 whitespace-nowrap">
     <span
       data-dot

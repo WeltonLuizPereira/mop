@@ -347,7 +347,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                         <Button variant="secondary" className="mt-3" onClick={clearFilters}>Limpar filtros</Button>
                     </div>
                 ) : (
-                    <Table>
+                    <Table label="Colaboradores">
                       <Table.Head>
                         <Table.Th className="w-px pr-0">Cliente</Table.Th>
                         <Table.Th>Nome</Table.Th>
