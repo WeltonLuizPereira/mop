@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileSpreadsheet, FileText, Plus, Search, Eye, Filter } from 'lucide-react';
+import { FileSpreadsheet, FileText, Plus, Search } from 'lucide-react';
 import { Collaborator, User, UserRole, Coordinator, Supervisor, Ilha, Operation, Client, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDate, formatDateString } from '../utils';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Badge, Button, MultiSelect, Table } from '../components/ui';
+import {
+    Badge, Button, EmptyState, FilterBar, InlineNotice, Input, LoadingState,
+    MetricStrip, MultiSelect, PageToolbar, Select, Table,
+} from '../components/ui';
 import { ClientLogo } from '../components/collaborators/ClientLogo';
 import { resolveClient } from '../lib/clientLogo';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
@@ -17,6 +20,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [falhouCarga, setFalhouCarga] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     
     // Filtros
     const [filterCoord, setFilterCoord] = useState<string[]>([]);
@@ -43,6 +47,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
         const porNome = <T extends { nome?: string }>(a: T, b: T) =>
             (a.nome || '').localeCompare(b.nome || '');
         try {
+            setIsLoading(true);
             setFalhouCarga(false);
             const [colabs, coords, supers, ilhasList, ops, cli] = await Promise.all([
                 db.getCollaborators(), db.getCoordinators(), db.getSupervisors(),
@@ -58,6 +63,8 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
             // sem isso a tela ficava para sempre vazia, indistinguivel de
             // "nenhum colaborador cadastrado"
             setFalhouCarga(true);
+        } finally {
+            setIsLoading(false);
         }
     }, []);
 
@@ -265,13 +272,6 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
         doc.save('MOP_Colaboradores.pdf');
     };
 
-    const getInitials = (name: string) => {
-        const parts = name.trim().split(' ');
-        if (parts.length === 0) return '';
-        if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-
     const clientOptions = clients.map(c => ({value: c.id, label: c.nome}));
     const opOptions = operations.filter(o => filterClient.length === 0 || filterClient.includes(o.clientId)).map(o => ({value: o.id, label: o.nome}));
     const ilhaOptions = ilhas.filter(i => (filterClient.length === 0 || filterClient.includes(i.clientId)) && (filterOp.length === 0 || filterOp.includes(i.operationId))).map(i => ({value: i.id, label: i.nome}));
@@ -280,74 +280,94 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const statusOptions = Object.values(CollaboratorStatus).map(s => ({value: s, label: s}));
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const years = Array.from({length: 6}, (_, i) => (today.getFullYear() + 1) - i);
+    const hasActiveFilters = Boolean(
+        search || filterCoord.length || filterSup.length || filterIlha.length ||
+        filterOp.length || filterClient.length || filterStatus.length,
+    );
+    const listToolbar = (
+        <div className="flex flex-col gap-3 bg-canvas-soft p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full max-w-sm">
+            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-ink-faint" size={15} />
+            <Input aria-label="Buscar colaboradores" className="pl-9" placeholder="Buscar por nome ou matrícula" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <MetricStrip label="Resumo da lista" items={[{ label: filtered.length === 1 ? 'resultado' : 'resultados', value: filtered.length }]} />
+        </div>
+    );
 
     // Sem altura fixa aqui: quem rola é o container do AppShell. Prender a
     // página em `100vh - 120px` (a medida do cabeçalho antigo, de 64px)
     // encolhia o cartão da tabela e, como ele tem `overflow-hidden`, as linhas
     // além do corte ficavam inalcançáveis — a lista simplesmente terminava.
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-             <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-bold text-gray-800">Colaboradores</h2>
-                    <div className="flex gap-2 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-                        <select className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
-                            <option value={-1}>Todos os Meses</option>
-                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                        </select>
-                        <div className="w-px bg-gray-200 my-1"></div>
-                        <select className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select>
+        <div className="flex flex-col gap-5">
+             <PageToolbar
+                description="Consulte a equipe, refine a referência e exporte a visão atual."
+                filters={(
+                    <div className="flex flex-wrap items-end gap-2" aria-label="Referência da consulta">
+                        <span className="t-eyebrow mb-2.5 mr-1 text-ink-faint">Referência</span>
+                        <Select aria-label="Mês de referência" className="w-auto min-w-40" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
+                            <option value={-1}>Todos os meses</option>
+                            {months.map((month, index) => <option key={month} value={index}>{month}</option>)}
+                        </Select>
+                        <Select aria-label="Ano de referência" className="w-auto" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
+                            {years.map(year => <option key={year} value={year}>{year}</option>)}
+                        </Select>
                     </div>
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="secondary" onClick={handleExportExcel}><FileSpreadsheet size={16}/> Excel</Button>
-                    <Button variant="secondary" onClick={handleExportPDF}><FileText size={16}/> PDF</Button>
-                    {(isAdmin || currentUser.role === UserRole.SUPPORT) && <Button onClick={() => setIsCreateOpen(true)}><Plus size={16}/> Novo Cadastro</Button>}
-                </div>
-             </div>
-             
-             {/* Filtros ... (omitted same as original) */}
-             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-2"><Filter size={14}/> Filtros Avançados</h3>
-                    {(filterCoord.length > 0 || filterSup.length > 0 || filterIlha.length > 0 || filterOp.length > 0 || filterClient.length > 0 || filterStatus.length > 0) && (
-                        <button onClick={clearFilters} className="text-xs text-brand-600 hover:text-brand-800 font-bold hover:underline">Limpar Filtros</button>
-                    )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                    <div className="space-y-1"><MultiSelect label="Cliente" options={clientOptions} value={filterClient} onChange={setFilterClient} /></div>
-                    <div className="space-y-1"><MultiSelect label="Operação" options={opOptions} value={filterOp} onChange={setFilterOp} /></div>
-                    <div className="space-y-1"><MultiSelect label="Ilha" options={ilhaOptions} value={filterIlha} onChange={setFilterIlha} /></div>
-                    <div className="space-y-1"><MultiSelect label="Coordenador" options={coordOptions} value={filterCoord} onChange={setFilterCoord} /></div>
-                    <div className="space-y-1"><MultiSelect label="Supervisor" options={supOptions} value={filterSup} onChange={setFilterSup} /></div>
-                    <div className="space-y-1"><MultiSelect label="Status" options={statusOptions} value={filterStatus} onChange={setFilterStatus} /></div>
-                </div>
-             </div>
+                )}
+                actions={(
+                    <>
+                        <Button variant="secondary" onClick={handleExportExcel}><FileSpreadsheet aria-hidden="true" size={16}/> Excel</Button>
+                        <Button variant="secondary" onClick={handleExportPDF}><FileText aria-hidden="true" size={16}/> PDF</Button>
+                        {(isAdmin || currentUser.role === UserRole.SUPPORT) && <Button onClick={() => setIsCreateOpen(true)}><Plus aria-hidden="true" size={16}/> Novo cadastro</Button>}
+                    </>
+                )}
+             />
 
-             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex gap-4">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input className="pl-9 w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-brand-500" placeholder="Buscar por nome ou matrícula" value={search} onChange={e => setSearch(e.target.value)} />
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 ml-auto"><span className="font-bold">{filtered.length}</span> resultados</div>
+             <FilterBar hasActiveFilters={hasActiveFilters} onClear={clearFilters}>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
+                    <MultiSelect label="Cliente" options={clientOptions} value={filterClient} onChange={setFilterClient} />
+                    <MultiSelect label="Operação" options={opOptions} value={filterOp} onChange={setFilterOp} />
+                    <MultiSelect label="Ilha" options={ilhaOptions} value={filterIlha} onChange={setFilterIlha} />
+                    <MultiSelect label="Coordenador" options={coordOptions} value={filterCoord} onChange={setFilterCoord} />
+                    <MultiSelect label="Supervisor" options={supOptions} value={filterSup} onChange={setFilterSup} />
+                    <MultiSelect label="Status" options={statusOptions} value={filterStatus} onChange={setFilterStatus} />
                 </div>
-                {falhouCarga ? (
-                    <div className="p-10 text-center">
-                        <p className="text-sm text-ink-2">Não foi possível carregar os colaboradores.</p>
-                        <Button variant="secondary" className="mt-3" onClick={() => load()}>Tentar de novo</Button>
-                    </div>
-                ) : collabs.length === 0 ? (
-                    <p className="p-10 text-center text-sm text-ink-mute">
-                        Nenhum colaborador cadastrado. Importe uma planilha ou cadastre o primeiro.
-                    </p>
-                ) : filtered.length === 0 ? (
-                    <div className="p-10 text-center">
-                        <p className="text-sm text-ink-mute">Nenhum colaborador encontrado para esses filtros.</p>
-                        <Button variant="secondary" className="mt-3" onClick={clearFilters}>Limpar filtros</Button>
-                    </div>
-                ) : (
-                    <Table label="Colaboradores">
+             </FilterBar>
+
+             {!isLoading && !falhouCarga && collabs.length > 0 && (
+                <div className="rounded-lg border border-hairline">{listToolbar}</div>
+             )}
+
+             {isLoading ? (
+                <div className="rounded-lg border border-hairline bg-canvas-soft"><LoadingState label="Carregando colaboradores" /></div>
+             ) : falhouCarga ? (
+                <InlineNotice
+                    tone="error"
+                    title="Falha ao carregar colaboradores"
+                    action={<Button variant="secondary" size="sm" onClick={() => void load()}>Tentar de novo</Button>}
+                >
+                    Não foi possível consultar os dados da equipe.
+                </InlineNotice>
+             ) : collabs.length === 0 ? (
+                <div className="rounded-lg border border-hairline bg-canvas-soft">
+                    <EmptyState
+                        title="Nenhum colaborador cadastrado"
+                        description="Importe uma planilha ou cadastre o primeiro colaborador."
+                        action={(isAdmin || currentUser.role === UserRole.SUPPORT) ? <Button onClick={() => setIsCreateOpen(true)}>Novo cadastro</Button> : undefined}
+                    />
+                </div>
+             ) : filtered.length === 0 ? (
+                <div className="rounded-lg border border-hairline bg-canvas-soft">
+                    <EmptyState
+                        title="Nenhum colaborador encontrado"
+                        description="Ajuste a busca ou remova os filtros aplicados."
+                        action={<Button variant="secondary" onClick={clearFilters}>Limpar filtros</Button>}
+                    />
+                </div>
+             ) : (
+                    <Table
+                      label="Colaboradores"
+                    >
                       <Table.Head>
                         <Table.Th className="w-px pr-0">Cliente</Table.Th>
                         <Table.Th>Nome</Table.Th>
@@ -355,31 +375,28 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                         <Table.Th>Supervisor</Table.Th>
                         <Table.Th>Ilha</Table.Th>
                       </Table.Head>
-                      <tbody>
+                      <Table.Body>
                         {filtered.map(c => {
                           const cliente = resolveClient(c, ilhas, clients);
                           const ilha = ilhas.find(i => i.id === c.ilhaId);
                           const supervisor = supervisors.find(s => s.id === c.supervisorId);
                           return (
-                            <tr
+                            <Table.Row
                               key={c.matricula}
-                              tabIndex={0}
-                              onClick={() => onViewDetails(c)}
-                              onKeyDown={e => { if (e.key === 'Enter') onViewDetails(c); }}
-                              className="cursor-pointer hover:bg-canvas-soft"
+                              activationLabel={`Abrir detalhes de ${c.nome}`}
+                              onActivate={() => onViewDetails(c)}
                             >
                               <Table.Td className="w-px pr-0"><ClientLogo client={cliente} /></Table.Td>
                               <Table.Td className="font-medium text-ink">{c.nome}</Table.Td>
                               <Table.Td><Badge status={c.status} /></Table.Td>
                               <Table.Td>{supervisor?.nome ?? '—'}</Table.Td>
                               <Table.Td>{ilha?.nome ?? '—'}</Table.Td>
-                            </tr>
+                            </Table.Row>
                           );
                         })}
-                      </tbody>
+                      </Table.Body>
                     </Table>
-                )}
-             </div>
+             )}
 
              {isCreateOpen && (
                  <CollaboratorFormModal onClose={() => setIsCreateOpen(false)} onSave={handleSave} onSchedule={handleScheduleCreate} />

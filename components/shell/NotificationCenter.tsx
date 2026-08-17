@@ -1,175 +1,199 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Gift, AlertTriangle, CheckCircle, UserMinus } from 'lucide-react';
-import { Collaborator, CollaboratorStatus, HistoryLog } from '../../types';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { AlertTriangle, Bell, CheckCircle, Gift, UserMinus, X } from 'lucide-react';
+import type { Collaborator, HistoryLog } from '../../types';
+import { CollaboratorStatus } from '../../types';
 import { db } from '../../services/mockDb';
-import { getCollaboratorCalculations, formatDateString } from '../../utils';
+import { formatDateString, getCollaboratorCalculations } from '../../utils';
+import { EmptyState, IconButton, InlineNotice, LoadingState } from '../ui';
+
+interface Notifications {
+  birthdays: Collaborator[];
+  expiring: Array<Collaborator & { vence: string }>;
+  avisoEnding: Collaborator[];
+  recentHistory: HistoryLog[];
+}
+
+const EMPTY_NOTIFICATIONS: Notifications = {
+  birthdays: [],
+  expiring: [],
+  avisoEnding: [],
+  recentHistory: [],
+};
 
 export const NotificationCenter = () => {
-    // ... same as original ...
-    const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<{
-        birthdays: Collaborator[],
-        expiring: (Collaborator & { vence: string })[],
-        avisoEnding: Collaborator[],
-        recentHistory: HistoryLog[]
-    }>({ birthdays: [], expiring: [], avisoEnding: [], recentHistory: [] });
+  const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notifications>(EMPTY_NOTIFICATIONS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  const titleId = useId();
 
-    const containerRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }, []);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+  const loadNotifications = useCallback(async () => {
+    setIsLoading(true);
+    setHasError(false);
+    try {
+      const collabs = await db.getCollaborators();
+      const today = new Date();
+      const todayStr = today.toLocaleDateString('pt-BR');
+      const day = today.getDate();
+      const month = today.getMonth() + 1;
 
-    useEffect(() => {
-        const loadNotifications = async () => {
-            const collabs = await db.getCollaborators();
-            const today = new Date();
-            const todayStr = today.toLocaleDateString('pt-BR');
-            const d = today.getDate();
-            const m = today.getMonth() + 1;
+      const birthdays = collabs.filter(collaborator => {
+        if (!collaborator.dtNasc || collaborator.status !== CollaboratorStatus.ATIVO) return false;
+        const parts = collaborator.dtNasc.split('-');
+        return parseInt(parts[2]) === day && parseInt(parts[1]) === month;
+      });
 
-            const todaysBirthdays = collabs.filter(c => {
-                if (!c.dtNasc || c.status !== CollaboratorStatus.ATIVO) return false;
-                const parts = c.dtNasc.split('-');
-                const bDay = parseInt(parts[2]);
-                const bMonth = parseInt(parts[1]);
-                return bDay === d && bMonth === m;
-            });
+      const expiring = collabs
+        .filter(collaborator => {
+          if (collaborator.status !== CollaboratorStatus.ATIVO) return false;
+          return getCollaboratorCalculations(collaborator.dtEntradaProduto).vence === todayStr;
+        })
+        .map(collaborator => ({
+          ...collaborator,
+          vence: getCollaboratorCalculations(collaborator.dtEntradaProduto).vence,
+        }));
 
-            const todaysExpiring = collabs.filter(c => {
-                if (c.status !== CollaboratorStatus.ATIVO) return false;
-                const calc = getCollaboratorCalculations(c.dtEntradaProduto);
-                return calc.vence === todayStr;
-            }).map(c => ({
-                ...c,
-                vence: getCollaboratorCalculations(c.dtEntradaProduto).vence
-            }));
+      const avisoEnding = collabs.filter(collaborator => {
+        if (collaborator.status !== CollaboratorStatus.AVISO_PREVIO || !collaborator.dataFim) return false;
+        return formatDateString(collaborator.dataFim) === todayStr;
+      });
 
-            const todaysAvisoEnding = collabs.filter(c => {
-                if (c.status !== CollaboratorStatus.AVISO_PREVIO || !c.dataFim) return false;
-                return formatDateString(c.dataFim) === todayStr;
-            });
+      const fullHistory = await db.getHistory();
+      setNotifications({ birthdays, expiring, avisoEnding, recentHistory: fullHistory.slice(0, 5) });
+    } catch {
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-            const fullHistory = await db.getHistory();
-            const history = fullHistory.slice(0, 5);
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) close();
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [close, isOpen]);
 
-            setNotifications({
-                birthdays: todaysBirthdays,
-                expiring: todaysExpiring,
-                avisoEnding: todaysAvisoEnding,
-                recentHistory: history
-            });
-        };
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      close();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [close, isOpen]);
 
-        loadNotifications();
-        const interval = setInterval(loadNotifications, 60000);
-        return () => clearInterval(interval);
-    }, [isOpen]);
+  useEffect(() => {
+    void loadNotifications();
+    const interval = window.setInterval(() => { void loadNotifications(); }, 60_000);
+    return () => window.clearInterval(interval);
+  }, [isOpen, loadNotifications]);
 
-    const totalAlerts = notifications.birthdays.length + notifications.expiring.length + notifications.avisoEnding.length;
+  const totalAlerts = notifications.birthdays.length + notifications.expiring.length + notifications.avisoEnding.length;
 
-    return (
-        <div className="relative" ref={containerRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 rounded-full text-fg-muted hover:text-primary hover:bg-primary-tonal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-                <Bell size={20} />
-                {totalAlerts > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface"></span>
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label="Notificações"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={() => setIsOpen(open => !open)}
+        className="relative grid h-8 w-8 place-items-center rounded-sm text-ink-2 transition-colors hover:bg-canvas-soft hover:text-ink"
+      >
+        <Bell aria-hidden="true" size={17} />
+        {totalAlerts > 0 && <span aria-hidden="true" className="absolute right-1 top-1 h-2 w-2 rounded-full border border-canvas bg-danger" />}
+        {totalAlerts > 0 && <span className="sr-only">{totalAlerts} alertas para hoje</span>}
+      </button>
+
+      {isOpen && (
+        <div
+          id={panelId}
+          role="dialog"
+          aria-labelledby={titleId}
+          className="mop-pop-in absolute right-0 z-50 mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-hairline bg-canvas shadow-3"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-hairline bg-canvas-soft px-4 py-3">
+            <div>
+              <h2 id={titleId} className="font-display text-sm font-bold text-ink">Central de notificações</h2>
+              <span className="t-eyebrow mt-1 block text-brand-text">Hoje</span>
+            </div>
+            <IconButton label="Fechar notificações" icon={<X size={15} />} variant="ghost" size="sm" onClick={close} />
+          </div>
+
+          <div className="max-h-[min(70vh,36rem)] overflow-y-auto">
+            {isLoading ? (
+              <LoadingState label="Carregando notificações" />
+            ) : hasError ? (
+              <div className="p-4">
+                <InlineNotice
+                  tone="error"
+                  action={<button type="button" className="text-xs font-semibold text-danger underline" onClick={() => void loadNotifications()}>Tentar de novo</button>}
+                >
+                  Não foi possível carregar as notificações.
+                </InlineNotice>
+              </div>
+            ) : (
+              <>
+                {totalAlerts === 0 ? (
+                  <EmptyState
+                    title="Tudo em dia"
+                    description="Nenhuma pendência urgente para hoje."
+                    action={<CheckCircle aria-hidden="true" size={22} className="text-ok" />}
+                  />
+                ) : (
+                  <section aria-labelledby={`${titleId}-attention`} className="p-2">
+                    <h3 id={`${titleId}-attention`} className="t-eyebrow px-2 py-2 text-ink-faint">Atenção hoje</h3>
+                    {notifications.avisoEnding.map(collaborator => (
+                      <article key={collaborator.matricula} className="flex items-start gap-3 rounded-md bg-brand-wash p-3">
+                        <UserMinus aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-brand-text" />
+                        <div><h4 className="text-sm font-semibold text-ink">Aviso prévio finalizando</h4><p className="text-xs text-ink-mute">Último dia de {collaborator.nome}. Realize o desligamento no sistema.</p></div>
+                      </article>
+                    ))}
+                    {notifications.birthdays.map(collaborator => (
+                      <article key={collaborator.matricula} className="flex items-start gap-3 rounded-md p-3 hover:bg-canvas-soft">
+                        <Gift aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-brand-text" />
+                        <div><h4 className="text-sm font-semibold text-ink">Aniversariante do dia</h4><p className="text-xs text-ink-mute">Parabéns para {collaborator.nome}.</p></div>
+                      </article>
+                    ))}
+                    {notifications.expiring.map(collaborator => (
+                      <article key={collaborator.matricula} className="flex items-start gap-3 rounded-md bg-danger/10 p-3">
+                        <AlertTriangle aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-danger" />
+                        <div><h4 className="text-sm font-semibold text-ink">Contrato vencendo hoje</h4><p className="text-xs text-ink-mute">{collaborator.nome} completa o período de experiência. Ação necessária no sistema.</p></div>
+                      </article>
+                    ))}
+                  </section>
                 )}
-            </button>
 
-            {isOpen && (
-                <div className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-surface rounded-2xl shadow-3 border border-border z-50 overflow-hidden">
-                    <div className="p-4 border-b border-border bg-surface-alt flex justify-between items-center">
-                        <h3 className="font-bold text-fg text-sm">Central de Notificações</h3>
-                        <span className="text-xs bg-primary-tonal text-primary px-2 py-0.5 rounded-full font-bold">Hoje</span>
-                    </div>
-
-                    <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
-                        {(notifications.birthdays.length > 0 || notifications.expiring.length > 0 || notifications.avisoEnding.length > 0) && (
-                            <div className="p-2">
-                                <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider px-2 py-1">Atenção Hoje</p>
-
-                                {notifications.avisoEnding.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors bg-warning/10">
-                                        <div className="bg-warning/20 text-fg p-2 rounded-lg">
-                                            <UserMinus size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-fg">Aviso Prévio Finalizando</p>
-                                            <p className="text-xs text-fg-muted">Último dia de <span className="font-semibold">{c.nome}</span>.</p>
-                                            <p className="text-[10px] text-fg-muted font-medium mt-1">Realizar desligamento no sistema.</p>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {notifications.birthdays.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors">
-                                        <div className="bg-primary-tonal text-primary p-2 rounded-lg">
-                                            <Gift size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-fg">Aniversariante do Dia!</p>
-                                            <p className="text-xs text-fg-muted">Parabéns para <span className="font-semibold">{c.nome}</span></p>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {notifications.expiring.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors bg-error/10">
-                                        <div className="bg-error/15 text-error p-2 rounded-lg">
-                                            <AlertTriangle size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-fg">Contrato Vencendo Hoje</p>
-                                            <p className="text-xs text-fg-muted">{c.nome} completa o período de experiência.</p>
-                                            <p className="text-[10px] text-error font-medium mt-1">Ação necessária no sistema.</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {notifications.birthdays.length === 0 && notifications.expiring.length === 0 && notifications.avisoEnding.length === 0 && (
-                            <div className="p-6 text-center text-fg-subtle">
-                                <CheckCircle className="mx-auto mb-2 text-fg-subtle" size={24} />
-                                <p className="text-xs">Nenhuma pendência urgente para hoje.</p>
-                            </div>
-                        )}
-
-                        <div className="w-full h-px bg-border my-1"></div>
-
-                        <div className="p-2">
-                            <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider px-2 py-1">Últimas Atualizações</p>
-                            {notifications.recentHistory.map(log => (
-                                <div key={log.id} className="flex gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors">
-                                    <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0
-                                        ${log.type === 'create' ? 'bg-success' :
-                                          log.type === 'delete' ? 'bg-error' : 'bg-primary'}`}
-                                    />
-                                    <div>
-                                        <p className="text-xs text-fg leading-tight">
-                                            <span className="font-bold">{log.user}</span> {log.action.toLowerCase()}
-                                        </p>
-                                        <p className="text-[10px] text-fg-muted mt-1">{log.target} • {log.date.split(' ')[1]}</p>
-                                    </div>
-                                </div>
-                            ))}
-                             {notifications.recentHistory.length === 0 && (
-                                <p className="text-xs text-fg-subtle p-3 text-center">Nenhum histórico recente.</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <section aria-labelledby={`${titleId}-history`} className="border-t border-hairline p-2">
+                  <h3 id={`${titleId}-history`} className="t-eyebrow px-2 py-2 text-ink-faint">Últimas atualizações</h3>
+                  {notifications.recentHistory.map(log => (
+                    <article key={log.id} className="flex gap-3 rounded-md p-3 hover:bg-canvas-soft">
+                      <span aria-hidden="true" className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${log.type === 'create' ? 'bg-ok' : log.type === 'delete' ? 'bg-danger' : 'bg-brand'}`} />
+                      <div><p className="text-xs leading-tight text-ink"><strong>{log.user}</strong> {log.action.toLowerCase()}</p><p className="mt-1 text-[10px] text-ink-mute">{log.target} • {log.date.split(' ')[1]}</p></div>
+                    </article>
+                  ))}
+                  {notifications.recentHistory.length === 0 && <p className="p-3 text-center text-xs text-ink-faint">Nenhum histórico recente.</p>}
+                </section>
+              </>
             )}
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };

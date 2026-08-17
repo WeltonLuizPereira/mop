@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus, UserRole } from '../types';
 import { CollaboratorsPage } from './CollaboratorsPage';
@@ -22,8 +23,8 @@ vi.mock('../services/mockDb', () => ({
 
 const usuario = { id: '1', matricula: '3924', nome: 'Welton', email: 'w@q.com',
   role: UserRole.ADMIN, status: EntityStatus.ACTIVE };
-const montar = () =>
-  render(<CollaboratorsPage currentUser={usuario} onViewDetails={vi.fn()} onRefresh={vi.fn()} />);
+const montar = (onViewDetails = vi.fn(), currentUser = usuario) =>
+  render(<CollaboratorsPage currentUser={currentUser} onViewDetails={onViewDetails} onRefresh={vi.fn()} />);
 
 describe('Colaboradores', () => {
   it('tem exatamente as cinco colunas definidas', async () => {
@@ -46,5 +47,38 @@ describe('Colaboradores', () => {
     montar();
     const linha = (await screen.findByText('Adriana Lopes Ferreira')).closest('tr')!;
     expect(within(linha).getByText('V')).toBeInTheDocument();
+  });
+
+  it('abre o detalhe por clique, Enter e Espaço', async () => {
+    const onViewDetails = vi.fn();
+    montar(onViewDetails);
+    const linha = (await screen.findByText('Adriana Lopes Ferreira')).closest('tr')!;
+    fireEvent.click(linha);
+    fireEvent.keyDown(linha, { key: 'Enter' });
+    fireEvent.keyDown(linha, { key: ' ' });
+    expect(onViewDetails).toHaveBeenCalledTimes(3);
+  });
+
+  it('preserva exportação e permissão de cadastro', async () => {
+    montar();
+    await screen.findByText('Adriana Lopes Ferreira');
+    expect(screen.getByRole('button', { name: /excel/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /pdf/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /novo cadastro/i })).toBeInTheDocument();
+  });
+
+  it('não oferece novo cadastro ao visualizador', async () => {
+    montar(vi.fn(), { ...usuario, role: UserRole.VIEWER });
+    await screen.findByText('Adriana Lopes Ferreira');
+    expect(screen.queryByRole('button', { name: /novo cadastro/i })).not.toBeInTheDocument();
+  });
+
+  it('mantém a busca disponível quando nenhum resultado corresponde ao termo', async () => {
+    montar();
+    await screen.findByText('Adriana Lopes Ferreira');
+    const search = screen.getByRole('textbox', { name: 'Buscar colaboradores' });
+    await userEvent.type(search, 'inexistente');
+    expect(screen.getByRole('textbox', { name: 'Buscar colaboradores' })).toHaveValue('inexistente');
+    expect(screen.getByRole('region', { name: 'Nenhum colaborador encontrado' })).toBeInTheDocument();
   });
 });

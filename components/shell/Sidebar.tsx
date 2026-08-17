@@ -14,7 +14,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout }: SidebarProps) => (
-  <aside className="w-[260px] shrink-0 bg-canvas-soft border-r border-hairline flex flex-col h-full">
+  <aside aria-label="Navegação da aplicação" className="w-[260px] shrink-0 bg-canvas-soft border-r border-hairline flex flex-col h-full">
     <div className="h-14 flex items-center gap-2.5 px-[18px] border-b border-hairline">
       <Logo variant="mark" className="w-6 h-6 shrink-0" />
       <div className="min-w-0">
@@ -23,7 +23,7 @@ export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout }: Side
       </div>
     </div>
 
-    <nav className="flex-1 overflow-y-auto p-3">
+    <nav aria-label="Menu principal" className="flex-1 overflow-y-auto p-3">
       {visibleGroups(currentUser.role).map(grupo => (
         <div key={grupo.group} className="mb-5 last:mb-0">
           <span className="t-eyebrow text-ink-faint block px-2.5 mb-2">{grupo.group}</span>
