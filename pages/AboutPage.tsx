@@ -9,7 +9,7 @@ export const AboutPage = () => (
       <div className="w-24 h-24 bg-brand-100 text-brand-600 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
         <Info size={48} />
       </div>
-      <h1 className="text-4xl font-bold text-gray-900 mb-2">MOP - Mapa Operacional</h1>
+      <h2 className="text-4xl font-bold text-gray-900 mb-2">MOP - Mapa Operacional</h2>
       <p className="text-xl text-gray-500 mb-8">Desenvolvido para simplificar o seu dia a dia.</p>
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-lg w-full space-y-6">
