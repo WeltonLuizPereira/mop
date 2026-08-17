@@ -6,6 +6,35 @@ import {
 import { generateId } from '../utils';
 import { supabase } from './supabase';
 
+/**
+ * Teto de linhas por requisição do PostgREST, a camada que o Supabase expõe.
+ */
+const PAGINA = 1000;
+
+/**
+ * Lê uma tabela inteira, página por página.
+ *
+ * O PostgREST devolve no máximo `PAGINA` linhas por requisição e **não
+ * sinaliza o corte**: a resposta chega 200, com a lista truncada e nenhum
+ * aviso. Quem lê sem paginar acredita ter lido tudo. Foi assim que a tela de
+ * Colaboradores parou de mostrar o fim do alfabeto ao passar de mil pessoas —
+ * a consulta ordenava por nome e o corte comia a cauda.
+ */
+async function buscarTudo<T>(
+  pagina: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error?: any }>,
+): Promise<{ data: T[]; error: any }> {
+  const tudo: T[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await pagina(de, de + PAGINA - 1);
+    if (error) return { data: tudo, error };
+    if (!data || data.length === 0) break;
+    tudo.push(...data);
+    // página incompleta significa fim da tabela — evita uma requisição a mais
+    if (data.length < PAGINA) break;
+  }
+  return { data: tudo, error: null };
+}
+
 // Seed Data para fallback
 const INITIAL_ADMIN: User = {
   id: '3924',
@@ -49,7 +78,8 @@ class SupabaseService {
 
   // --- Users ---
   async getUsers(): Promise<User[]> {
-    const { data, error } = await supabase.from('mop_users').select('*');
+    const { data, error } = await buscarTudo<any>((de, ate) =>
+        supabase.from('mop_users').select('*').range(de, ate));
     if (error) console.error('Erro ao buscar usuários:', error);
     // Fallback se não houver usuários (primeiro acesso)
     if (!data || data.length === 0) return [INITIAL_ADMIN];
@@ -76,7 +106,8 @@ class SupabaseService {
   // --- History ---
   async getHistory(): Promise<HistoryLog[]> { 
     // Buscamos sem ordenação do banco pois o campo date é string DD/MM/YYYY e a ordenação SQL seria alfabética incorreta
-    const { data, error } = await supabase.from('mop_history').select('*');
+    const { data, error } = await buscarTudo<any>((de, ate) =>
+        supabase.from('mop_history').select('*').range(de, ate));
     if (error) {
       console.error('Erro ao buscar histórico:', error);
       return [];
@@ -119,11 +150,13 @@ class SupabaseService {
   }
   
   async getVacationHistory(matricula?: string): Promise<any[]> {
-    let query = supabase.from('mop_vacation_history').select('*');
-    if (matricula) {
-        query = query.eq('collaborator_matricula', matricula);
-    }
-    const { data, error } = await query.order('start_date', { ascending: false });
+    const { data, error } = await buscarTudo<any>((de, ate) => {
+        let query = supabase.from('mop_vacation_history').select('*');
+        if (matricula) {
+            query = query.eq('collaborator_matricula', matricula);
+        }
+        return query.order('start_date', { ascending: false }).range(de, ate);
+    });
     if (error) {
       console.error('Erro ao buscar histórico de férias:', error);
       return [];
@@ -166,10 +199,12 @@ class SupabaseService {
 
   // --- Helpers Genéricos de CRUD ---
   private async getAll<T>(table: string): Promise<T[]> {
-    let query = supabase.from(table).select('*');
-    if (table !== 'mop_users') query = query.order('nome');
-    const { data } = await query;
-    return (data as T[]) || [];
+    const { data } = await buscarTudo<T>((de, ate) => {
+      let query = supabase.from(table).select('*');
+      if (table !== 'mop_users') query = query.order('nome');
+      return query.range(de, ate);
+    });
+    return data;
   }
 
   private async saveItem<T extends { id: string }>(table: string, item: T) {
@@ -314,7 +349,8 @@ class SupabaseService {
 
   // --- Collaborators ---
   async getCollaborators(): Promise<Collaborator[]> {
-    const { data } = await supabase.from('mop_collaborators').select('*').order('nome');
+    const { data } = await buscarTudo<any>((de, ate) =>
+        supabase.from('mop_collaborators').select('*').order('nome').range(de, ate));
     return data?.map(c => ({
         ...c,
         ilhaId: c.ilha_id,
