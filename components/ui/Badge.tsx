@@ -1,5 +1,6 @@
 import React from 'react';
 import { CollaboratorStatus, EntityStatus } from '../../types';
+import { normalizarStatus } from '../../lib/status';
 
 const COR: Record<string, string> = {
   [CollaboratorStatus.ATIVO]: 'var(--st-ativo)',
@@ -39,15 +40,20 @@ interface BadgeProps {
 }
 
 /** Ponto + rótulo. Cor nunca carrega significado sozinha (spec §4.4). */
-export const Badge = ({ status, count, className = '' }: BadgeProps) => (
-  <span className={`inline-flex items-center gap-[7px] text-[13px] text-ink-2 whitespace-nowrap ${className}`}>
-    <span
-      data-dot
-      aria-hidden="true"
-      className="w-2 h-2 rounded-full shrink-0"
-      style={{ backgroundColor: COR[status] ?? 'var(--st-desligado)' }}
-    />
-    {count !== undefined && <b className="t-data font-medium text-ink-2">{count}</b>}
-    {count === undefined ? rotular(status) : contar(status, count)}
-  </span>
-);
+export const Badge = ({ status, count, className = '' }: BadgeProps) => {
+  // "Ferias" gravado sem acento é o mesmo estado que "FÉRIAS": normalizar aqui
+  // é o que mantém o ponto da tabela e o do tile do mapa na mesma cor
+  const canonico = normalizarStatus(status) ?? status;
+  return (
+    <span className={`inline-flex items-center gap-[7px] text-[13px] text-ink-2 whitespace-nowrap ${className}`}>
+      <span
+        data-dot
+        aria-hidden="true"
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: COR[canonico] ?? 'var(--st-desligado)' }}
+      />
+      {count !== undefined && <b className="t-data font-medium text-ink-2">{count}</b>}
+      {count === undefined ? rotular(canonico) : contar(canonico, count)}
+    </span>
+  );
+};

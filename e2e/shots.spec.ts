@@ -84,6 +84,32 @@ const TELAS = [
   'Update em massa', 'Histórico', 'Sobre',
 ];
 
+test('diálogos', async ({ page }) => {
+  await stub(page);
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto('/');
+  await page.getByLabel('Matrícula').fill('3924');
+  await page.getByLabel('Senha').fill('senha-de-teste');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.locator('h1').waitFor();
+
+  await page.getByRole('button', { name: 'Clientes', exact: true }).click();
+  await page.getByRole('button', { name: 'Novo' }).click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${DIR}/dialogo-cadastro.png` });
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('row', { name: /Vivo/ }).getByRole('button').last().click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${DIR}/dialogo-exclusao.png` });
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: 'Colaboradores', exact: true }).click();
+  await page.getByRole('button', { name: 'Novo colaborador' }).click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${DIR}/dialogo-colaborador.png` });
+});
+
 for (const tema of ['claro', 'escuro'] as const) {
   test(`telas — tema ${tema}`, async ({ page }) => {
     test.setTimeout(240_000);

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, AlertTriangle, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { User, UserRole, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { generateId } from '../utils';
-import { Button, Input, Select, Badge } from '../components/ui';
+import { Button, Input, Select, Badge, Modal } from '../components/ui';
 
 export const CrudPage = <T extends { id: string, nome: string, status: string | EntityStatus }>({
-  title, data, onSave, onDelete, schema, currentUser, onRefresh
+  title, singular, data, onSave, onDelete, schema, currentUser, onRefresh
 }: {
-  key?: any, title: string, data: Promise<T[]> | T[], onSave: (item: any) => Promise<void> | void, onDelete: (id: string) => Promise<void> | void, schema: { key: string, label: string, type: 'text' | 'select' | 'multiselect', options?: any[] | ((currentItem: any) => any[]) }[], currentUser: User, onRefresh: () => void
+  key?: any, title: string, singular: string, data: Promise<T[]> | T[], onSave: (item: any) => Promise<void> | void, onDelete: (id: string) => Promise<void> | void, schema: { key: string, label: string, type: 'text' | 'select' | 'multiselect', options?: any[] | ((currentItem: any) => any[]) }[], currentUser: User, onRefresh: () => void
 }) => {
     // ... same as original ...
     const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +34,7 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
     const confirmDelete = async () => {
         if (itemToDelete) {
            await onDelete(itemToDelete.id);
-           await db.addHistory({ action: `Exclusão de ${title.slice(0, -1)}`, target: itemToDelete.nome, user: currentUser.nome, date: new Date().toLocaleString('pt-BR'), type: 'delete', details: `Registro removido permanentemente` });
+           await db.addHistory({ action: `Exclusão de ${singular}`, target: itemToDelete.nome, user: currentUser.nome, date: new Date().toLocaleString('pt-BR'), type: 'delete', details: `Registro removido permanentemente` });
            setIsDeleteOpen(false); setItemToDelete(null); onRefresh();
         }
     };
@@ -44,7 +44,7 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
         const isNew = !currentItem.id;
         const payload = { ...currentItem, id: currentItem.id || generateId() };
         await onSave(payload);
-        await db.addHistory({ action: isNew ? `Criação de ${title.slice(0, -1)}` : `Edição de ${title.slice(0, -1)}`, target: payload.nome, user: currentUser.nome, date: new Date().toLocaleString('pt-BR'), type: isNew ? 'create' : 'update', details: isNew ? 'Novo registro criado' : 'Atualização de dados cadastrais' });
+        await db.addHistory({ action: isNew ? `Criação de ${singular}` : `Edição de ${singular}`, target: payload.nome, user: currentUser.nome, date: new Date().toLocaleString('pt-BR'), type: isNew ? 'create' : 'update', details: isNew ? 'Novo registro criado' : 'Atualização de dados cadastrais' });
         setLoading(false); setIsOpen(false); onRefresh();
     };
 
@@ -106,15 +106,20 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                   </table>
                 </div>
             </div>
-            {/* Modal ... */}
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                  <div className="mop-pop-in bg-canvas rounded-xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
-                    <div className="bg-canvas-soft p-4 border-b border-hairline flex justify-between items-center shrink-0">
-                      <h3 className="font-bold text-lg text-ink">{currentItem.id ? 'Editar' : 'Novo'} {title}</h3>
-                      <button type="button" onClick={() => setIsOpen(false)} className="text-ink-faint hover:text-ink"><X size={20}/></button>
-                    </div>
-                    <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto flex flex-col gap-4">
+            <Modal
+              open={isOpen}
+              onClose={() => setIsOpen(false)}
+              title={`${currentItem.id ? 'Editar' : 'Novo'} ${singular}`}
+              rodape={
+                <>
+                  <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
+                  <Button type="submit" form="form-cadastro" disabled={loading}>
+                    {loading ? 'Salvando…' : 'Salvar'}
+                  </Button>
+                </>
+              }
+            >
+                    <form id="form-cadastro" onSubmit={handleSubmit} className="flex flex-col gap-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {schema.map(field => {
                         const opts = typeof field.options === 'function' ? field.options(currentItem) : field.options;
@@ -165,27 +170,30 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                       <div className="mt-2 pt-4 border-t border-hairline">
                         <Select label="Status" value={currentItem.status || EntityStatus.ACTIVE} onChange={(e: any) => setCurrentItem({...currentItem, status: e.target.value})}><option value={EntityStatus.ACTIVE}>Ativo</option><option value={EntityStatus.INACTIVE}>Inativo</option></Select>
                       </div>
-                      <div className="mt-4 flex justify-end gap-3 shrink-0">
-                        <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
-                        <Button type="submit" disabled={loading}>{loading ? 'Salvando...' : 'Salvar'}</Button>
-                      </div>
                     </form>
-                  </div>
+            </Modal>
+            <Modal
+              open={isDeleteOpen && Boolean(itemToDelete)}
+              onClose={() => setIsDeleteOpen(false)}
+              title={`Excluir ${singular}?`}
+              tamanho="sm"
+              semCabecalho
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={32} />
                 </div>
-            )}
-            {/* Delete Modal ... */}
-            {isDeleteOpen && itemToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="mop-pop-in bg-canvas rounded-xl shadow-3 w-full max-w-sm overflow-hidden">
-                    <div className="p-6 text-center">
-                       <div className="w-16 h-16 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-4"><AlertTriangle size={32} /></div>
-                       <h3 className="t-display-md text-ink mb-2">Excluir {title.slice(0, -1)}?</h3>
-                       <p className="text-ink-mute text-sm mb-6">Tem certeza que deseja remover <b>{itemToDelete.nome}</b>?</p>
-                       <div className="flex gap-3 justify-center"><Button variant="secondary" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button><Button variant="danger" onClick={confirmDelete}>Sim, Excluir</Button></div>
-                    </div>
-                  </div>
+                <h3 className="t-display-md text-ink mb-2">Excluir {singular}?</h3>
+                <p className="text-ink-mute text-sm mb-6">
+                  <b className="text-ink">{itemToDelete?.nome}</b> sai do cadastro. Quem já está ligado a
+                  este registro continua no histórico.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button variant="secondary" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button>
+                  <Button variant="solid-danger" onClick={confirmDelete}>Excluir</Button>
                 </div>
-            )}
+              </div>
+            </Modal>
         </div>
     );
 };

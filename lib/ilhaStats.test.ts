@@ -74,6 +74,19 @@ describe('computeIlhaStats', () => {
     expect(r.map(i => i.id)).toEqual(['i2', 'i1']);
   });
 
+  it('conta quem está com o status escrito fora do padrão', () => {
+    const [i1] = computeIlhaStats(ilhas, [
+      colab('1', 'i1', 'Ativo' as CollaboratorStatus),
+      colab('2', 'i1', 'FERIAS' as CollaboratorStatus),
+    ], clients, operations);
+    expect(i1.total).toBe(2);
+    expect(i1.emOperacao).toBe(0.5);
+    expect(i1.porStatus).toEqual([
+      { status: CollaboratorStatus.ATIVO, count: 1 },
+      { status: CollaboratorStatus.FERIAS, count: 1 },
+    ]);
+  });
+
   it('inverte a ordem quando a pessoa pede decrescente', () => {
     const r = computeIlhaStats(ilhas, [
       colab('1', 'i1', CollaboratorStatus.ATIVO),

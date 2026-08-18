@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle, CalendarClock, Stethoscope, Activity } from 'lucide-react';
 import { Collaborator, CollaboratorStatus, Ilha, Coordinator, Supervisor, Client, Operation } from '../../types';
 import { db } from '../../services/mockDb';
-import { Input, Select, Button } from '../ui';
+import { Input, Select, Button, Modal } from '../ui';
 
 export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initialScheduleDate }: any) => {
     const [formData, setFormData] = useState<Partial<Collaborator>>(initialData || {
@@ -37,23 +37,63 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
         onSchedule(formData, scheduleDate);
     };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="mop-pop-in bg-canvas rounded-xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh]">
-            <div className="bg-canvas-soft p-4 border-b border-hairline flex justify-between items-center shrink-0">
-              <h3 className="font-bold text-lg text-ink">{initialData ? 'Editar' : 'Novo'} Colaborador</h3>
-              <button onClick={onClose} className="text-ink-faint hover:text-ink"><X size={20}/></button>
+    const rodape = (
+        <div className="flex items-center justify-between gap-3 w-full">
+            {onSchedule ? (
+                <div className="flex items-center gap-2">
+                    {!isScheduling ? (
+                        <Button variant="secondary" onClick={() => setIsScheduling(true)}>
+                            <CalendarClock size={16}/> {initialData ? 'Agendar alteração' : 'Agendar cadastro'}
+                        </Button>
+                    ) : (
+                        <div className="flex items-center gap-2 bg-brand-wash p-2 rounded-lg border border-brand/30 mop-fade-up">
+                            <span className="t-eyebrow text-brand-text">Para</span>
+                            <input
+                                type="date"
+                                aria-label="Data do agendamento"
+                                className="px-2 py-1 text-sm rounded-sm border border-brand/40 bg-canvas text-ink focus:ring-1 focus:ring-brand outline-none"
+                                value={scheduleDate}
+                                onChange={(e) => setScheduleDate(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setIsScheduling(false)}
+                                aria-label="Cancelar agendamento"
+                                className="p-1 rounded-full text-brand-text/70 hover:text-brand-text"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            ) : <span />}
+
+            <div className="flex justify-end gap-3">
+                <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+                {isScheduling
+                    ? <Button onClick={handleConfirmSchedule}>Confirmar agendamento</Button>
+                    : <Button onClick={() => onSave(formData)}>Salvar</Button>}
             </div>
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
+        </div>
+    );
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={initialData ? 'Editar colaborador' : 'Novo colaborador'}
+            rodape={rodape}
+        >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input label="Matrícula" value={formData.matricula} onChange={(e:any) => handleChange('matricula', e.target.value)} required disabled={!!initialData} />
-                <Input label="Nome Completo" value={formData.nome} onChange={(e:any) => handleChange('nome', e.target.value)} required />
+                <Input label="Nome completo" value={formData.nome} onChange={(e:any) => handleChange('nome', e.target.value)} required />
                 <Input label="Email" type="email" value={formData.email} onChange={(e:any) => handleChange('email', e.target.value)} />
-                <Input label="Data Nascimento" type="date" value={formData.dtNasc} onChange={(e:any) => handleChange('dtNasc', e.target.value)} />
+                <Input label="Data de nascimento" type="date" value={formData.dtNasc} onChange={(e:any) => handleChange('dtNasc', e.target.value)} />
 
                 {/* Novos Campos VR */}
                 <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 bg-brand-wash p-3 rounded-lg border border-brand/20">
                     <Input label="Email VR" value={formData.email_vr || ''} onChange={(e:any) => handleChange('email_vr', e.target.value)} placeholder="Email para sistema VR" />
-                    <Input label="Senha de Acesso" value={formData.senha || ''} onChange={(e:any) => handleChange('senha', e.target.value)} placeholder="Senha inicial" />
+                    <Input label="Senha de acesso" value={formData.senha || ''} onChange={(e:any) => handleChange('senha', e.target.value)} placeholder="Senha inicial" />
                 </div>
 
                 <div className="col-span-1 md:col-span-2 bg-canvas-soft p-4 rounded-lg border border-hairline">
@@ -113,14 +153,14 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
 
                     {formData.status === CollaboratorStatus.FERIAS && (
                         <div className="grid grid-cols-2 gap-4 bg-brand/15 p-4 rounded-lg border border-brand/40 mop-fade-up">
-                             <Input label="Início Férias" type="date" value={formData.feriasInicio} onChange={(e:any) => handleChange('feriasInicio', e.target.value)} />
-                             <Input label="Fim Férias" type="date" value={formData.feriasFim} onChange={(e:any) => handleChange('feriasFim', e.target.value)} />
+                             <Input label="Início das férias" type="date" value={formData.feriasInicio} onChange={(e:any) => handleChange('feriasInicio', e.target.value)} />
+                             <Input label="Fim das férias" type="date" value={formData.feriasFim} onChange={(e:any) => handleChange('feriasFim', e.target.value)} />
                         </div>
                     )}
 
                     {formData.status === CollaboratorStatus.DESLIGADO && (
                         <div className="bg-danger/10 p-4 rounded-lg border border-danger/30 mop-fade-up">
-                             <Input label="Data Desligamento" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
+                             <Input label="Data do desligamento" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
                         </div>
                     )}
 
@@ -131,7 +171,7 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                                 <p className="text-sm font-bold">Registro de Aviso Prévio</p>
                              </div>
                              <p className="text-xs text-ink-mute mb-3">Informe a data prevista para o desligamento final. O sistema usará esta data para cálculos de turnover futuro.</p>
-                             <Input label="Data Fim do Aviso" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
+                             <Input label="Fim do aviso" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
                         </div>
                     )}
 
@@ -141,7 +181,7 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                                 <Activity size={16} />
                                 <p className="text-sm font-bold">Registro de Afastamento</p>
                              </div>
-                             <Input label="Data de Início do Afastamento" type="date" value={formData.dataAfastamento} onChange={(e:any) => handleChange('dataAfastamento', e.target.value)} required />
+                             <Input label="Início do afastamento" type="date" value={formData.dataAfastamento} onChange={(e:any) => handleChange('dataAfastamento', e.target.value)} required />
                         </div>
                     )}
 
@@ -151,58 +191,19 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                                 <Stethoscope size={16} />
                                 <p className="text-sm font-bold">Registro de Licença Maternidade</p>
                              </div>
-                             <Input label="Data de Início da Licença" type="date" value={formData.dataAfastamento} onChange={(e:any) => handleChange('dataAfastamento', e.target.value)} required />
+                             <Input label="Início da licença" type="date" value={formData.dataAfastamento} onChange={(e:any) => handleChange('dataAfastamento', e.target.value)} required />
                         </div>
                     )}
                 </div>
 
                 <div className="col-span-1 md:col-span-2">
-                    <Input label="Data Entrada" type="date" value={formData.dtEntradaProduto} onChange={(e:any) => handleChange('dtEntradaProduto', e.target.value)} />
+                    <Input label="Data de entrada" type="date" value={formData.dtEntradaProduto} onChange={(e:any) => handleChange('dtEntradaProduto', e.target.value)} />
                     <div className="grid grid-cols-2 gap-2">
-                        <Input label="Horário Entrada" type="time" value={formData.horarioEntrada} onChange={(e:any) => handleChange('horarioEntrada', e.target.value)} />
-                        <Input label="Horário Saída" type="time" value={formData.horarioSaida} onChange={(e:any) => handleChange('horarioSaida', e.target.value)} />
+                        <Input label="Entrada" type="time" value={formData.horarioEntrada} onChange={(e:any) => handleChange('horarioEntrada', e.target.value)} />
+                        <Input label="Saída" type="time" value={formData.horarioSaida} onChange={(e:any) => handleChange('horarioSaida', e.target.value)} />
                     </div>
                 </div>
             </div>
-            <div className="p-4 bg-canvas-soft flex items-center justify-between border-t border-hairline shrink-0">
-                 {onSchedule ? (
-                    <div className="flex items-center gap-2">
-                        {!isScheduling ? (
-                            <Button variant="secondary" onClick={() => setIsScheduling(true)}>
-                                <CalendarClock size={16}/> {initialData ? "Agendar alteração" : "Agendar Cadastro"}
-                            </Button>
-                        ) : (
-                            <div className="flex items-center gap-2 bg-brand-wash p-2 rounded-lg border border-brand/30 mop-fade-up">
-                                <span className="text-xs font-bold text-brand-text uppercase">Para:</span>
-                                <input
-                                    type="date"
-                                    className="px-2 py-1 text-sm rounded border border-brand/40 bg-canvas text-ink focus:ring-1 focus:ring-brand outline-none"
-                                    value={scheduleDate}
-                                    onChange={(e) => setScheduleDate(e.target.value)}
-                                />
-                                <button
-                                    onClick={() => setIsScheduling(false)}
-                                    className="p-1 rounded-full text-brand-text/70 hover:text-brand-text"
-                                >
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                 ) : <div></div>}
-
-                <div className="flex justify-end gap-3">
-                    <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-                    {isScheduling ? (
-                        <Button onClick={handleConfirmSchedule}>
-                            Confirmar agendamento
-                        </Button>
-                    ) : (
-                        <Button onClick={() => onSave(formData)}>Salvar</Button>
-                    )}
-                </div>
-            </div>
-          </div>
-        </div>
+        </Modal>
     );
 };

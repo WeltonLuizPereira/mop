@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, AlertCircle, Info, Filter, AlertTriangle, CalendarClock, Loader2, X, CheckCircle, ListChecks } from 'lucide-react';
 import { User, Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
-import { Button } from '../components/ui';
+import { Button, Modal } from '../components/ui';
 
 export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, onRefresh: () => void }) => {
     // ... same as original ...
@@ -479,35 +479,38 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                 </div>
             </div>
 
-            {/* Custom Modal for Sandbox Compatibility */}
-            {modalConfig.isOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-canvas rounded-lg shadow-3 w-full max-w-sm overflow-hidden scale-100 p-6 text-center">
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 
-                            ${modalConfig.type === 'error' ? 'bg-danger/15 text-danger' : 
-                              modalConfig.type === 'success' ? 'bg-ok/15 text-ok' : 
-                              modalConfig.type === 'confirm' ? 'bg-brand-wash text-brand' : 'bg-canvas-sunk text-ink-mute'}`}>
-                            {modalConfig.type === 'error' ? <AlertTriangle size={32} /> :
-                             modalConfig.type === 'success' ? <CheckCircle size={32} /> :
-                             modalConfig.type === 'confirm' ? <AlertCircle size={32} /> : <Info size={32} />} 
-                        </div>
-                        
-                        <h3 className="t-display-md text-ink mb-2">{modalConfig.title}</h3>
-                        <div className="text-ink-mute text-sm mb-6">{modalConfig.message}</div>
-                        
-                        <div className="flex gap-3 justify-center">
-                            {(modalConfig.type === 'confirm') ? (
-                                <>
-                                    <Button variant="secondary" onClick={() => setModalConfig(p => ({...p, isOpen: false}))}>Cancelar</Button>
-                                    <Button onClick={modalConfig.onConfirm}>Confirmar</Button>
-                                </>
-                            ) : (
-                                <Button variant="secondary" onClick={() => setModalConfig(p => ({...p, isOpen: false}))}>Fechar</Button>
-                            )}
-                        </div>
+            <Modal
+                open={modalConfig.isOpen}
+                onClose={() => setModalConfig(p => ({ ...p, isOpen: false }))}
+                title={modalConfig.title}
+                tamanho="sm"
+                semCabecalho
+            >
+                <div className="text-center">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4
+                        ${modalConfig.type === 'error' ? 'bg-danger/15 text-danger' :
+                          modalConfig.type === 'success' ? 'bg-ok/15 text-ok' :
+                          modalConfig.type === 'confirm' ? 'bg-brand-wash text-brand' : 'bg-canvas-sunk text-ink-mute'}`}>
+                        {modalConfig.type === 'error' ? <AlertTriangle size={32} /> :
+                         modalConfig.type === 'success' ? <CheckCircle size={32} /> :
+                         modalConfig.type === 'confirm' ? <AlertCircle size={32} /> : <Info size={32} />}
+                    </div>
+
+                    <h3 className="t-display-md text-ink mb-2">{modalConfig.title}</h3>
+                    <div className="text-ink-mute text-sm mb-6">{modalConfig.message}</div>
+
+                    <div className="flex gap-3 justify-center">
+                        {(modalConfig.type === 'confirm') ? (
+                            <>
+                                <Button variant="secondary" onClick={() => setModalConfig(p => ({ ...p, isOpen: false }))}>Cancelar</Button>
+                                <Button onClick={modalConfig.onConfirm}>Confirmar</Button>
+                            </>
+                        ) : (
+                            <Button variant="secondary" onClick={() => setModalConfig(p => ({ ...p, isOpen: false }))}>Fechar</Button>
+                        )}
                     </div>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };

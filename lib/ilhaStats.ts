@@ -1,6 +1,7 @@
 import {
   CollaboratorStatus, type Client, type Collaborator, type Ilha, type Operation,
 } from '../types';
+import { normalizarStatus } from './status';
 
 export interface IlhaStat {
   id: string;
@@ -37,10 +38,15 @@ export function computeIlhaStats(
 
   return ilhas
     .map(ilha => {
+      // O status vem do banco como texto livre; sem normalizar, "Ferias" some
+      // da contagem aqui e vira ponto cinza na tabela — as duas telas
+      // discordariam sobre a mesma pessoa.
+      const daIlha = collabs
+        .filter(c => c.ilhaId === ilha.id)
+        .map(c => ({ colaborador: c, status: normalizarStatus(c.status) }));
+
       // Desligado não é quadro: quem saiu não entra no denominador.
-      const doQuadro = collabs.filter(
-        c => c.ilhaId === ilha.id && c.status !== CollaboratorStatus.DESLIGADO,
-      );
+      const doQuadro = daIlha.filter(c => c.status !== CollaboratorStatus.DESLIGADO);
       const ativos = doQuadro.filter(c => c.status === CollaboratorStatus.ATIVO).length;
 
       return {
@@ -70,7 +76,8 @@ export function computeIlhaStats(
 }
 
 export function totaisGerais(collabs: Collaborator[]) {
-  const contar = (s: CollaboratorStatus) => collabs.filter(c => c.status === s).length;
+  const status = collabs.map(c => normalizarStatus(c.status));
+  const contar = (s: CollaboratorStatus) => status.filter(atual => atual === s).length;
   return {
     ativos: contar(CollaboratorStatus.ATIVO),
     ferias: contar(CollaboratorStatus.FERIAS),

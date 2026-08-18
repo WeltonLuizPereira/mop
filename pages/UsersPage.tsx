@@ -6,6 +6,7 @@ import { CrudPage } from './CrudPage';
 export const UsersPage = ({ currentUser, onRefresh }: any) => {
     return <CrudPage
         title="Usuários"
+        singular="usuário"
         data={db.getUsers()}
         onSave={(u: User) => {
              db.getUsers().then(users => {

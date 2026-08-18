@@ -16,6 +16,8 @@ vi.mock('../services/mockDb', () => ({
         coordinatorIds: [], supervisorIds: [], status: EntityStatus.ACTIVE },
       { id: 'i2', nome: 'Ilha 07 — Cobrança', clientId: 'c2', operationId: 'o2',
         coordinatorIds: [], supervisorIds: [], status: EntityStatus.ACTIVE },
+      { id: 'i3', nome: 'Ilha 02 — Desativada', clientId: 'c1', operationId: 'o3',
+        coordinatorIds: [], supervisorIds: [], status: EntityStatus.INACTIVE },
     ])),
     getClients: vi.fn(async () => ([
       { id: 'c1', nome: 'Vivo', status: EntityStatus.ACTIVE },
@@ -24,6 +26,7 @@ vi.mock('../services/mockDb', () => ({
     getOperations: vi.fn(async () => ([
       { id: 'o1', nome: 'Móvel', clientId: 'c1', status: EntityStatus.ACTIVE },
       { id: 'o2', nome: 'Residencial', clientId: 'c2', status: EntityStatus.ACTIVE },
+      { id: 'o3', nome: 'Fibra', clientId: 'c1', status: EntityStatus.ACTIVE },
     ])),
   },
 }));
@@ -36,6 +39,38 @@ describe('Visão geral', () => {
     render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
     expect(await screen.findByText('Ilha 01 — SAC')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
+  });
+
+  it('deixa a ilha inativa fora do mapa', async () => {
+    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    await screen.findByText('Ilha 01 — SAC');
+    expect(screen.queryByText('Ilha 02 — Desativada')).not.toBeInTheDocument();
+  });
+
+  it('recorta o mapa pela operação escolhida no chip', async () => {
+    const user = userEvent.setup();
+    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    await screen.findByText('Ilha 01 — SAC');
+
+    await user.selectOptions(screen.getByLabelText('Filtrar ilhas por operação'), 'o2');
+
+    expect(screen.getByText('Ilha 07 — Cobrança')).toBeInTheDocument();
+    expect(screen.queryByText('Ilha 01 — SAC')).not.toBeInTheDocument();
+  });
+
+  it('só oferece as operações do cliente escolhido e zera a anterior', async () => {
+    const user = userEvent.setup();
+    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    await screen.findByText('Ilha 01 — SAC');
+
+    const operacao = screen.getByLabelText('Filtrar ilhas por operação') as HTMLSelectElement;
+    await user.selectOptions(operacao, 'o2');
+    await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c1');
+
+    // a operação do cliente antigo não pode continuar valendo
+    expect(operacao.value).toBe('');
+    const oferecidas = [...operacao.options].map(o => o.textContent);
+    expect(oferecidas).toEqual(['todas', 'Móvel', 'Fibra']);
   });
 
   it('recorta o mapa pelo cliente escolhido no chip', async () => {
