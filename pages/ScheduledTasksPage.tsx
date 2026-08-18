@@ -1,158 +1,188 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Trash2, Edit2 } from 'lucide-react';
 import { Collaborator, ScheduledTask } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
-import { Button } from '../components/ui';
+import { Button, EmptyState, InlineNotice, LoadingState, MetricStrip, PageToolbar, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
-export const ScheduledTasksPage = () => {
-    const [tasks, setTasks] = useState<ScheduledTask[]>([]);
-    const [collabNames, setCollabNames] = useState<Record<string, string>>({});
+export const ScheduledTasksPage: React.FC = () => {
+  const [tasks, setTasks] = useState<ScheduledTask[]>([]);
+  const [collabNames, setCollabNames] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [falhouCarga, setFalhouCarga] = useState(false);
 
-    // New State for Editing
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editingTask, setEditingTask] = useState<ScheduledTask | null>(null);
-    const [initialData, setInitialData] = useState<Partial<Collaborator>>({});
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<ScheduledTask | null>(null);
+  const [initialData, setInitialData] = useState<Partial<Collaborator>>({});
 
-    const loadTasks = async () => {
-        const pending = await db.getPendingTasks();
-        setTasks(pending);
+  const loadTasks = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setFalhouCarga(false);
+      const pending = await db.getPendingTasks();
+      setTasks(pending);
 
-        // Fetch Names
-        const collabs = await db.getCollaborators();
-        const names: Record<string, string> = {};
-        pending.forEach(t => {
-            const c = collabs.find(col => col.matricula === t.matricula);
-            if (c) names[t.matricula] = c.nome;
-            // Fallback para tarefas de criação onde o colaborador ainda não existe
-            else if (t.changes && t.changes.nome) names[t.matricula] = t.changes.nome + " (Novo)";
-        });
-        setCollabNames(names);
-    };
-
-    useEffect(() => { loadTasks(); }, []);
-
-    const handleCancel = async (id: string) => {
-        if(confirm("Deseja cancelar esta tarefa agendada?")) {
-            await db.cancelTask(id);
-            loadTasks();
-        }
+      // Busca os nomes dos colaboradores referenciados pelas tarefas
+      const collabs = await db.getCollaborators();
+      const names: Record<string, string> = {};
+      pending.forEach(t => {
+        const c = collabs.find(col => col.matricula === t.matricula);
+        if (c) names[t.matricula] = c.nome;
+        // Fallback para tarefas de criação onde o colaborador ainda não existe
+        else if (t.changes && t.changes.nome) names[t.matricula] = t.changes.nome + ' (Novo)';
+      });
+      setCollabNames(names);
+    } catch {
+      setFalhouCarga(true);
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
 
-    const handleCancelAll = async () => {
-        if(confirm("Atenção: Esta ação irá excluir TODAS as tarefas agendadas. Deseja continuar?")) {
-            try {
-                await db.cancelAllTasks();
-                loadTasks();
-            } catch (err: any) {
-                alert("Erro ao excluir tarefas: " + err.message);
-                console.error(err);
-            }
-        }
+  useEffect(() => { loadTasks(); }, [loadTasks]);
+
+  const handleCancel = async (id: string) => {
+    if (confirm('Deseja cancelar esta tarefa agendada?')) {
+      await db.cancelTask(id);
+      loadTasks();
     }
+  };
 
-    const handleEdit = async (task: ScheduledTask) => {
-        setEditingTask(task);
-
-        const collabs = await db.getCollaborators();
-        const existing = collabs.find(c => c.matricula === task.matricula);
-
-        if (existing) {
-            setInitialData({ ...existing, ...task.changes });
-        } else {
-            setInitialData(task.changes);
-        }
-
-        setIsEditOpen(true);
-    };
-
-    const handleUpdateTask = async (data: Collaborator, date: string) => {
-        if (!editingTask) return;
-
-        await db.updateTask(editingTask.id, data, date);
-
-        await db.addHistory({
-            action: 'Edição de Tarefa Agendada',
-            target: data.nome || 'N/A',
-            user: 'Sistema', // Or current user if passed
-            date: new Date().toLocaleString('pt-BR'),
-            type: 'update',
-            details: `Tarefa reagendada para ${formatDateString(date)}`
-        });
-
-        setIsEditOpen(false);
-        setEditingTask(null);
+  const handleCancelAll = async () => {
+    if (confirm('Atenção: Esta ação irá excluir TODAS as tarefas agendadas. Deseja continuar?')) {
+      try {
+        await db.cancelAllTasks();
         loadTasks();
-    };
+      } catch (err: any) {
+        alert('Erro ao excluir tarefas: ' + err.message);
+        console.error(err);
+      }
+    }
+  };
 
-    return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-gray-800">Tarefas Agendadas</h2>
-                    <span className="bg-brand-100 text-brand-700 text-sm font-bold px-3 py-1 rounded-full">
-                        {tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
-                    </span>
-                </div>
-                {tasks.length > 0 && (
-                    <Button variant="solid-danger" onClick={handleCancelAll}>
-                        <Trash2 size={16} className="mr-2" /> Excluir Todas
-                    </Button>
-                )}
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
-                        <tr>
-                            <th className="p-4">Data Programada</th>
-                            <th className="p-4">Matrícula</th>
-                            <th className="p-4">Colaborador</th>
-                            <th className="p-4">Resumo Alterações</th>
-                            <th className="p-4">Criado Por</th>
-                            <th className="p-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {tasks.map(task => (
-                            <tr key={task.id} className="hover:bg-gray-50">
-                                <td className="p-4 font-bold text-brand-700">{formatDateString(task.scheduled_date)}</td>
-                                <td className="p-4 font-mono text-xs">{task.matricula}</td>
-                                <td className="p-4 font-medium text-gray-900">{collabNames[task.matricula] || '...'}</td>
-                                <td className="p-4 text-xs text-gray-500">
-                                    {Object.keys(task.changes).length > 5 ? 'Alteração Completa (Cadastro)' : Object.keys(task.changes).join(', ')}
-                                </td>
-                                <td className="p-4 text-xs">{task.created_by}</td>
-                                <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="secondary" className="px-2 py-1 text-xs text-brand-600 border-brand-200 bg-brand-50 hover:bg-brand-100" onClick={() => handleEdit(task)}>
-                                            <Edit2 size={14} className="mr-1"/> Editar
-                                        </Button>
-                                        <Button variant="danger" className="px-2 py-1 text-xs" onClick={() => handleCancel(task.id)}>
-                                            Cancelar
-                                        </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {tasks.length === 0 && (
-                            <tr>
-                                <td colSpan={6} className="p-8 text-center text-gray-400">Nenhuma tarefa pendente.</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+  const handleEdit = async (task: ScheduledTask) => {
+    setEditingTask(task);
 
-            {isEditOpen && (
-                <CollaboratorFormModal
-                    initialData={initialData}
-                    onClose={() => setIsEditOpen(false)}
-                    onSave={() => {}}
-                    onSchedule={handleUpdateTask}
-                    initialScheduleDate={editingTask?.scheduled_date}
-                />
-            )}
-        </div>
-    );
+    const collabs = await db.getCollaborators();
+    const existing = collabs.find(c => c.matricula === task.matricula);
+
+    if (existing) {
+      setInitialData({ ...existing, ...task.changes });
+    } else {
+      setInitialData(task.changes);
+    }
+
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateTask = async (data: Collaborator, date: string) => {
+    if (!editingTask) return;
+
+    await db.updateTask(editingTask.id, data, date);
+
+    await db.addHistory({
+      action: 'Edição de Tarefa Agendada',
+      target: data.nome || 'N/A',
+      user: 'Sistema',
+      date: new Date().toLocaleString('pt-BR'),
+      type: 'update',
+      details: `Tarefa reagendada para ${formatDateString(date)}`
+    });
+
+    setIsEditOpen(false);
+    setEditingTask(null);
+    loadTasks();
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      <PageToolbar
+        description="Gerencie os cadastros e as alterações agendados para uma data futura."
+        actions={tasks.length > 0 && (
+          <Button variant="solid-danger" onClick={handleCancelAll}>
+            <Trash2 aria-hidden="true" size={16} /> Excluir todas
+          </Button>
+        )}
+      />
+
+      {isLoading ? (
+        <div className="rounded-lg border border-hairline bg-canvas-soft"><LoadingState label="Carregando tarefas agendadas" /></div>
+      ) : falhouCarga ? (
+        <InlineNotice
+          tone="error"
+          title="Falha ao carregar tarefas agendadas"
+          action={<Button variant="secondary" size="sm" onClick={() => void loadTasks()}>Tentar de novo</Button>}
+        >
+          Não foi possível consultar as tarefas agendadas.
+        </InlineNotice>
+      ) : (
+        <>
+          <div className="rounded-lg border border-hairline">
+            <div className="flex items-center gap-3 bg-canvas-soft p-3">
+              <MetricStrip
+                label="Resumo da lista"
+                items={[{ label: tasks.length === 1 ? 'tarefa pendente' : 'tarefas pendentes', value: tasks.length }]}
+              />
+            </div>
+          </div>
+
+          {tasks.length === 0 ? (
+            <div className="rounded-lg border border-hairline bg-canvas-soft">
+              <EmptyState
+                title="Nenhuma tarefa pendente"
+                description="Os cadastros e alterações agendados aparecerão aqui."
+              />
+            </div>
+          ) : (
+            <Table label="Tarefas agendadas">
+              <Table.Head>
+                <Table.Th>Data programada</Table.Th>
+                <Table.Th>Matrícula</Table.Th>
+                <Table.Th>Colaborador</Table.Th>
+                <Table.Th>Resumo alterações</Table.Th>
+                <Table.Th>Criado por</Table.Th>
+                <Table.Th>Ações</Table.Th>
+              </Table.Head>
+              <Table.Body>
+                {tasks.map(task => {
+                  const chaves = Object.keys(task.changes);
+                  const resumo = chaves.length > 5 ? 'Alteração completa (cadastro)' : chaves.join(', ');
+                  return (
+                    <tr key={task.id}>
+                      <Table.Td className="t-data font-medium text-brand-text">{formatDateString(task.scheduled_date)}</Table.Td>
+                      <Table.Td className="t-data">{task.matricula}</Table.Td>
+                      <Table.Td className="font-medium text-ink">{collabNames[task.matricula] || '...'}</Table.Td>
+                      <Table.Td className="text-ink-mute">{resumo}</Table.Td>
+                      <Table.Td>{task.created_by}</Table.Td>
+                      <Table.Td className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="secondary" size="sm" onClick={() => handleEdit(task)}>
+                            <Edit2 aria-hidden="true" size={14} /> Editar
+                          </Button>
+                          <Button variant="danger" size="sm" onClick={() => handleCancel(task.id)}>
+                            Cancelar
+                          </Button>
+                        </div>
+                      </Table.Td>
+                    </tr>
+                  );
+                })}
+              </Table.Body>
+            </Table>
+          )}
+        </>
+      )}
+
+      {isEditOpen && (
+        <CollaboratorFormModal
+          initialData={initialData}
+          onClose={() => setIsEditOpen(false)}
+          onSave={() => {}}
+          onSchedule={handleUpdateTask}
+          initialScheduleDate={editingTask?.scheduled_date}
+        />
+      )}
+    </div>
+  );
 };

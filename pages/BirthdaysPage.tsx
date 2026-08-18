@@ -1,85 +1,130 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Collaborator, Ilha } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
-import { Button } from '../components/ui';
+import { Button, EmptyState, InlineNotice, LoadingState, MetricStrip, PageToolbar, Select, Table } from '../components/ui';
 
-export const BirthdaysPage = ({ onBack }: any) => {
+const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+export interface BirthdaysPageProps {
+  onBack?: () => void;
+}
+
+export const BirthdaysPage: React.FC<BirthdaysPageProps> = ({ onBack }) => {
   const [collabs, setCollabs] = useState<Collaborator[]>([]);
   const [ilhas, setIlhas] = useState<Ilha[]>([]);
   const [month, setMonth] = useState(new Date().getMonth());
+  const [isLoading, setIsLoading] = useState(true);
+  const [falhouCarga, setFalhouCarga] = useState(false);
 
-  useEffect(() => {
-      const load = async () => {
-          setCollabs(await db.getCollaborators());
-          setIlhas(await db.getIlhas());
-      }
-      load();
+  const load = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setFalhouCarga(false);
+      const [colabs, ilhasList] = await Promise.all([db.getCollaborators(), db.getIlhas()]);
+      setCollabs(colabs);
+      setIlhas(ilhasList);
+    } catch {
+      setFalhouCarga(true);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const filtered = collabs.filter(c => {
-      if(!c.dtNasc) return false;
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = collabs
+    .filter(c => {
+      if (!c.dtNasc) return false;
       const m = parseInt(c.dtNasc.split('-')[1]) - 1;
       return m === month;
-  }).sort((a, b) => {
+    })
+    .sort((a, b) => {
       const dayA = parseInt(a.dtNasc.split('-')[2]);
       const dayB = parseInt(b.dtNasc.split('-')[2]);
       return dayA - dayB;
-  });
-
-  const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    });
 
   return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                  <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>
-                  <h2 className="text-2xl font-bold text-gray-800">Aniversariantes</h2>
-              </div>
-              <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-                    <select 
-                        className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none"
-                        value={month} 
-                        onChange={e => setMonth(parseInt(e.target.value))}
-                    >
-                        {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                    </select>
-              </div>
-           </div>
-           
-           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-600">
-                     <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
-                         <tr>
-                             <th className="p-4 w-24 text-center">Dia</th>
-                             <th className="p-4">Nome</th>
-                             <th className="p-4">Ilha</th>
-                             <th className="p-4">Data Completa</th>
-                         </tr>
-                     </thead>
-                     <tbody className="divide-y divide-gray-100">
-                         {filtered.map(c => {
-                             const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
-                             const day = c.dtNasc ? c.dtNasc.split('-')[2] : '--';
-                             return (
-                                 <tr key={c.matricula} className="hover:bg-gray-50">
-                                     <td className="p-4 flex justify-center">
-                                        <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 border-2 border-white shadow-md flex items-center justify-center font-bold text-lg">
-                                            {day}
-                                        </div>
-                                     </td>
-                                     <td className="p-4 font-medium text-gray-900">{c.nome}</td>
-                                     <td className="p-4 text-xs">{ilhaName}</td>
-                                     <td className="p-4">{formatDateString(c.dtNasc)}</td>
-                                 </tr>
-                             )
-                         })}
-                         {filtered.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-gray-400">Nenhum aniversariante neste mês.</td></tr>}
-                     </tbody>
-                </table>
-           </div>
-      </div>
-  )
-}
+    <div className="flex flex-col gap-5">
+      <PageToolbar
+        description="Consulte quem faz aniversário no mês selecionado."
+        filters={(
+          <div className="flex flex-wrap items-end gap-2" aria-label="Referência do mês">
+            <span className="t-eyebrow mb-2.5 mr-1 text-ink-faint">Mês</span>
+            <Select
+              aria-label="Mês de referência"
+              className="w-auto min-w-40"
+              value={month}
+              onChange={e => setMonth(Number(e.target.value))}
+            >
+              {MESES.map((m, i) => <option key={m} value={i}>{m}</option>)}
+            </Select>
+          </div>
+        )}
+        actions={onBack && (
+          <Button variant="ghost" onClick={onBack}><ArrowLeft aria-hidden="true" size={16} /> Voltar</Button>
+        )}
+      />
 
+      {isLoading ? (
+        <div className="rounded-lg border border-hairline bg-canvas-soft"><LoadingState label="Carregando aniversariantes" /></div>
+      ) : falhouCarga ? (
+        <InlineNotice
+          tone="error"
+          title="Falha ao carregar aniversariantes"
+          action={<Button variant="secondary" size="sm" onClick={() => void load()}>Tentar de novo</Button>}
+        >
+          Não foi possível consultar os aniversariantes.
+        </InlineNotice>
+      ) : (
+        <>
+          <div className="rounded-lg border border-hairline">
+            <div className="flex items-center gap-3 bg-canvas-soft p-3">
+              <MetricStrip
+                label="Resumo da lista"
+                items={[{ label: filtered.length === 1 ? 'aniversariante' : 'aniversariantes', value: filtered.length }]}
+              />
+            </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="rounded-lg border border-hairline bg-canvas-soft">
+              <EmptyState
+                title="Nenhum aniversariante neste mês"
+                description={`Não há registros de aniversário em ${MESES[month]}.`}
+              />
+            </div>
+          ) : (
+            <Table label="Aniversariantes">
+              <Table.Head>
+                <Table.Th>Dia</Table.Th>
+                <Table.Th>Nome</Table.Th>
+                <Table.Th>Ilha</Table.Th>
+                <Table.Th>Data completa</Table.Th>
+              </Table.Head>
+              <Table.Body>
+                {filtered.map(c => {
+                  const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome ?? '—';
+                  const day = c.dtNasc ? c.dtNasc.split('-')[2] : '--';
+                  return (
+                    <tr key={c.matricula}>
+                      <Table.Td className="t-data">{day}</Table.Td>
+                      <Table.Td className="font-medium text-ink">{c.nome}</Table.Td>
+                      <Table.Td>{ilhaName}</Table.Td>
+                      <Table.Td className="t-data">{formatDateString(c.dtNasc)}</Table.Td>
+                    </tr>
+                  );
+                })}
+              </Table.Body>
+            </Table>
+          )}
+        </>
+      )}
+    </div>
+  );
+};

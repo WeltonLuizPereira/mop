@@ -1,48 +1,95 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { HistoryLog } from '../types';
 import { db } from '../services/mockDb';
+import { Button, EmptyState, InlineNotice, LoadingState, MetricStrip, PageToolbar, Table, Tag } from '../components/ui';
+
+// A cor reforça a leitura, mas o texto do próprio Tag já comunica o tipo —
+// nenhum estado depende só da cor (spec §10).
+const CLASSE_POR_TIPO: Record<HistoryLog['type'], string> = {
+  create: 'text-ok',
+  delete: 'text-danger',
+  update: '',
+  import: '',
+};
 
 export const HistoryPage: React.FC = () => {
-    // ... same as original ...
-    const [logs, setLogs] = useState<HistoryLog[]>([]);
+  const [logs, setLogs] = useState<HistoryLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [falhouCarga, setFalhouCarga] = useState(false);
 
-    useEffect(() => {
-        db.getHistory().then(setLogs);
-    }, []);
+  const load = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setFalhouCarga(false);
+      // A ordenação já acontece em services/mockDb.ts (o formato de data
+      // PT-BR não ordena corretamente no SQL); a página só exibe o que
+      // recebe, sem reordenar.
+      setLogs(await db.getHistory());
+    } catch {
+      setFalhouCarga(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">Histórico de Atividades</h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
-                        <tr>
-                            <th className="p-4 w-32">Data/Hora</th>
-                            <th className="p-4 w-40">Usuário</th>
-                            <th className="p-4 w-40">Ação</th>
-                            <th className="p-4 w-48">Alvo</th>
-                            <th className="p-4">Detalhes</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {logs.map(log => (
-                            <tr key={log.id}>
-                                <td className="p-4 text-xs text-gray-500">{log.date}</td>
-                                <td className="p-4 font-bold text-xs">{log.user}</td>
-                                <td className="p-4">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase
-                                        ${log.type === 'create' ? 'bg-green-100 text-green-700' :
-                                          log.type === 'delete' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                        {log.action}
-                                    </span>
-                                </td>
-                                <td className="p-4 text-xs font-bold text-gray-800">{log.target}</td>
-                                <td className="p-4 text-xs text-gray-600">{log.details || '-'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <PageToolbar description="Consulte as últimas alterações realizadas no sistema." />
+
+      {isLoading ? (
+        <div className="rounded-lg border border-hairline bg-canvas-soft"><LoadingState label="Carregando histórico" /></div>
+      ) : falhouCarga ? (
+        <InlineNotice
+          tone="error"
+          title="Falha ao carregar histórico"
+          action={<Button variant="secondary" size="sm" onClick={() => void load()}>Tentar de novo</Button>}
+        >
+          Não foi possível consultar o histórico de atividades.
+        </InlineNotice>
+      ) : (
+        <>
+          <div className="rounded-lg border border-hairline">
+            <div className="flex items-center gap-3 bg-canvas-soft p-3">
+              <MetricStrip
+                label="Resumo da lista"
+                items={[{ label: logs.length === 1 ? 'registro' : 'registros', value: logs.length }]}
+              />
             </div>
-        </div>
-    );
+          </div>
+
+          {logs.length === 0 ? (
+            <div className="rounded-lg border border-hairline bg-canvas-soft">
+              <EmptyState
+                title="Nenhum registro no histórico"
+                description="As próximas alterações realizadas no sistema aparecerão aqui."
+              />
+            </div>
+          ) : (
+            <Table label="Histórico de atividades">
+              <Table.Head>
+                <Table.Th>Data/hora</Table.Th>
+                <Table.Th>Usuário</Table.Th>
+                <Table.Th>Ação</Table.Th>
+                <Table.Th>Alvo</Table.Th>
+                <Table.Th>Detalhes</Table.Th>
+              </Table.Head>
+              <Table.Body>
+                {logs.map(log => (
+                  <tr key={log.id}>
+                    <Table.Td className="t-data text-ink-mute">{log.date}</Table.Td>
+                    <Table.Td className="font-medium">{log.user}</Table.Td>
+                    <Table.Td><Tag className={CLASSE_POR_TIPO[log.type]}>{log.action}</Tag></Table.Td>
+                    <Table.Td className="font-medium text-ink">{log.target}</Table.Td>
+                    <Table.Td className="text-ink-mute">{log.details || '-'}</Table.Td>
+                  </tr>
+                ))}
+              </Table.Body>
+            </Table>
+          )}
+        </>
+      )}
+    </div>
+  );
 };
