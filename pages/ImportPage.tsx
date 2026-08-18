@@ -332,30 +332,30 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-500">
-            <h2 className="text-2xl font-bold text-gray-800">Gestão de Dados</h2>
-            
-            <div className="flex gap-4 border-b border-gray-200">
+            <div className="flex gap-4 border-b border-hairline">
                 <button 
                     onClick={() => handleTabChange('import')}
-                    className={`pb-3 px-4 text-sm font-bold ${activeTab === 'import' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-3 px-4 text-sm font-bold ${activeTab === 'import' ? 'text-brand border-b-2 border-brand' : 'text-ink-mute hover:text-ink'}`}
                 >
-                    Importar Novos
+                    Importar novos
                 </button>
                 <button 
                     onClick={() => handleTabChange('update')}
-                    className={`pb-3 px-4 text-sm font-bold ${activeTab === 'update' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-3 px-4 text-sm font-bold ${activeTab === 'update' ? 'text-brand border-b-2 border-brand' : 'text-ink-mute hover:text-ink'}`}
                 >
                     Update em Massa
                 </button>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
-                 <div className="w-16 h-16 bg-blue-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-canvas p-8 rounded-lg shadow-1 border border-hairline text-center">
+                 <div className="w-16 h-16 bg-brand-wash text-brand rounded-full flex items-center justify-center mx-auto mb-4">
                      <FileSpreadsheet size={32} />
                  </div>
-                 <h3 className="text-lg font-bold text-gray-900 mb-2">Carregar Planilha Excel ({activeTab === 'import' ? 'Importar' : 'Atualizar'})</h3>
+                 <h3 className="t-display-md text-ink mb-2">
+                     {activeTab === 'import' ? 'Importar de uma planilha' : 'Atualizar a partir de uma planilha'}
+                 </h3>
                  
-                 <p className="text-gray-500 text-sm mb-6">
+                 <p className="text-ink-mute text-sm mb-6">
                     {activeTab === 'import' ? 
                         "A planilha deve conter as colunas: MATRICULA, NOME, EMAIL, STATUS, SUPERVISOR, COORDENADOR, CLIENTE, OPERAÇÃO, ILHA, DT ENTRADA PRODUTO, HORÁRIOS, DATA FIM, EMAIL VR, SENHA." :
                         "A planilha deve conter as colunas obrigatórias: MATRICULA, SUPERVISOR, ILHA, REFERENCIA, COORDENADOR, OPERAÇÃO, CLIENTE."
@@ -363,26 +363,26 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                  </p>
                  
                  <input type="file" id="file-upload" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleFile} />
-                 <label htmlFor="file-upload" className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 cursor-pointer font-medium transition-colors shadow-lg shadow-brand-500/20">
-                     <Upload size={18} /> Selecionar Arquivo
+                 <label htmlFor="file-upload" className="inline-flex items-center gap-2 px-6 py-3 bg-brand text-on-brand rounded-lg hover:bg-brand-text cursor-pointer font-medium transition-colors shadow-2">
+                     <Upload size={18} /> Selecionar arquivo
                  </label>
 
                  {file && (
-                     <div className="mt-8 p-6 bg-gray-50 rounded-xl text-left border border-gray-100 animate-in slide-in-from-bottom-2">
+                     <div className="mt-8 p-6 bg-canvas-soft rounded-lg text-left border border-hairline animate-in slide-in-from-bottom-2">
                          <div className="flex justify-between items-center mb-4">
                             <div>
-                                <p className="font-bold text-gray-800">{file.name}</p>
-                                <p className="text-xs text-gray-500">{stats.found} registros encontrados</p>
+                                <p className="font-bold text-ink">{file.name}</p>
+                                <p className="text-xs text-ink-mute">{stats.found} registros encontrados</p>
                             </div>
-                            <Button variant="ghost" onClick={() => handleTabChange(activeTab)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                            <Button variant="ghost" onClick={() => handleTabChange(activeTab)} className="text-danger hover:text-danger hover:bg-danger/10">
                                 <Trash2 size={16}/>
                             </Button>
                          </div>
                          
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Pré-visualização</p>
-                         <div className="overflow-x-auto bg-white rounded-lg border border-gray-200 mb-6">
+                         <p className="t-eyebrow text-ink-faint mb-2">Pré-visualização</p>
+                         <div className="overflow-x-auto bg-canvas rounded-lg border border-hairline mb-6">
                              <table className="w-full text-xs text-left">
-                                 <thead className="bg-gray-50 text-gray-600 font-semibold">
+                                 <thead>
                                      <tr>
                                          {activeTab === 'import' ? (
                                              <>
@@ -401,7 +401,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                                          )}
                                      </tr>
                                  </thead>
-                                 <tbody className="divide-y divide-gray-100">
+                                 <tbody className="divide-y divide-hairline">
                                      {preview.map((row, i) => (
                                          <tr key={i}>
                                              {activeTab === 'import' ? (
@@ -425,7 +425,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                              </table>
                          </div>
 
-                         <div className="flex justify-end items-center gap-3 pt-4 border-t border-gray-200 flex-wrap">
+                         <div className="flex justify-end items-center gap-3 pt-4 border-t border-hairline flex-wrap">
                              <Button variant="secondary" onClick={() => handleTabChange(activeTab)}>Cancelar</Button>
                              
                              {!isScheduling ? (
@@ -433,17 +433,17 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                                      <CalendarClock size={16}/> Agendar
                                  </Button>
                              ) : (
-                                 <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-200 animate-in fade-in slide-in-from-left-2">
-                                     <span className="text-xs font-bold text-blue-700 uppercase">Agendar para:</span>
+                                 <div className="flex items-center gap-2 bg-brand-wash p-2 rounded-lg border border-hairline-2 animate-in fade-in slide-in-from-left-2">
+                                     <span className="text-xs font-bold text-brand-text uppercase">Agendar para:</span>
                                      <input 
                                          type="date" 
-                                         className="px-2 py-1 text-sm rounded border border-blue-300 focus:ring-1 focus:ring-blue-500 outline-none"
+                                         className="px-2 py-1 text-sm rounded border border-hairline-2 focus:ring-1 focus:ring-brand outline-none"
                                          value={scheduleDate}
                                          onChange={(e) => setScheduleDate(e.target.value)}
                                      />
                                      <button 
                                          onClick={() => { setIsScheduling(false); setScheduleDate(''); }} 
-                                         className="p-1 rounded-full text-blue-400 hover:text-blue-600 outline-none"
+                                         className="p-1 rounded-full text-ink-mute hover:text-brand-text outline-none"
                                      >
                                          <X size={14} />
                                      </button>
@@ -454,7 +454,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                                  {isProcessing ? (
                                     <><Loader2 size={16} className="animate-spin mr-2"/> Processando...</>
                                  ) : (
-                                    <><CheckCircle size={16} className="mr-2"/> {activeTab === 'import' ? 'Confirmar Importação' : 'Confirmar Atualização'}</>
+                                    <><CheckCircle size={16} className="mr-2"/> {activeTab === 'import' ? 'Confirmar importação' : 'Confirmar atualização'}</>
                                  )}
                              </Button>
                          </div>

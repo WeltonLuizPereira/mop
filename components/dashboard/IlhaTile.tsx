@@ -14,8 +14,13 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
                hover:border-hairline-2 hover:shadow-2 hover:-translate-y-px
                motion-reduce:hover:translate-y-0"
   >
-    <header className="pb-3 border-b border-hairline">
-      <h3 className="t-display-md text-ink">{ilha.nome}</h3>
+    <header className="pb-[13px] border-b border-hairline">
+      {/* 15px é a medida do mockup: o anel e o percentual são o foco do tile,
+          o nome só identifica. Nomes de ilha reais são longos e em caixa alta,
+          então acima disso eles quebram em duas linhas e roubam a cena. */}
+      <h3 className="font-display font-bold text-[15px] leading-[1.25] tracking-[-.01em] text-ink">
+        {ilha.nome}
+      </h3>
       <p className="text-xs text-ink-mute mt-0.5">{ilha.cliente} · {ilha.operacao}</p>
     </header>
 
@@ -26,7 +31,7 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
           {Math.round(ilha.emOperacao * 100)}%
         </div>
         <div className="text-xs text-ink-mute mt-1.5 whitespace-nowrap">
-          em operação · <span className="t-data text-ink-2">{ilha.total}</span> pessoas
+          em operação · <span className="t-data text-ink-2">{ilha.total}</span> {ilha.total === 1 ? 'pessoa' : 'pessoas'}
         </div>
       </div>
     </div>
@@ -36,10 +41,7 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
       : (
         <div className="flex flex-wrap gap-x-3.5 gap-y-[7px]">
           {ilha.porStatus.map(s => (
-            <span key={s.status} className="inline-flex items-center gap-1.5">
-              <span className="t-data text-xs text-ink-2">{s.count}</span>
-              <Badge status={s.status} />
-            </span>
+            <Badge key={s.status} status={s.status} count={s.count} className="text-xs" />
           ))}
         </div>
       )}

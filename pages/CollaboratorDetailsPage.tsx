@@ -183,8 +183,8 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
 
     const Field = ({ label, value, className = "" }: any) => (
         <div className="mb-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-            <p className={`font-medium text-gray-900 ${className}`}>{value || '-'}</p>
+            <p className="t-eyebrow text-ink-faint mb-1">{label}</p>
+            <p className={`font-medium text-ink ${className}`}>{value || '-'}</p>
         </div>
     );
 
@@ -194,20 +194,20 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>
                 
                 {client?.logo ? (
-                    <img src={client.logo} alt={`Logo ${client.nome}`} className="w-12 h-12 rounded-full object-cover object-center bg-white border border-gray-200" referrerPolicy="no-referrer" />
+                    <img src={client.logo} alt={`Logo ${client.nome}`} className="w-12 h-12 rounded-full object-cover object-center bg-canvas border border-hairline" referrerPolicy="no-referrer" />
                 ) : (
-                    <div className="w-12 h-12 rounded-full bg-brand-100 text-brand-700 border-2 border-white shadow-sm flex items-center justify-center font-bold text-lg">
+                    <div className="w-12 h-12 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-lg">
                         {getInitials(currentCollab.nome)}
                     </div>
                 )}
 
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-gray-900">{currentCollab.nome}</h1>
-                    <p className="text-gray-500">Matrícula: {currentCollab.matricula}</p>
+                    <h1 className="t-display-lg text-ink">{currentCollab.nome}</h1>
+                    <p className="text-ink-mute">Matrícula: {currentCollab.matricula}</p>
                 </div>
                 {(isAdmin || currentUser.role === UserRole.SUPPORT) && (
                     <div className="flex gap-2">
-                        <Button onClick={() => setIsEditOpen(true)}><Edit2 size={16}/> Editar Cadastro</Button>
+                        <Button onClick={() => setIsEditOpen(true)}><Edit2 size={16}/> Editar cadastro</Button>
                         {isAdmin && <Button variant="danger" onClick={handleDelete}><Trash2 size={16}/></Button>}
                     </div>
                 )}
@@ -215,15 +215,15 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><UserIcon size={18} className="text-brand-600"/> Dados Pessoais</h3>
+                    <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><UserIcon size={18} className="text-brand"/> Dados Pessoais</h3>
                         <Field label="Email" value={currentCollab.email} className="break-all" />
                         <Field label="Data de Nascimento" value={formatDateString(currentCollab.dtNasc)} />
                         <Field label="Status" value={<Badge status={currentCollab.status} />} />
                     </div>
                     
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Briefcase size={18} className="text-brand-600"/> Contrato</h3>
+                    <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Briefcase size={18} className="text-brand"/> Contrato</h3>
                         <Field label="Data de Entrada" value={formatDateString(currentCollab.dtEntradaProduto)} />
                         {currentCollab.status === CollaboratorStatus.DESLIGADO && (
                             <Field label="Data Desligamento" value={formatDateString(currentCollab.dataFim)} />
@@ -241,8 +241,8 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 </div>
 
                 <div className="space-y-6">
-                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><MapPin size={18} className="text-brand-600"/> Alocação</h3>
+                     <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><MapPin size={18} className="text-brand"/> Alocação</h3>
                         <Field label="Cliente" value={client?.nome} />
                         <Field label="Operação" value={op?.nome} />
                         <Field label="Ilha" value={ilha?.nome} />
@@ -250,8 +250,8 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                         <Field label="Supervisor" value={sup?.nome} />
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Clock size={18} className="text-brand-600"/> Jornada</h3>
+                    <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Clock size={18} className="text-brand"/> Jornada</h3>
                         <div className="flex gap-8">
                              <Field label="Entrada" value={formatTime(currentCollab.horarioEntrada)} />
                              <Field label="Saída" value={formatTime(currentCollab.horarioSaida)} />
@@ -260,15 +260,15 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 </div>
                 
                 <div className="space-y-6">
-                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Key size={18} className="text-brand-600"/> Dados de Acesso</h3>
+                     <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Key size={18} className="text-brand"/> Dados de Acesso</h3>
                         <Field label="Email VR" value={currentCollab.email_vr} className="break-all" />
                         <Field label="Senha" value={currentCollab.senha} />
                     </div>
                     
                     {/* Férias Display */}
-                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Sun size={18} className="text-brand-600"/> Férias</h3>
+                     <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Sun size={18} className="text-brand"/> Férias</h3>
                         {currentCollab.feriasInicio ? (
                              <>
                                 <div className="grid grid-cols-2 gap-4">
@@ -277,8 +277,8 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                                 </div>
                                 {currentCollab.feriasFim && (
                                     <div className="mb-4">
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Retorno Previsto</p>
-                                        <p className="font-bold text-green-600 text-lg">{addDays(currentCollab.feriasFim, 1)}</p>
+                                        <p className="t-eyebrow text-ink-faint mb-1">Retorno Previsto</p>
+                                        <p className="font-bold text-ok text-lg">{addDays(currentCollab.feriasFim, 1)}</p>
                                     </div>
                                 )}
                                 <div className="mt-2">
@@ -286,18 +286,18 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                                 </div>
                              </>
                         ) : (
-                            <p className="text-gray-400 text-sm">Nenhuma férias programada.</p>
+                            <p className="text-ink-faint text-sm">Nenhuma férias programada.</p>
                         )}
                         
                         {vacationHistory.length > 0 && (
-                            <div className="mt-6 pt-4 border-t border-gray-100">
-                                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                                    <History size={16} className="text-gray-400" /> Histórico de Férias
+                            <div className="mt-6 pt-4 border-t border-hairline">
+                                <h4 className="text-sm font-bold text-ink mb-3 flex items-center gap-2">
+                                    <History size={16} className="text-ink-faint" /> Histórico de férias
                                 </h4>
                                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
                                     {vacationHistory.map((h, i) => (
-                                        <div key={i} className="flex justify-between items-center bg-gray-50 p-2 rounded text-sm">
-                                            <span className="text-gray-600">
+                                        <div key={i} className="flex justify-between items-center bg-canvas-soft p-2 rounded text-sm">
+                                            <span className="text-ink-mute">
                                                 {formatDateString(h.start_date)} - {formatDateString(h.end_date)}
                                             </span>
                                         </div>
@@ -309,15 +309,15 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                        <History size={18} className="text-gray-500"/> Histórico de Alterações
+            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+                <div className="p-4 border-b border-hairline flex justify-between items-center bg-canvas-soft">
+                    <h3 className="font-bold text-ink flex items-center gap-2">
+                        <History size={18} className="text-ink-mute"/> Histórico de Alterações
                     </h3>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-600">
-                        <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-xs tracking-wider">
+                    <table className="w-full text-left text-sm text-ink-mute bg-canvas">
+                        <thead>
                             <tr>
                                 <th className="p-4 w-32">Data/Hora</th>
                                 <th className="p-4 w-40">Usuário</th>
@@ -325,18 +325,18 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                                 <th className="p-4">Detalhes</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-hairline">
                             {historyLogs.map(log => (
                                 <tr key={log.id}>
-                                    <td className="p-4 text-xs text-gray-500">{log.date}</td>
+                                    <td className="p-4 text-xs text-ink-mute dado">{log.date}</td>
                                     <td className="p-4 font-bold text-xs">{log.user}</td>
                                     <td className="p-4 text-xs">{log.action}</td>
-                                    <td className="p-4 text-xs text-gray-700 font-mono">{log.details || '-'}</td>
+                                    <td className="p-4 text-xs text-ink font-mono">{log.details || '-'}</td>
                                 </tr>
                             ))}
                             {historyLogs.length === 0 && (
                                 <tr>
-                                    <td colSpan={4} className="p-8 text-center text-gray-400">Nenhum registro de alteração encontrado.</td>
+                                    <td colSpan={4} className="p-8 text-center text-ink-faint">Nenhum registro de alteração encontrado.</td>
                                 </tr>
                             )}
                         </tbody>

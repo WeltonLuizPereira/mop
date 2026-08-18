@@ -17,6 +17,19 @@ describe('Badge', () => {
     expect(cor(a)).not.toBe(cor(b));
   });
 
+  it('põe a contagem entre o ponto e o rótulo, como no mockup', () => {
+    const { container } = render(<Badge status={CollaboratorStatus.FERIAS} count={4} />);
+    expect(container.textContent).toBe('4férias');
+    expect(container.querySelector('b')).toHaveTextContent('4');
+  });
+
+  it('concorda o rótulo com a contagem', () => {
+    const um = render(<Badge status={CollaboratorStatus.ATIVO} count={1} />);
+    expect(um.container.textContent).toBe('1ativo');
+    const varios = render(<Badge status={CollaboratorStatus.ATIVO} count={3} />);
+    expect(varios.container.textContent).toBe('3ativos');
+  });
+
   it('marca o ponto como decorativo — quem lê tela ouve só o rótulo', () => {
     const { container } = render(<Badge status={CollaboratorStatus.ATIVO} />);
     expect(container.querySelector('[data-dot]')).toHaveAttribute('aria-hidden', 'true');

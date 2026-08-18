@@ -13,9 +13,17 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
-import { Button } from '../components/ui';
+import { Button, ChipSelect } from '../components/ui';
+import { useChartTokens } from '../lib/tokens';
 
 export const TurnoverPage = () => {
+    // o gráfico recebe cor como valor; os tokens vêm do tema em vigor
+    const cor = useChartTokens();
+    const eixo = { fontSize: 10, fill: cor.inkFaint };
+    const painel = {
+        backgroundColor: cor.canvas, borderRadius: '8px',
+        border: `1px solid ${cor.hairline}`, fontSize: '12px', color: cor.ink2,
+    };
     const today = new Date();
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth()); // 0-11
@@ -344,178 +352,150 @@ export const TurnoverPage = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-            {/* Header Controls */}
-            <div className="flex justify-between items-center flex-wrap gap-4">
-                <h2 className="text-2xl font-bold text-gray-800">Indicadores de Turnover</h2>
-                <div className="flex items-center gap-3">
-                    <div className="flex gap-2 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-                        <select 
-                            className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none cursor-pointer"
-                            value={selectedMonth} 
-                            onChange={e => setSelectedMonth(Number(e.target.value))}
-                        >
-                            <option value={-1}>Todos os Meses</option>
-                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                        </select>
-                        <div className="w-px bg-gray-200 my-1"></div>
-                        <select 
-                            className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none cursor-pointer"
-                            value={selectedYear} 
-                            onChange={e => setSelectedYear(Number(e.target.value))}
-                        >
-                            {years.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="secondary" onClick={() => handleExport('excel')} className="h-10 px-3 bg-white border border-gray-200 hover:bg-gray-50 flex items-center gap-2 text-brand-600">
-                            <FileSpreadsheet size={16} /> <span className="hidden sm:inline text-xs font-semibold">Excel</span>
-                        </Button>
-                        <Button variant="secondary" onClick={() => handleExport('pdf')} className="h-10 px-3 bg-white border border-gray-200 hover:bg-gray-50 flex items-center gap-2 text-red-600">
-                            <FileDown size={16} /> <span className="hidden sm:inline text-xs font-semibold">PDF</span>
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            {/* Uma faixa de contexto: periodo, recortes e exportacao, em chips. */}
+            <div className="flex items-center flex-wrap gap-2.5">
+                <span className="t-eyebrow text-ink-faint mr-1">Período e recorte</span>
+                <ChipSelect rotulo="Mês" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
+                    <option value={-1}>todos</option>
+                    {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                </ChipSelect>
+                <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
+                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </ChipSelect>
+                <ChipSelect rotulo="Cliente" value={filterClient} onChange={e => setFilterClient(e.target.value)}>
+                    <option value="">todos</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </ChipSelect>
+                <ChipSelect rotulo="Operação" value={filterOp} onChange={e => setFilterOp(e.target.value)}>
+                    <option value="">todas</option>
+                    {operations
+                        .filter(o => !filterClient || o.clientId === filterClient)
+                        .map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                </ChipSelect>
+                <ChipSelect rotulo="Ilha" value={filterIlha} onChange={e => setFilterIlha(e.target.value)}>
+                    <option value="">todas</option>
+                    {ilhas
+                        .filter(i => (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp))
+                        .map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                </ChipSelect>
+                <ChipSelect rotulo="Supervisor" value={filterSup} onChange={e => setFilterSup(e.target.value)}>
+                    <option value="">todos</option>
+                    {supervisors.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                </ChipSelect>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4">
-                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Cliente</label>
-                    <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterClient} onChange={e => setFilterClient(e.target.value)}>
-                        <option value="">Todos</option>
-                        {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                    </select>
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Operação</label>
-                    <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterOp} onChange={e => setFilterOp(e.target.value)}>
-                        <option value="">Todas</option>
-                        {operations
-                            .filter(o => !filterClient || o.clientId === filterClient)
-                            .map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                    </select>
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Ilha</label>
-                    <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterIlha} onChange={e => setFilterIlha(e.target.value)}>
-                        <option value="">Todas</option>
-                        {ilhas
-                            .filter(i => (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp))
-                            .map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
-                    </select>
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Supervisor</label>
-                    <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterSup} onChange={e => setFilterSup(e.target.value)}>
-                        <option value="">Todos</option>
-                        {supervisors.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-                    </select>
+                <div className="ml-auto flex items-center gap-2">
+                    <Button variant="ghost" onClick={() => handleExport('excel')}>
+                        <FileSpreadsheet size={15} /> Excel
+                    </Button>
+                    <Button variant="ghost" onClick={() => handleExport('pdf')}>
+                        <FileDown size={15} /> PDF
+                    </Button>
                 </div>
             </div>
 
             {/* Report Content */}
-            <div id="turnover-report-content" className="space-y-6 bg-gray-50/50 p-2 sm:p-4 rounded-xl">
+            <div id="turnover-report-content" className="space-y-6 bg-canvas-soft/50 p-2 sm:p-4 rounded-lg">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden flex flex-col justify-between h-32">
+                    <div className="bg-canvas p-5 rounded-lg border border-hairline shadow-1 relative overflow-hidden flex flex-col justify-between h-32">
                         <div>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wide flex items-center gap-1">Turnover Mensal <HelpCircle size={12} className="text-gray-300"/></p>
-                        <h3 className="text-3xl font-bold text-brand-600 mt-2">{metrics.turnoverRate}%</h3>
+                        <p className="t-eyebrow text-ink-faint flex items-center gap-1">Turnover Mensal <HelpCircle size={12} className="text-ink-faint"/></p>
+                        <h3 className="t-display-xl text-brand mt-2">{metrics.turnoverRate}%</h3>
                     </div>
-                    <div className="absolute right-0 top-0 h-full w-1 bg-brand-500"></div>
+                    <div className="absolute right-0 top-0 h-full w-1 bg-brand"></div>
                 </div>
 
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden flex flex-col justify-between h-32">
+                <div className="bg-canvas p-5 rounded-lg border border-hairline shadow-1 relative overflow-hidden flex flex-col justify-between h-32">
                     <div>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wide">Taxa de Desligamento</p>
-                        <h3 className="text-3xl font-bold text-red-500 mt-2">{metrics.terminationRate}%</h3>
+                        <p className="t-eyebrow text-ink-faint">Taxa de Desligamento</p>
+                        <h3 className="t-display-xl text-danger mt-2">{metrics.terminationRate}%</h3>
                     </div>
-                    <div className="absolute right-0 top-0 h-full w-1 bg-red-500"></div>
+                    <div className="absolute right-0 top-0 h-full w-1 bg-danger"></div>
                 </div>
 
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden flex flex-col justify-between h-32">
+                <div className="bg-canvas p-5 rounded-lg border border-hairline shadow-1 relative overflow-hidden flex flex-col justify-between h-32">
                     <div>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wide">Headcount Médio</p>
-                        <h3 className="text-3xl font-bold text-gray-900 mt-2">{metrics.headcount}</h3>
+                        <p className="t-eyebrow text-ink-faint">Headcount Médio</p>
+                        <h3 className="t-display-xl text-ink mt-2">{metrics.headcount}</h3>
                     </div>
-                    <div className="absolute right-0 top-0 h-full w-1 bg-blue-500"></div>
+                    <div className="absolute right-0 top-0 h-full w-1 bg-ink-2"></div>
                 </div>
 
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden flex flex-col justify-between h-32">
+                <div className="bg-canvas p-5 rounded-lg border border-hairline shadow-1 relative overflow-hidden flex flex-col justify-between h-32">
                     <div>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wide">Movimentação</p>
+                        <p className="t-eyebrow text-ink-faint">Movimentação</p>
                         <div className="flex items-end gap-3 mt-2">
                              <div>
-                                 <span className="text-xs text-gray-400 font-bold block">Admissões</span>
-                                 <span className="text-xl font-bold text-green-600">{metrics.admissionsCount}</span>
+                                 <span className="text-xs text-ink-faint font-bold block">Admissões</span>
+                                 <span className="t-display-md text-ok">{metrics.admissionsCount}</span>
                              </div>
-                             <div className="h-8 w-px bg-gray-200"></div>
+                             <div className="h-8 w-px bg-hairline"></div>
                              <div>
-                                 <span className="text-xs text-gray-400 font-bold block">Desligamentos</span>
-                                 <span className="text-xl font-bold text-red-600">{metrics.terminationsCount}</span>
+                                 <span className="text-xs text-ink-faint font-bold block">Desligamentos</span>
+                                 <span className="t-display-md text-danger">{metrics.terminationsCount}</span>
                              </div>
                         </div>
                     </div>
-                    <div className="absolute right-0 top-0 h-full w-1 bg-gray-400"></div>
+                    <div className="absolute right-0 top-0 h-full w-1 bg-ink-faint"></div>
                 </div>
             </div>
 
             {/* Tenure KPI Cards */}
-            <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-                 <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><CalendarClock size={16} className="text-indigo-600"/> Tempo de Casa nos Desligamentos (Período Atual)</h3>
+            <div className="bg-canvas p-4 sm:p-6 rounded-lg border border-hairline shadow-1 relative overflow-hidden">
+                 <h3 className="text-sm font-bold text-ink mb-4 flex items-center gap-2"><CalendarClock size={16} className="text-brand-text"/> Tempo de Casa nos Desligamentos (Período Atual)</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                     <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 flex justify-between items-center">
+                     <div className="bg-canvas-soft p-4 rounded-lg border border-hairline flex justify-between items-center">
                          <div>
-                             <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">Até 90 Dias</span>
+                             <span className="t-eyebrow text-ink-faint block mb-2">Até 90 Dias</span>
                              <div className="flex items-end gap-2">
-                                <span className="text-2xl font-bold text-indigo-700">{metrics.tenure90}</span>
-                                <span className="text-sm font-medium text-indigo-500 mb-1">desl.</span>
+                                <span className="t-display-lg text-ink">{metrics.tenure90}</span>
+                                <span className="text-sm font-medium text-ink-mute mb-1">desl.</span>
                              </div>
                          </div>
                          <div className="text-right">
-                             <div className="bg-white px-2 py-1 rounded-md shadow-sm border border-indigo-100 text-sm font-bold text-indigo-700">
+                             <div className="bg-canvas px-2 py-1 rounded-md shadow-1 border border-hairline text-sm font-bold text-brand-text">
                                  {metrics.terminationsCount > 0 ? ((metrics.tenure90 / metrics.terminationsCount) * 100).toFixed(1) : '0'}%
                              </div>
                          </div>
                      </div>
-                     <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 flex justify-between items-center">
+                     <div className="bg-canvas-soft p-4 rounded-lg border border-hairline flex justify-between items-center">
                          <div>
-                             <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">91 a 180 Dias</span>
+                             <span className="t-eyebrow text-ink-faint block mb-2">91 a 180 Dias</span>
                              <div className="flex items-end gap-2">
-                                <span className="text-2xl font-bold text-indigo-700">{metrics.tenure180}</span>
-                                <span className="text-sm font-medium text-indigo-500 mb-1">desl.</span>
+                                <span className="t-display-lg text-ink">{metrics.tenure180}</span>
+                                <span className="text-sm font-medium text-ink-mute mb-1">desl.</span>
                              </div>
                          </div>
                          <div className="text-right">
-                             <div className="bg-white px-2 py-1 rounded-md shadow-sm border border-indigo-100 text-sm font-bold text-indigo-700">
+                             <div className="bg-canvas px-2 py-1 rounded-md shadow-1 border border-hairline text-sm font-bold text-brand-text">
                                  {metrics.terminationsCount > 0 ? ((metrics.tenure180 / metrics.terminationsCount) * 100).toFixed(1) : '0'}%
                              </div>
                          </div>
                      </div>
-                     <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 flex justify-between items-center">
+                     <div className="bg-canvas-soft p-4 rounded-lg border border-hairline flex justify-between items-center">
                          <div>
-                             <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">181 a 365 Dias</span>
+                             <span className="t-eyebrow text-ink-faint block mb-2">181 a 365 Dias</span>
                              <div className="flex items-end gap-2">
-                                <span className="text-2xl font-bold text-indigo-700">{metrics.tenure365}</span>
-                                <span className="text-sm font-medium text-indigo-500 mb-1">desl.</span>
+                                <span className="t-display-lg text-ink">{metrics.tenure365}</span>
+                                <span className="text-sm font-medium text-ink-mute mb-1">desl.</span>
                              </div>
                          </div>
                          <div className="text-right">
-                             <div className="bg-white px-2 py-1 rounded-md shadow-sm border border-indigo-100 text-sm font-bold text-indigo-700">
+                             <div className="bg-canvas px-2 py-1 rounded-md shadow-1 border border-hairline text-sm font-bold text-brand-text">
                                  {metrics.terminationsCount > 0 ? ((metrics.tenure365 / metrics.terminationsCount) * 100).toFixed(1) : '0'}%
                              </div>
                          </div>
                      </div>
-                     <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 flex justify-between items-center">
+                     <div className="bg-canvas-soft p-4 rounded-lg border border-hairline flex justify-between items-center">
                          <div>
-                             <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">Mais de 365</span>
+                             <span className="t-eyebrow text-ink-faint block mb-2">Mais de 365</span>
                              <div className="flex items-end gap-2">
-                                <span className="text-2xl font-bold text-indigo-700">{metrics.tenureMoreThan365}</span>
-                                <span className="text-sm font-medium text-indigo-500 mb-1">desl.</span>
+                                <span className="t-display-lg text-ink">{metrics.tenureMoreThan365}</span>
+                                <span className="text-sm font-medium text-ink-mute mb-1">desl.</span>
                              </div>
                          </div>
                          <div className="text-right">
-                             <div className="bg-white px-2 py-1 rounded-md shadow-sm border border-indigo-100 text-sm font-bold text-indigo-700">
+                             <div className="bg-canvas px-2 py-1 rounded-md shadow-1 border border-hairline text-sm font-bold text-brand-text">
                                  {metrics.terminationsCount > 0 ? ((metrics.tenureMoreThan365 / metrics.terminationsCount) * 100).toFixed(1) : '0'}%
                              </div>
                          </div>
@@ -525,42 +505,42 @@ export const TurnoverPage = () => {
 
             {/* Row 1 Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-80 flex flex-col">
-                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-brand-600"/> Evolução do Turnover (6 Meses)</h3>
+                <div className="bg-canvas p-6 rounded-lg border border-hairline shadow-1 h-80 flex flex-col">
+                    <h3 className="text-sm font-bold text-ink mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-brand"/> Evolução do Turnover (6 Meses)</h3>
                     <div className="flex-1 w-full min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorTurnover" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2}/>
-                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor={cor.brand} stopOpacity={0.2}/>
+                                        <stop offset="95%" stopColor={cor.brand} stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} unit="%" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={cor.hairline} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={eixo} />
+                                <YAxis axisLine={false} tickLine={false} tick={eixo} unit="%" />
                                 <RechartsTooltip 
-                                    contentStyle={{backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px'}} 
-                                    itemStyle={{color: '#16a34a'}}
+                                    contentStyle={painel} 
+                                    itemStyle={{ color: cor.brand }}
                                 />
-                                <Area type="monotone" dataKey="turnover" stroke="#16a34a" strokeWidth={2} fillOpacity={1} fill="url(#colorTurnover)" name="Turnover %" isAnimationActive={false} />
+                                <Area type="monotone" dataKey="turnover" stroke={cor.brand} strokeWidth={2} fillOpacity={1} fill="url(#colorTurnover)" name="Turnover %" isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-80 flex flex-col">
-                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><Users size={16} className="text-blue-600"/> Admissões x Desligamentos</h3>
+                <div className="bg-canvas p-6 rounded-lg border border-hairline shadow-1 h-80 flex flex-col">
+                    <h3 className="text-sm font-bold text-ink mb-4 flex items-center gap-2"><Users size={16} className="text-brand-text"/> Admissões x Desligamentos</h3>
                     <div className="flex-1 w-full min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={chartData} barGap={4}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
-                                <RechartsTooltip cursor={{fill: '#f9fafb'}} contentStyle={{backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px'}} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={cor.hairline} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={eixo} />
+                                <YAxis axisLine={false} tickLine={false} tick={eixo} />
+                                <RechartsTooltip cursor={{ fill: cor.hairline, fillOpacity: .35 }} contentStyle={painel} />
                                 <Legend wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
-                                <Bar dataKey="admissoes" name="Admissões" fill="#22c55e" radius={[2, 2, 0, 0]} barSize={20} isAnimationActive={false} />
-                                <Bar dataKey="desligamentos" name="Desligamentos" fill="#ef4444" radius={[2, 2, 0, 0]} barSize={20} isAnimationActive={false} />
+                                <Bar dataKey="admissoes" name="Admissões" fill={cor.ok} radius={[2, 2, 0, 0]} barSize={20} isAnimationActive={false} />
+                                <Bar dataKey="desligamentos" name="Desligamentos" fill={cor.danger} radius={[2, 2, 0, 0]} barSize={20} isAnimationActive={false} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -569,52 +549,52 @@ export const TurnoverPage = () => {
 
             {/* Row 2 Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-80 flex flex-col lg:col-span-1">
-                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingDown size={16} className="text-red-500"/> Taxa de Desligamento</h3>
+                 <div className="bg-canvas p-6 rounded-lg border border-hairline shadow-1 h-80 flex flex-col lg:col-span-1">
+                    <h3 className="text-sm font-bold text-ink mb-4 flex items-center gap-2"><TrendingDown size={16} className="text-danger"/> Taxa de Desligamento</h3>
                     <div className="flex-1 w-full min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorTermination" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor={cor.danger} stopOpacity={0.2}/>
+                                        <stop offset="95%" stopColor={cor.danger} stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} unit="%" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={cor.hairline} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={eixo} />
+                                <YAxis axisLine={false} tickLine={false} tick={eixo} unit="%" />
                                 <RechartsTooltip 
-                                    contentStyle={{backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px'}} 
-                                    itemStyle={{color: '#ef4444'}}
+                                    contentStyle={painel} 
+                                    itemStyle={{ color: cor.danger }}
                                 />
-                                <Area type="monotone" dataKey="terminationRate" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorTermination)" name="Taxa %" isAnimationActive={false} />
+                                <Area type="monotone" dataKey="terminationRate" stroke={cor.danger} strokeWidth={2} fillOpacity={1} fill="url(#colorTermination)" name="Taxa %" isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-80 flex flex-col lg:col-span-2">
-                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><MapPin size={16} className="text-purple-600"/> Turnover por Ilha (Top 10 - Mês Atual)</h3>
+                <div className="bg-canvas p-6 rounded-lg border border-hairline shadow-1 h-80 flex flex-col lg:col-span-2">
+                    <h3 className="text-sm font-bold text-ink mb-4 flex items-center gap-2"><MapPin size={16} className="text-brand-text"/> Turnover por Ilha (Top 10 - Mês Atual)</h3>
                     <div className="flex-1 w-full min-h-0">
                          {ilhaChartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={ilhaChartData} layout="vertical" margin={{left: 20}}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f3f4f6" />
-                                    <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} unit="%" />
-                                    <YAxis type="category" dataKey="name" width={100} axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#4b5563', fontWeight: 500}} />
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={cor.hairline} />
+                                    <XAxis type="number" axisLine={false} tickLine={false} tick={eixo} unit="%" />
+                                    <YAxis type="category" dataKey="name" width={100} axisLine={false} tickLine={false} tick={{ ...eixo, fill: cor.ink2, fontWeight: 500 }} />
                                     <RechartsTooltip 
-                                        contentStyle={{backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px'}}
+                                        contentStyle={painel}
                                         formatter={(value: any, name: any, props: any) => [`${value}% Turnover`, `HC Médio: ${props.payload.headcount}`]}
                                     />
-                                    <Bar dataKey="turnover" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={15} name="Turnover %" isAnimationActive={false}>
+                                    <Bar dataKey="turnover" fill={cor.brand} radius={[0, 4, 4, 0]} barSize={15} name="Turnover %" isAnimationActive={false}>
                                          {ilhaChartData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={index < 3 ? '#7c3aed' : '#a78bfa'} />
+                                            <Cell key={`cell-${index}`} fill={index < 3 ? cor.brandHot : cor.brand} />
                                         ))}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                          ) : (
-                             <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                             <div className="h-full flex flex-col items-center justify-center text-ink-faint">
                                  <AlertCircle size={24} className="mb-2 opacity-50"/>
                                  <p className="text-xs">Sem dados suficientes de HC para as ilhas selecionadas.</p>
                              </div>
@@ -624,35 +604,35 @@ export const TurnoverPage = () => {
             </div>
 
             {selectedMonth === -1 && (
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-6">
-                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><CalendarDays size={16} className="text-brand-600"/> Detalhamento Mensal</h3>
+                <div className="bg-canvas p-6 rounded-lg border border-hairline shadow-1 overflow-hidden mt-6">
+                    <h3 className="text-sm font-bold text-ink mb-4 flex items-center gap-2"><CalendarDays size={16} className="text-brand"/> Detalhamento Mensal</h3>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-gray-600 border-collapse">
-                            <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-[10px]">
+                        <table className="w-full text-left text-sm text-ink-mute border-collapse">
+                            <thead>
                                 <tr>
-                                    <th className="p-3 border-b border-gray-100">Mês</th>
-                                    <th className="p-3 text-right border-b border-gray-100">Ativos Início</th>
-                                    <th className="p-3 text-right border-b border-gray-100">Admissões</th>
-                                    <th className="p-3 text-right border-b border-gray-100">Desligamentos</th>
-                                    <th className="p-3 text-right border-b border-gray-100">Ativos Fim</th>
-                                    <th className="p-3 text-right border-b border-gray-100" title="Média de Movimentação = (Admissões + Desligamentos) / 2">Média Mov.</th>
-                                    <th className="p-3 text-right border-b border-gray-100" title="Headcount Médio = (Ativos Início + Ativos Fim) / 2">HC Médio</th>
-                                    <th className="p-3 text-right border-b border-gray-100">Turnover (%)</th>
-                                    <th className="p-3 text-right border-b border-gray-100">Taxa Deslig. (%)</th>
+                                    <th className="p-3 border-b border-hairline">Mês</th>
+                                    <th className="p-3 num border-b border-hairline">Ativos Início</th>
+                                    <th className="p-3 num border-b border-hairline">Admissões</th>
+                                    <th className="p-3 num border-b border-hairline">Desligamentos</th>
+                                    <th className="p-3 num border-b border-hairline">Ativos Fim</th>
+                                    <th className="p-3 num border-b border-hairline" title="Média de Movimentação = (Admissões + Desligamentos) / 2">Média Mov.</th>
+                                    <th className="p-3 num border-b border-hairline" title="Headcount Médio = (Ativos Início + Ativos Fim) / 2">HC Médio</th>
+                                    <th className="p-3 num border-b border-hairline">Turnover (%)</th>
+                                    <th className="p-3 num border-b border-hairline">Taxa Deslig. (%)</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-hairline">
                                 {chartData.map((d, i) => (
-                                    <tr key={i} className="hover:bg-gray-50/50">
-                                        <td className="p-3 font-semibold text-gray-800">{d.name}</td>
-                                        <td className="p-3 text-right font-medium">{d.activeAtStart}</td>
-                                        <td className="p-3 text-right text-green-600 font-medium">{d.admissoes}</td>
-                                        <td className="p-3 text-right text-red-600 font-medium">{d.desligamentos}</td>
-                                        <td className="p-3 text-right font-medium">{d.activeAtEnd}</td>
-                                        <td className="p-3 text-right font-medium">{((d.admissoes + d.desligamentos) / 2).toFixed(1)}</td>
-                                        <td className="p-3 text-right font-medium">{d.avgHeadcount}</td>
-                                        <td className="p-3 text-right font-medium">{d.turnover}%</td>
-                                        <td className="p-3 text-right font-medium">{d.terminationRate}%</td>
+                                    <tr key={i} className="hover:bg-canvas-soft/50">
+                                        <td className="p-3 font-semibold text-ink">{d.name}</td>
+                                        <td className="p-3 num">{d.activeAtStart}</td>
+                                        <td className="p-3 num text-ok">{d.admissoes}</td>
+                                        <td className="p-3 num text-danger">{d.desligamentos}</td>
+                                        <td className="p-3 num">{d.activeAtEnd}</td>
+                                        <td className="p-3 num">{((d.admissoes + d.desligamentos) / 2).toFixed(1)}</td>
+                                        <td className="p-3 num">{d.avgHeadcount}</td>
+                                        <td className="p-3 num">{d.turnover}%</td>
+                                        <td className="p-3 num">{d.terminationRate}%</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -662,23 +642,23 @@ export const TurnoverPage = () => {
             )}
 
             {/* Methodology Footer */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mt-6">
-                <h4 className="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2"><Info size={16}/> Metodologia de Cálculo</h4>
-                <p className="text-xs text-blue-700 leading-relaxed mb-3">
+            <div className="bg-brand-wash border border-hairline rounded-lg p-6 mt-6">
+                <h4 className="text-sm font-bold text-ink mb-2 flex items-center gap-2"><Info size={16}/> Metodologia de Cálculo</h4>
+                <p className="text-xs text-brand-text leading-relaxed mb-3">
                     O cálculo de Turnover apresentado segue a fórmula padrão de mercado para rotatividade média mensal:
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                    <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                        <span className="font-bold text-blue-900 block mb-1">1. Média de Movimentação</span>
-                        <span className="text-gray-600">(Admissões + Desligamentos) ÷ 2</span>
+                    <div className="bg-canvas p-3 rounded-lg border border-hairline shadow-1">
+                        <span className="font-bold text-ink block mb-1">1. Média de Movimentação</span>
+                        <span className="text-ink-mute">(Admissões + Desligamentos) ÷ 2</span>
                     </div>
-                    <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                        <span className="font-bold text-blue-900 block mb-1">2. Headcount Médio</span>
-                        <span className="text-gray-600">(Ativos no Início do Período + Ativos no Fim do Período) ÷ 2</span>
+                    <div className="bg-canvas p-3 rounded-lg border border-hairline shadow-1">
+                        <span className="font-bold text-ink block mb-1">2. Headcount Médio</span>
+                        <span className="text-ink-mute">(Ativos no Início do Período + Ativos no Fim do Período) ÷ 2</span>
                     </div>
-                    <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                        <span className="font-bold text-blue-900 block mb-1">3. Taxa Final</span>
-                        <span className="text-gray-600">(Média Movimentação ÷ Headcount Médio) × 100</span>
+                    <div className="bg-canvas p-3 rounded-lg border border-hairline shadow-1">
+                        <span className="font-bold text-ink block mb-1">3. Taxa Final</span>
+                        <span className="text-ink-mute">(Média Movimentação ÷ Headcount Médio) × 100</span>
                     </div>
                 </div>
             </div>

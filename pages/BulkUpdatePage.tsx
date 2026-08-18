@@ -231,7 +231,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
         }
         setModalConfig({
             isOpen: true,
-            title: 'Confirmar Agendamento',
+            title: 'Confirmar agendamento',
             message: <span dangerouslySetInnerHTML={{__html: `Confirma o agendamento para <b>${selectedIds.size}</b> colaboradores na data <b>${scheduleDate}</b>?`}} />,
             type: 'confirm',
             onConfirm: processSchedule
@@ -250,7 +250,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
         }
         setModalConfig({
             isOpen: true,
-            title: 'Confirmar Atualização',
+            title: 'Confirmar atualização',
             message: <span dangerouslySetInnerHTML={{__html: `Confirma a atualização de <b>${selectedIds.size}</b> colaboradores?`}} />,
             type: 'confirm',
             onConfirm: processUpdate
@@ -259,39 +259,37 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <h2 className="text-2xl font-bold text-gray-800">Atualização em Massa</h2>
-            
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Left Column: Filters and Actions */}
                 <div className="space-y-6 lg:col-span-1">
                     
                     {/* Actions Panel */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-brand-200 ring-1 ring-brand-100">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <ListChecks size={18} className="text-brand-600"/> Ação de Atualização
+                    <div className="bg-canvas p-5 rounded-lg shadow-1 border border-brand-wash ring-1 ring-brand-wash">
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2">
+                            <ListChecks size={18} className="text-brand"/> O que alterar
                         </h3>
                         
                         <div className="space-y-4">
-                            <div className="p-3 bg-brand-50 rounded-lg text-center">
-                                <span className="block text-2xl font-bold text-brand-700">{selectedIds.size}</span>
-                                <span className="text-xs text-brand-600 font-medium uppercase">Selecionados</span>
+                            <div className="p-3 bg-brand-wash rounded-lg text-center">
+                                <span className="block t-display-lg text-brand-text">{selectedIds.size}</span>
+                                <span className="t-eyebrow text-brand-text">Selecionados</span>
                             </div>
 
                             {updates.map((update, index) => (
-                                <div key={index} className="space-y-3 p-3 bg-gray-50 rounded border border-gray-100 relative">
+                                <div key={index} className="space-y-3 p-3 bg-canvas-soft rounded border border-hairline relative">
                                     {updates.length > 1 && (
                                         <button 
                                             onClick={() => setUpdates(updates.filter((_, i) => i !== index))}
-                                            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded"
+                                            className="absolute top-2 right-2 p-1 text-ink-faint hover:text-danger hover:bg-danger/10 rounded"
                                             title="Remover campo"
                                         >
                                             <X size={14} />
                                         </button>
                                     )}
                                     <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Campo {index + 1}</label>
+                                        <label className="t-eyebrow text-ink-mute block mb-1">Campo {index + 1}</label>
                                         <select 
-                                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
+                                            className="w-full p-2 bg-canvas border border-hairline rounded-lg text-sm"
                                             value={update.field}
                                             onChange={e => { 
                                                 const newUpdates = [...updates]; 
@@ -311,9 +309,9 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
 
                                     {update.field && (
                                         <div className="animate-in slide-in-from-top-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Novo Valor</label>
+                                            <label className="t-eyebrow text-ink-mute block mb-1">Novo Valor</label>
                                             <select 
-                                                className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
+                                                className="w-full p-2 bg-canvas border border-hairline rounded-lg text-sm"
                                                 value={update.value}
                                                 onChange={e => {
                                                     const newUpdates = [...updates]; 
@@ -330,7 +328,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                                 {update.field === 'status' && Object.values(CollaboratorStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                             {update.field === 'ilhaId' && update.value && (
-                                                <p className="text-[10px] text-brand-600 mt-2 bg-brand-50 p-2 rounded">
+                                                <p className="text-[10px] text-brand mt-2 bg-brand-wash p-2 rounded">
                                                     Atenção: Ao alterar a Ilha, a Operação, Cliente, Coordenador e Supervisor serão atualizados automaticamente para os padrões da Ilha selecionada.
                                                 </p>
                                             )}
@@ -341,28 +339,28 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                             
                             <Button 
                                 variant="secondary" 
-                                className="w-full border-dashed border-2 text-brand-600 hover:bg-brand-50 hover:text-brand-700 justify-center flex items-center gap-2"
+                                className="w-full border-dashed border-2 text-brand hover:bg-brand-wash hover:text-brand-text justify-center flex items-center gap-2"
                                 onClick={() => setUpdates([...updates, { field: '', value: '' }])}
                             >
-                                <Plus size={16} /> Adicionar Campo
+                                <Plus size={16} /> Adicionar campo
                             </Button>
 
-                            <div className="pt-2 mt-2 border-t border-gray-100 flex flex-col gap-2">
+                            <div className="pt-2 mt-2 border-t border-hairline flex flex-col gap-2">
                                         {!isScheduling ? (
-                                            <Button variant="secondary" onClick={() => setIsScheduling(true)} className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 w-full flex justify-center gap-2">
-                                                <CalendarClock size={16}/> Agendar Alteração
+                                            <Button variant="secondary" onClick={() => setIsScheduling(true)} className="text-brand-text border-hairline-2 bg-brand-wash hover:bg-brand-wash w-full flex justify-center gap-2">
+                                                <CalendarClock size={16}/> Agendar alteração
                                             </Button>
                                         ) : (
-                                            <div className="flex flex-col gap-2 bg-blue-50 p-3 rounded-lg border border-blue-200 animate-in fade-in slide-in-from-top-2">
+                                            <div className="flex flex-col gap-2 bg-brand-wash p-3 rounded-lg border border-hairline-2 animate-in fade-in slide-in-from-top-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-blue-700 uppercase">Agendar para:</span>
-                                                    <button onClick={() => {setIsScheduling(false); setScheduleDate('');}} className="p-1 rounded-full text-blue-400 hover:text-blue-600 bg-blue-100">
+                                                    <span className="text-xs font-bold text-brand-text uppercase">Agendar para:</span>
+                                                    <button onClick={() => {setIsScheduling(false); setScheduleDate('');}} className="p-1 rounded-full text-ink-mute hover:text-brand-text bg-brand-wash">
                                                         <X size={14} />
                                                     </button>
                                                 </div>
                                                 <input 
                                                     type="date" 
-                                                    className="px-2 py-1.5 text-sm rounded border border-blue-300 focus:ring-1 focus:ring-blue-500 outline-none w-full"
+                                                    className="px-2 py-1.5 text-sm rounded border border-hairline-2 focus:ring-1 focus:ring-brand outline-none w-full"
                                                     value={scheduleDate}
                                                     onChange={(e) => setScheduleDate(e.target.value)}
                                                 />
@@ -374,44 +372,44 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                 disabled={loading || selectedIds.size === 0 || updates.filter(u => u.field && u.value).length === 0 || (isScheduling && !scheduleDate)}
                                 className="w-full justify-center"
                             >
-                                {loading ? <Loader2 className="animate-spin" /> : (isScheduling ? 'Confirmar Agendamento' : 'Aplicar Alterações')}
+                                {loading ? <Loader2 className="animate-spin" /> : (isScheduling ? 'Confirmar agendamento' : 'Aplicar alterações')}
                             </Button>
                         </div>
                     </div>
 
                     {/* Filters Panel */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <div className="bg-canvas p-5 rounded-lg shadow-1 border border-hairline">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                <Filter size={18} className="text-gray-400"/> Filtros
+                            <h3 className="font-bold text-ink flex items-center gap-2">
+                                <Filter size={18} className="text-ink-faint"/> Filtros
                             </h3>
                         </div>
                         
                         <div className="space-y-3">
                             <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Status</label>
-                                <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}>
+                                <label className="t-eyebrow text-ink-faint">Status</label>
+                                <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}>
                                     <option value="">Todos</option>
                                     {Object.values(CollaboratorStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Cliente</label>
-                                <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterClient} onChange={e => setFilterClient(e.target.value)}>
+                                <label className="t-eyebrow text-ink-faint">Cliente</label>
+                                <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterClient} onChange={e => setFilterClient(e.target.value)}>
                                     <option value="">Todos</option>
                                     {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Operação</label>
-                                <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterOp} onChange={e => setFilterOp(e.target.value)}>
+                                <label className="t-eyebrow text-ink-faint">Operação</label>
+                                <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterOp} onChange={e => setFilterOp(e.target.value)}>
                                     <option value="">Todas</option>
                                     {operations.filter(o => !filterClient || o.clientId === filterClient).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Ilha</label>
-                                <select className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" value={filterIlha} onChange={e => setFilterIlha(e.target.value)}>
+                                <label className="t-eyebrow text-ink-faint">Ilha</label>
+                                <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterIlha} onChange={e => setFilterIlha(e.target.value)}>
                                     <option value="">Todas</option>
                                     {ilhas.filter(i => (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp)).map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
                                 </select>
@@ -421,20 +419,20 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                 </div>
 
                 {/* Right Column: Table */}
-                <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[600px]">
-                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                        <span className="text-sm font-bold text-gray-600">{filtered.length} colaboradores encontrados</span>
+                <div className="lg:col-span-3 bg-canvas rounded-lg shadow-1 border border-hairline flex flex-col h-[600px]">
+                    <div className="p-4 border-b border-hairline flex justify-between items-center bg-canvas-soft">
+                        <span className="text-sm font-bold text-ink-mute">{filtered.length} colaboradores encontrados</span>
                     </div>
                     <div className="flex-1 overflow-auto">
-                        <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="bg-white text-gray-700 font-semibold uppercase tracking-wider text-xs sticky top-0 shadow-sm z-10">
+                        <table className="w-full text-left text-sm text-ink-mute bg-canvas">
+                            <thead className="sticky top-0 shadow-1 z-10">
                                 <tr>
                                     <th className="p-4 w-10">
                                         <input 
                                             type="checkbox" 
                                             checked={filtered.length > 0 && selectedIds.size === filtered.length}
                                             onChange={handleSelectAll}
-                                            className="rounded text-brand-600 focus:ring-brand-500"
+                                            className="rounded text-brand focus:ring-brand"
                                         />
                                     </th>
                                     <th className="p-4">Nome / Matrícula</th>
@@ -443,7 +441,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                     <th className="p-4">Ilha</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-hairline">
                                 {filtered.map(c => {
                                     const sup = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';
                                     const coord = coordinators.find(co => co.id === c.coordinatorId)?.nome || '-';
@@ -451,18 +449,18 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                     const strMatricula = String(c.matricula);
                                     
                                     return (
-                                        <tr key={strMatricula} className={selectedIds.has(strMatricula) ? "bg-brand-50/30" : "hover:bg-gray-50"}>
+                                        <tr key={strMatricula} className={selectedIds.has(strMatricula) ? "bg-brand-wash/30" : "hover:bg-canvas-soft"}>
                                             <td className="p-4">
                                                 <input 
                                                     type="checkbox" 
                                                     checked={selectedIds.has(strMatricula)}
                                                     onChange={() => toggleSelect(strMatricula)}
-                                                    className="rounded text-brand-600 focus:ring-brand-500"
+                                                    className="rounded text-brand focus:ring-brand"
                                                 />
                                             </td>
                                             <td className="p-4">
-                                                <div className="font-medium text-gray-900">{c.nome}</div>
-                                                <div className="text-xs text-gray-400">{c.matricula}</div>
+                                                <div className="font-medium text-ink">{c.nome}</div>
+                                                <div className="text-xs text-ink-faint">{c.matricula}</div>
                                             </td>
                                             <td className="p-4 text-xs">{sup}</td>
                                             <td className="p-4 text-xs">{coord}</td>
@@ -472,7 +470,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                 })}
                                 {filtered.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="p-8 text-center text-gray-400">Nenhum registro encontrado.</td>
+                                        <td colSpan={5} className="p-8 text-center text-ink-faint">Nenhum registro encontrado.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -484,18 +482,18 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
             {/* Custom Modal for Sandbox Compatibility */}
             {modalConfig.isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 p-6 text-center">
+                    <div className="bg-canvas rounded-lg shadow-3 w-full max-w-sm overflow-hidden scale-100 p-6 text-center">
                         <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 
-                            ${modalConfig.type === 'error' ? 'bg-red-100 text-red-600' : 
-                              modalConfig.type === 'success' ? 'bg-green-100 text-green-600' : 
-                              modalConfig.type === 'confirm' ? 'bg-brand-100 text-brand-600' : 'bg-gray-100 text-gray-600'}`}>
+                            ${modalConfig.type === 'error' ? 'bg-danger/15 text-danger' : 
+                              modalConfig.type === 'success' ? 'bg-ok/15 text-ok' : 
+                              modalConfig.type === 'confirm' ? 'bg-brand-wash text-brand' : 'bg-canvas-sunk text-ink-mute'}`}>
                             {modalConfig.type === 'error' ? <AlertTriangle size={32} /> :
                              modalConfig.type === 'success' ? <CheckCircle size={32} /> :
                              modalConfig.type === 'confirm' ? <AlertCircle size={32} /> : <Info size={32} />} 
                         </div>
                         
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">{modalConfig.title}</h3>
-                        <div className="text-gray-500 text-sm mb-6">{modalConfig.message}</div>
+                        <h3 className="t-display-md text-ink mb-2">{modalConfig.title}</h3>
+                        <div className="text-ink-mute text-sm mb-6">{modalConfig.message}</div>
                         
                         <div className="flex gap-3 justify-center">
                             {(modalConfig.type === 'confirm') ? (

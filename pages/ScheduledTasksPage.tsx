@@ -90,20 +90,19 @@ export const ScheduledTasksPage = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-gray-800">Tarefas Agendadas</h2>
-                    <span className="bg-brand-100 text-brand-700 text-sm font-bold px-3 py-1 rounded-full">
-                        {tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
-                    </span>
+                    <p className="text-[13px] text-ink-mute">
+                        <span className="t-data text-ink">{tasks.length}</span> {tasks.length === 1 ? 'tarefa agendada' : 'tarefas agendadas'}
+                    </p>
                 </div>
                 {tasks.length > 0 && (
                     <Button variant="solid-danger" onClick={handleCancelAll}>
-                        <Trash2 size={16} className="mr-2" /> Excluir Todas
+                        <Trash2 size={16} className="mr-2" /> Excluir todas
                     </Button>
                 )}
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
+            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+                <table className="w-full text-left text-sm text-ink-mute bg-canvas">
+                    <thead>
                         <tr>
                             <th className="p-4">Data Programada</th>
                             <th className="p-4">Matrícula</th>
@@ -113,19 +112,19 @@ export const ScheduledTasksPage = () => {
                             <th className="p-4 text-right">Ações</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-hairline">
                         {tasks.map(task => (
-                            <tr key={task.id} className="hover:bg-gray-50">
-                                <td className="p-4 font-bold text-brand-700">{formatDateString(task.scheduled_date)}</td>
+                            <tr key={task.id} className="hover:bg-canvas-soft">
+                                <td className="p-4 text-brand-text dado">{formatDateString(task.scheduled_date)}</td>
                                 <td className="p-4 font-mono text-xs">{task.matricula}</td>
-                                <td className="p-4 font-medium text-gray-900">{collabNames[task.matricula] || '...'}</td>
-                                <td className="p-4 text-xs text-gray-500">
+                                <td className="p-4 font-medium text-ink">{collabNames[task.matricula] || '...'}</td>
+                                <td className="p-4 text-xs text-ink-mute">
                                     {Object.keys(task.changes).length > 5 ? 'Alteração Completa (Cadastro)' : Object.keys(task.changes).join(', ')}
                                 </td>
                                 <td className="p-4 text-xs">{task.created_by}</td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="secondary" className="px-2 py-1 text-xs text-brand-600 border-brand-200 bg-brand-50 hover:bg-brand-100" onClick={() => handleEdit(task)}>
+                                        <Button variant="secondary" className="px-2 py-1 text-xs text-brand border-brand-wash bg-brand-wash hover:bg-brand-wash" onClick={() => handleEdit(task)}>
                                             <Edit2 size={14} className="mr-1"/> Editar
                                         </Button>
                                         <Button variant="danger" className="px-2 py-1 text-xs" onClick={() => handleCancel(task.id)}>
@@ -137,7 +136,7 @@ export const ScheduledTasksPage = () => {
                         ))}
                         {tasks.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-gray-400">Nenhuma tarefa pendente.</td>
+                                <td colSpan={6} className="p-8 text-center text-ink-faint">Nenhuma tarefa pendente.</td>
                             </tr>
                         )}
                     </tbody>

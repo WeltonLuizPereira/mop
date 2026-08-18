@@ -24,8 +24,13 @@ const ORDEM = [
   CollaboratorStatus.REALOCADO,
 ];
 
+/** `nome` põe as ilhas em ordem alfabética; `asc`/`desc` ordenam pela fatia
+ *  em operação, crescente ou decrescente. */
+export type Ordem = 'nome' | 'asc' | 'desc';
+
 export function computeIlhaStats(
   ilhas: Ilha[], collabs: Collaborator[], clients: Client[], operations: Operation[],
+  ordem: Ordem = 'nome',
 ): IlhaStat[] {
   const nomeCliente = new Map(clients.map(c => [c.id, c.nome]));
   const nomeOperacao = new Map(operations.map(o => [o.id, o.nome]));
@@ -51,13 +56,16 @@ export function computeIlhaStats(
       };
     })
     .sort((a, b) => {
+      if (ordem === 'nome') return a.nome.localeCompare(b.nome, 'pt-BR');
+
       // Ilha vazia marca 0%, mas 0% de ninguém não é crise — é ilha sem gente.
       // Deixá-la subir empurraria para baixo justamente as ilhas com problema
       // real, que é o que a tela existe para mostrar primeiro.
       const aVazia = a.total === 0;
       const bVazia = b.total === 0;
       if (aVazia !== bVazia) return aVazia ? 1 : -1;
-      return a.emOperacao - b.emOperacao;
+      const delta = a.emOperacao - b.emOperacao;
+      return ordem === 'asc' ? delta : -delta;
     });
 }
 

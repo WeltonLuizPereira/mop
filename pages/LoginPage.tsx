@@ -31,9 +31,10 @@ export const LoginPage = ({ onLogin }: { onLogin: (u: User) => void }) => {
 
     return (
         <div className="min-h-screen grid lg:grid-cols-[1.05fr_.95fr] bg-canvas">
-          {/* Palco escuro nos dois temas: o logo foi desenhado para fundo
-              escuro — a linha "Contact Center" é branca no arquivo. */}
-          <div className="hidden lg:grid place-items-center p-12" style={{ background: '#121110', color: '#F5F1EF' }}>
+          {/* O palco segue o tema: quase branco no claro, quase preto no
+              escuro. A linha "Contact Center" é vetorizada em currentColor,
+              então acompanha o tema junto com o fundo. */}
+          <div className="hidden lg:grid place-items-center p-12 bg-canvas-sunk text-ink">
             <Logo variant="lockup" className="w-[min(430px,84%)]" />
           </div>
 

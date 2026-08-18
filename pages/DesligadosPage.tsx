@@ -4,7 +4,7 @@ import { Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, Collabo
 import { db } from '../services/mockDb';
 import { formatDateString, getInitials } from '../utils';
 import * as XLSX from 'xlsx';
-import { Button, MultiSelect } from '../components/ui';
+import { Button, ChipSelect, MultiSelect } from '../components/ui';
 
 export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
     const [collabs, setCollabs] = useState<Collaborator[]>([]);
@@ -101,9 +101,9 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
             <div className="flex items-center justify-between flex-wrap gap-4">
                  <div className="flex items-center gap-4">
                     {onBack && <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>}
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        Colaboradores Desligados <span className="text-gray-500 text-lg font-normal ml-2">({filtered.length})</span>
-                    </h2>
+                    <p className="text-[13px] text-ink-mute">
+                        <span className="t-data text-ink">{filtered.length}</span> desligados
+                    </p>
                  </div>
                  
                  <div className="flex items-center gap-3">
@@ -111,40 +111,31 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                         <input 
                             type="checkbox" 
                             id="viewAllMode"
-                            className="w-4 h-4 text-brand-600 bg-gray-100 border-gray-300 rounded focus:ring-brand-500"
+                            className="w-4 h-4 text-brand bg-canvas-sunk border-hairline rounded focus:ring-brand"
                             checked={viewAll}
                             onChange={(e) => setViewAll(e.target.checked)}
                         />
-                        <label htmlFor="viewAllMode" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                            Todo o Período
+                        <label htmlFor="viewAllMode" className="text-sm font-medium text-ink cursor-pointer select-none">
+                            Todo o período
                         </label>
                     </div>
 
                     {!viewAll && (
-                        <div className="flex gap-2 bg-white p-1 rounded-lg border border-gray-200 shadow-sm animate-in fade-in slide-in-from-right-2">
-                            <select 
-                                className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none"
-                                value={selectedMonth} 
-                                onChange={e => setSelectedMonth(Number(e.target.value))}
-                            >
+                        <div className="flex gap-2.5 animate-in fade-in slide-in-from-right-2">
+                            <ChipSelect rotulo="Mês" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
                                 {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                            </select>
-                            <div className="w-px bg-gray-200 my-1"></div>
-                            <select 
-                                className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none"
-                                value={selectedYear} 
-                                onChange={e => setSelectedYear(Number(e.target.value))}
-                            >
+                            </ChipSelect>
+                            <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
                                 {years.map(y => <option key={y} value={y}>{y}</option>)}
-                            </select>
+                            </ChipSelect>
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
                 {/* Filtros em linha idêntico aos outros */}
-                <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap gap-3 items-center">
+                <div className="p-4 border-b border-hairline bg-canvas-soft flex flex-wrap gap-3 items-center">
                     <div className="min-w-[180px]">
                         <MultiSelect 
                             options={clients.map(c => ({value: c.id, label: c.nome}))}
@@ -191,19 +182,19 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                     {(filterCoord.length > 0 || filterSup.length > 0 || filterIlha.length > 0 || filterOp.length > 0 || filterClient.length > 0) && (
                         <button 
                             onClick={() => { setFilterCoord([]); setFilterSup([]); setFilterIlha([]); setFilterOp([]); setFilterClient([]); }}
-                            className="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 rounded bg-red-50 hover:bg-red-100 transition-colors"
+                            className="text-xs text-danger hover:text-danger font-medium px-2 py-1 rounded bg-danger/10 hover:bg-danger/15 transition-colors"
                         >
-                            Limpar Filtros
+                            Limpar filtros
                         </button>
                     )}
                 </div>
 
-                <div className="p-4 border-b border-gray-100 flex gap-4 justify-between">
+                <div className="p-4 border-b border-hairline flex gap-4 justify-between">
                     <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={16} />
                         <input
-                            className="pl-9 w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-brand-500"
-                            placeholder="Buscar por nome ou matrícula..."
+                            className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm text-[13px] text-ink placeholder:text-ink-faint"
+                            placeholder="Buscar nome ou matrícula"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
@@ -212,8 +203,8 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                         <FileSpreadsheet size={16} /> Excel
                     </Button>
                 </div>
-                <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
+                <table className="w-full text-left text-sm text-ink-mute bg-canvas">
+                    <thead>
                         <tr>
                             <th className="p-4 w-16"></th>
                             <th className="p-4">Nome</th>
@@ -223,24 +214,24 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                             <th className="p-4 text-right">Ações</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-hairline">
                         {filtered.map(c => {
                             const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
                             const supName = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';
                             return (
-                                <tr key={c.matricula} className="hover:bg-gray-50 cursor-pointer" onClick={() => onViewDetails && onViewDetails(c)}>
+                                <tr key={c.matricula} className="hover:bg-canvas-soft cursor-pointer" onClick={() => onViewDetails && onViewDetails(c)}>
                                     <td className="p-4">
-                                        <div className="w-9 h-9 rounded-full bg-red-100 text-red-700 border-2 border-white shadow-sm flex items-center justify-center font-bold text-xs">
+                                        <div className="w-9 h-9 rounded-full bg-danger/15 text-danger border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-xs">
                                             {getInitials(c.nome)}
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <div className="font-medium text-gray-900">{c.nome}</div>
-                                        <div className="text-xs text-gray-400">{c.matricula}</div>
+                                        <div className="font-medium text-ink">{c.nome}</div>
+                                        <div className="text-xs text-ink-faint">{c.matricula}</div>
                                     </td>
-                                    <td className="p-4 text-xs">{ilhaName}</td>
+                                    <td className="p-4"><span className="font-display text-xs tracking-[-.01em] text-ink-2">{ilhaName}</span></td>
                                     <td className="p-4 text-xs">{supName}</td>
-                                    <td className="p-4 font-bold text-gray-800">{formatDateString(c.dataFim)}</td>
+                                    <td className="p-4 text-ink dado">{formatDateString(c.dataFim)}</td>
                                     <td className="p-4 text-right">
                                         <Button variant="ghost"><Eye size={16}/></Button>
                                     </td>
@@ -249,7 +240,7 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                         })}
                          {filtered.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-gray-400">
+                                <td colSpan={6} className="p-8 text-center text-ink-faint">
                                     <UserX className="mx-auto mb-2 opacity-50" size={24}/>
                                     Nenhum colaborador desligado encontrado neste período.
                                 </td>

@@ -59,13 +59,34 @@ describe('computeIlhaStats', () => {
     ]);
   });
 
+  it('ordena por nome quando ninguém pede outra ordem', () => {
+    const foraDeOrdem = [ilhas[1], ilhas[0]];
+    const r = computeIlhaStats(foraDeOrdem, [], clients, operations);
+    expect(r.map(i => i.nome)).toEqual(['Ilha 01', 'Ilha 02']);
+  });
+
   it('ordena da ilha mais crítica para a mais tranquila', () => {
     const r = computeIlhaStats(ilhas, [
       colab('1', 'i1', CollaboratorStatus.ATIVO),
       colab('2', 'i2', CollaboratorStatus.ATIVO),
       colab('3', 'i2', CollaboratorStatus.FERIAS),
-    ], clients, operations);
+    ], clients, operations, 'asc');
     expect(r.map(i => i.id)).toEqual(['i2', 'i1']);
+  });
+
+  it('inverte a ordem quando a pessoa pede decrescente', () => {
+    const r = computeIlhaStats(ilhas, [
+      colab('1', 'i1', CollaboratorStatus.ATIVO),
+      colab('2', 'i2', CollaboratorStatus.ATIVO),
+      colab('3', 'i2', CollaboratorStatus.FERIAS),
+    ], clients, operations, 'desc');
+    expect(r.map(i => i.id)).toEqual(['i1', 'i2']);
+  });
+
+  it('mantém a ilha vazia no fim nas duas direções', () => {
+    const colabs = [colab('1', 'i1', CollaboratorStatus.ATIVO)];
+    expect(computeIlhaStats(ilhas, colabs, clients, operations, 'asc').at(-1)!.id).toBe('i2');
+    expect(computeIlhaStats(ilhas, colabs, clients, operations, 'desc').at(-1)!.id).toBe('i2');
   });
 });
 

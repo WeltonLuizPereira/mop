@@ -74,35 +74,36 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                   {onBack && <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>}
-                  <h2 className="text-2xl font-bold text-gray-800">Controle de Férias</h2>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">{activeVacations.length}</span>
+                  <p className="text-[13px] text-ink-mute">
+                      <span className="t-data text-ink">{activeVacations.length}</span> em férias
+                  </p>
               </div>
            </div>
-           <div className="flex gap-4 border-b border-gray-200">
+           <div className="flex gap-4 border-b border-hairline">
                <button 
-                   className={`pb-2 px-1 text-sm font-bold transition-colors ${activeTab === 'mapa' ? 'border-b-2 border-brand-500 text-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
+                   className={`pb-2 px-1 text-sm font-bold transition-colors ${activeTab === 'mapa' ? 'border-b-2 border-brand text-brand' : 'text-ink-mute hover:text-ink'}`}
                    onClick={() => setActiveTab('mapa')}
                >
-                   Mapa de Férias
+                   Mapa de férias
                </button>
                <button 
-                   className={`pb-2 px-1 text-sm font-bold transition-colors ${activeTab === 'historico' ? 'border-b-2 border-brand-500 text-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
+                   className={`pb-2 px-1 text-sm font-bold transition-colors ${activeTab === 'historico' ? 'border-b-2 border-brand text-brand' : 'text-ink-mute hover:text-ink'}`}
                    onClick={() => setActiveTab('historico')}
                >
-                   Histórico de Férias
+                   Histórico de férias
                </button>
            </div>
 
            <div>
               {activeTab === 'mapa' ? (
                 <>
-                    <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <Sun size={18} className="text-orange-500" />
-                        Mapa de Férias (Ativas e Programadas)
+                    <h3 className="font-bold text-ink mb-3 flex items-center gap-2">
+                        <Sun size={18} className="text-brand" />
+                        Férias ativas e programadas
                     </h3>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="bg-orange-50 text-orange-800 font-semibold uppercase tracking-wider text-xs">
+                    <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+                        <table className="w-full text-left text-sm text-ink-mute bg-canvas">
+                            <thead>
                                 <tr>
                                     <th className="p-4 w-16"></th>
                                     <th className="p-4">Nome</th>
@@ -113,34 +114,38 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                     <th className="p-4 text-center">Status Retorno</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-hairline">
                                 {activeVacations.map(c => {
                                     const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
                                     const daysUntil = getDaysUntilReturn(c.feriasFim);
                                     const isAlert = false;
 
                                     return (
-                                        <tr key={c.matricula} className={`hover:bg-gray-50 cursor-pointer transition-colors ${isAlert ? 'bg-red-50 hover:bg-red-100' : ''}`} onClick={() => onViewDetails && onViewDetails(c)}>
+                                        <tr key={c.matricula} className={`hover:bg-canvas-soft cursor-pointer transition-colors ${isAlert ? 'bg-danger/10 hover:bg-danger/15' : ''}`} onClick={() => onViewDetails && onViewDetails(c)}>
                                             <td className="p-4">
-                                                 <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 border-2 border-white shadow-sm flex items-center justify-center font-bold text-xs">
+                                                 <div className="w-9 h-9 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-xs">
                                                     {getInitials(c.nome)}
                                                 </div>
                                             </td>
-                                            <td className="p-4 font-medium text-gray-900">{c.nome}</td>
-                                            <td className="p-4 text-xs">{ilhaName}</td>
-                                            <td className="p-4">{formatDateString(c.feriasInicio)}</td>
-                                            <td className="p-4">{formatDateString(c.feriasFim)}</td>
-                                            <td className="p-4 font-bold text-green-600">
+                                            <td className="p-4 font-medium text-ink">{c.nome}</td>
+                                            <td className="p-4">
+                                                <span className="font-display text-xs tracking-[-.01em] text-ink-2">{ilhaName}</span>
+                                            </td>
+                                            <td className="p-4 dado text-ink-mute">{formatDateString(c.feriasInicio)}</td>
+                                            <td className="p-4 dado text-ink-mute">{formatDateString(c.feriasFim)}</td>
+                                            {/* a data de retorno é a que importa nesta tela, então ela fica
+                                                em tinta cheia — verde aqui diria "deu certo", que não é o caso */}
+                                            <td className="p-4 dado text-ink">
                                                 {c.feriasFim ? addDays(c.feriasFim, 1) : '-'}
                                             </td>
                                             <td className="p-4 text-center">
                                                 {isAlert ? (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold animate-pulse">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-danger/15 text-danger text-xs font-bold animate-pulse">
                                                         <AlertTriangle size={12} />
                                                         Em {daysUntil} {daysUntil === 1 ? 'dia' : 'dias'}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-xs text-gray-500 font-medium">
+                                                    <span className="text-xs text-ink-mute font-medium">
                                                         {daysUntil === 999 ? '-' : daysUntil < 0 ? 'Retornou' : `Em ${daysUntil} dias`}
                                                     </span>
                                                 )}
@@ -150,7 +155,7 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                 })}
                                 {activeVacations.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="p-6 text-center text-gray-400 text-xs">
+                                        <td colSpan={7} className="p-6 text-center text-ink-faint text-xs">
                                             Nenhuma férias mapeada no momento.
                                         </td>
                                     </tr>
@@ -162,26 +167,26 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
               ) : (
                 <>
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4">
-                        <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                            <History size={18} className="text-gray-500" />
-                            Histórico de Férias
-                            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">{filteredHistory.length}</span>
+                        <h3 className="font-bold text-ink flex items-center gap-2">
+                            <History size={18} className="text-ink-mute" />
+                            Histórico de férias
+                            <span className="bg-canvas-sunk text-ink-mute px-2 py-0.5 rounded-full text-xs font-bold">{filteredHistory.length}</span>
                         </h3>
                         <div className="flex flex-col sm:flex-row items-center gap-2">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={16} />
                                 <input
                                     type="text"
-                                    placeholder="Buscar nome ou matrícula..."
+                                    placeholder="Buscar nome ou matrícula"
                                     value={historySearch}
                                     onChange={(e) => setHistorySearch(e.target.value)}
-                                    className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                    className="pl-9 pr-4 py-2 border border-hairline rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-brand focus:border-brand"
                                 />
                             </div>
                             <select 
                                 value={historyYear}
                                 onChange={(e) => setHistoryYear(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500"
+                                className="px-3 py-2 border border-hairline rounded-lg text-sm bg-canvas focus:ring-2 focus:ring-brand"
                             >
                                 <option value="">Ano</option>
                                 <option value="2024">2024</option>
@@ -192,7 +197,7 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                             <select 
                                 value={historyMonth}
                                 onChange={(e) => setHistoryMonth(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500"
+                                className="px-3 py-2 border border-hairline rounded-lg text-sm bg-canvas focus:ring-2 focus:ring-brand"
                             >
                                 <option value="">Mês</option>
                                 <option value="01">Janeiro</option>
@@ -210,9 +215,9 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                             </select>
                         </div>
                     </div>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-xs">
+                    <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+                        <table className="w-full text-left text-sm text-ink-mute bg-canvas">
+                            <thead>
                                 <tr>
                                     <th className="p-4 w-16"></th>
                                     <th className="p-4">Nome</th>
@@ -221,28 +226,28 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                     <th className="p-4">Fim</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-hairline">
                                 {filteredHistory.map(h => {
                                     const c = collabs.find(col => col.matricula === h.collaborator_matricula);
                                     const nome = c ? c.nome : 'Desconhecido';
                                     const ilhaName = c ? (ilhas.find(i => i.id === c.ilhaId)?.nome || '-') : '-';
                                     return (
-                                        <tr key={h.id} className="hover:bg-gray-50 transition-colors">
+                                        <tr key={h.id} className="hover:bg-canvas-soft transition-colors">
                                             <td className="p-4">
-                                                <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 border-2 border-white shadow-sm flex items-center justify-center font-bold text-xs">
+                                                <div className="w-9 h-9 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-xs">
                                                     {getInitials(nome)}
                                                 </div>
                                             </td>
-                                            <td className="p-4 font-medium text-gray-900">{nome}</td>
-                                            <td className="p-4 text-xs">{ilhaName}</td>
-                                            <td className="p-4">{formatDateString(h.start_date)}</td>
-                                            <td className="p-4">{formatDateString(h.end_date)}</td>
+                                            <td className="p-4 font-medium text-ink">{nome}</td>
+                                            <td className="p-4"><span className="font-display text-xs tracking-[-.01em] text-ink-2">{ilhaName}</span></td>
+                                            <td className="p-4 dado">{formatDateString(h.start_date)}</td>
+                                            <td className="p-4 dado">{formatDateString(h.end_date)}</td>
                                         </tr>
                                     );
                                 })}
                                 {filteredHistory.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="p-6 text-center text-gray-400 text-xs">
+                                        <td colSpan={5} className="p-6 text-center text-ink-faint text-xs">
                                             Nenhum histórico encontrado.
                                         </td>
                                     </tr>

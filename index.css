@@ -31,19 +31,7 @@
   --color-danger: var(--danger);
   --color-ok:     var(--ok);
 
-  /* Shim legado. 60 call sites de `brand-*` vivem nas páginas das levas 2 e 3;
-     removê-lo agora quebraria essas telas. Sai ao fim da leva 3.
-     Os passos 200/300/800 não existiam antes e 7 call sites de App.tsx não
-     emitiam CSS nenhum — corrigido aqui. */
-  --color-brand-50:  var(--brand-wash);
-  --color-brand-100: var(--brand-wash);
-  --color-brand-200: var(--brand-wash);
-  --color-brand-300: var(--brand-hot);
-  --color-brand-500: var(--brand);
-  --color-brand-600: var(--brand);
-  --color-brand-700: var(--brand-text);
-  --color-brand-800: var(--brand-text);
-  --color-brand-900: var(--brand-press);
+
 
   --radius-xs: 4px;  --radius-sm: 6px;   --radius-md: 8px;
   --radius-lg: 12px; --radius-xl: 16px;  --radius-tile: 20px;
@@ -150,38 +138,7 @@ html, body {
   }
 }
 
-/* Levas 2/3 — normalização das páginas operacionais legadas.
-   Estas regras mantêm a marcação funcional existente, mas fazem todas as
-   superfícies consumirem o mesmo sistema de tokens do mockup Quality. */
-@layer utilities {
-  .bg-white { background-color: var(--canvas); }
-  .bg-gray-50, .bg-gray-50\/50 { background-color: var(--canvas-soft); }
-  .bg-gray-100 { background-color: var(--canvas-sunk); }
 
-  .text-gray-900, .text-gray-800, .text-gray-700 { color: var(--ink); }
-  .text-gray-600, .text-gray-500 { color: var(--ink-mute); }
-  .text-gray-400, .text-gray-300 { color: var(--ink-faint); }
-
-  .border-gray-100, .border-gray-200, .border-gray-300 {
-    border-color: var(--hairline);
-  }
-  .divide-gray-100 > :not(:last-child),
-  .divide-gray-200 > :not(:last-child) { border-color: var(--hairline); }
-
-  .hover\:bg-gray-50:hover, .hover\:bg-gray-50\/50:hover,
-  .hover\:bg-gray-100:hover { background-color: var(--canvas-sunk); }
-  .hover\:text-gray-600:hover, .hover\:text-gray-700:hover {
-    color: var(--ink);
-  }
-
-  /* Acentos históricos passam a obedecer à regra: laranja = ação. */
-  .bg-blue-50, .bg-orange-50, .bg-indigo-50 { background-color: var(--brand-wash); }
-  .text-blue-600, .text-blue-700, .text-indigo-600, .text-indigo-700,
-  .text-purple-600, .text-orange-600 { color: var(--brand-text); }
-  .border-blue-100, .border-indigo-100, .border-orange-100 {
-    border-color: var(--hairline);
-  }
-}
 
 /* Ritmo de página compartilhado pelas rotas extraídas do monólito. */
 main > div > h2,
@@ -192,13 +149,29 @@ main > div > div:first-child h2 {
   color: var(--ink);
 }
 
+/* Cabeçalho e linhas no mesmo registro da tabela do mockup: sem preenchimento,
+   sem zebra, separador de 1px e o eyebrow largo no topo. As páginas herdadas
+   ainda trazem classes próprias de fundo e tamanho; estas regras não estão em
+   nenhuma layer, então prevalecem sobre as utilidades do Tailwind. */
 main table thead {
-  background-color: var(--canvas-soft);
-  color: var(--ink-mute);
+  background-color: transparent;
+  color: var(--ink-faint);
   font-family: var(--font-display);
+  font-weight: 500;
   font-size: 11px;
-  letter-spacing: .12em;
+  letter-spacing: .18em;
   text-transform: uppercase;
+}
+
+/* Cabeçalho fixo é a exceção: as linhas passam por baixo dele e precisam
+   de um fundo opaco para não atravessar o texto. */
+main table thead.sticky { background-color: var(--canvas); }
+
+main table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
 }
 
 main table tbody tr {
@@ -206,7 +179,34 @@ main table tbody tr {
   transition: background-color 140ms ease;
 }
 
+main table tbody td {
+  padding: 9px 14px;
+  font-size: 13px;
+  vertical-align: middle;
+  /* dígito de largura fixa: a coluna se alinha sozinha, sem tabulação
+     manual, e 1.284 fica sob 37 na mesma casa */
+  font-variant-numeric: tabular-nums;
+}
+
+/* `.num` para contagem — mono e à direita, onde a unidade importa.
+   `.dado` para data e matrícula — mono, mas segue o alinhamento da coluna.
+   Nenhuma das duas mexe na cor: quem decide isso é a coluna. */
+main table td.num,
+main table th.num { text-align: right; }
+main table td.num,
+main table td.dado {
+  font-family: var(--font-data);
+  font-weight: 500;
+}
+
 main table tbody tr:hover { background-color: var(--canvas-soft); }
+
+/* Sob o cursor, a linha recebe a mesma régua de 2px que marca a página atual
+   na barra lateral — o sistema já ensinou esse sinal. Vai por dentro da
+   célula (`inset`) para não empurrar a coluna um pixel. */
+main table tbody tr:hover > td:first-child {
+  box-shadow: inset 2px 0 0 var(--brand);
+}
 
 main select,
 main input:not([type='checkbox']):not([type='radio']),

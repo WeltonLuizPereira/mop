@@ -8,6 +8,11 @@ describe('Logo', () => {
     expect(container.querySelectorAll('path')).toHaveLength(1);
   });
 
+  it('põe o mark no laranja do sistema, o mesmo dos anéis dos tiles', () => {
+    const { container } = render(<Logo variant="mark" />);
+    expect(container.querySelector('path')).toHaveAttribute('fill', 'var(--brand)');
+  });
+
   it('desenha os três paths no lockup', () => {
     const { container } = render(<Logo variant="lockup" />);
     expect(container.querySelectorAll('path')).toHaveLength(3);

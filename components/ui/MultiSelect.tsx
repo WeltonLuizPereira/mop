@@ -91,7 +91,7 @@ export const MultiSelect = ({ label, options, value, onChange }: {
            <div className="p-2 border-b border-hairline">
                <input
                    type="text"
-                   placeholder="Buscar..."
+                   placeholder="Buscar"
                    aria-label={`Buscar em ${label}`}
                    className="w-full rounded-sm border border-hairline-2 bg-canvas text-ink text-xs px-2 py-1.5 placeholder:text-ink-faint"
                    value={searchTerm}

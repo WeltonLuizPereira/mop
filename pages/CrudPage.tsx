@@ -52,22 +52,27 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
 
     return (
         <div className="space-y-4 mop-fade-up">
-            {/* ... CRUD UI ... */}
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-fg">{title}</h2>
-                {isAdmin && <Button onClick={handleCreate}><Plus size={16} /> Novo</Button>}
-            </div>
-            {/* Table ... */}
-            <div className="bg-surface rounded-2xl shadow-1 border border-border overflow-hidden flex flex-col min-h-0 flex-1">
-                <div className="p-4 border-b border-border flex gap-4">
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" size={16} />
-                    <input className="pl-9 w-full px-3 py-2 bg-surface-alt border border-transparent rounded-lg text-sm text-fg focus:ring-2 focus:ring-primary outline-none transition-colors" placeholder={`Buscar ${title}...`} value={search} onChange={e => setSearch(e.target.value)} />
+            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden flex flex-col min-h-0 flex-1">
+                {/* Uma barra só: buscar, contar, criar — o mesmo desenho da lista
+                    de colaboradores, para as seis telas de cadastro. */}
+                <div className="px-4 py-3.5 border-b border-hairline flex items-center flex-wrap gap-2.5">
+                  <div className="relative w-full max-w-[340px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={15} />
+                    <input
+                      className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm text-[13px] text-ink placeholder:text-ink-faint"
+                      placeholder={`Buscar em ${title.toLowerCase()}`}
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                    />
                   </div>
+                  <span className="ml-auto text-[13px] text-ink-mute whitespace-nowrap">
+                    <span className="t-data text-ink-2">{filteredData.length}</span> {filteredData.length === 1 ? 'registro' : 'registros'}
+                  </span>
+                  {isAdmin && <Button onClick={handleCreate}><Plus size={15} /> Novo</Button>}
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-fg-muted">
-                    <thead className="bg-surface-alt text-fg-muted font-bold uppercase tracking-wider text-xs">
+                  <table className="w-full text-left text-sm text-ink-mute bg-canvas">
+                    <thead>
                       <tr>
                         <th className="p-4">Nome</th>
                         <th className="p-4">Status</th>
@@ -75,24 +80,26 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                         {isAdmin && <th className="p-4 text-right">Ações</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-hairline">
                       {filteredData.map((item) => (
-                        <tr key={item.id} className="hover:bg-surface-alt transition-colors">
-                          <td className="p-4 font-medium text-fg">{item.nome}</td>
+                        <tr key={item.id} className="hover:bg-canvas-soft transition-colors">
+                          <td className="p-4 font-medium text-ink">{item.nome}</td>
                           <td className="p-4"><Badge status={item.status} /></td>
                           {schema.filter(s => s.key !== 'nome' && s.key !== 'status' && s.type === 'select').map(s => {
     const opts = typeof s.options === 'function' ? s.options(item) : s.options;
     const selectedOpt = opts?.find(o => o.value === (item as any)[s.key]);
     return <td key={s.key} className="p-4">{selectedOpt?.label || '-'}</td>;
 })}
-                          {isAdmin && (<td className="p-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="text-primary hover:text-primary-dark p-1.5 bg-primary-tonal rounded-lg transition-colors"><Edit2 size={16} /></button><button onClick={() => handleDeleteRequest(item)} className="text-error hover:opacity-80 p-1.5 bg-error/10 rounded-lg transition-colors"><Trash2 size={16} /></button></div></td>)}
+                          {isAdmin && (<td className="p-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="text-brand-text hover:text-brand-press p-1.5 bg-brand-wash rounded-lg transition-colors"><Edit2 size={16} /></button><button onClick={() => handleDeleteRequest(item)} className="text-danger hover:opacity-80 p-1.5 bg-danger/10 rounded-lg transition-colors"><Trash2 size={16} /></button></div></td>)}
                         </tr>
                       ))}
                       {filteredData.length === 0 && (
                         <tr><td colSpan={10} className="p-10">
-                          <div className="flex flex-col items-center gap-3 text-center">
-                            <p className="text-fg-subtle text-sm">Nenhum registro encontrado</p>
-                          </div>
+                          <p className="text-center text-[13px] text-ink-mute">
+                            {search
+                              ? 'Nada com esse texto. Ajuste a busca.'
+                              : `Nenhum registro em ${title.toLowerCase()}. Use Novo para criar o primeiro.`}
+                          </p>
                         </td></tr>
                       )}
                     </tbody>
@@ -102,10 +109,10 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
             {/* Modal ... */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                  <div className="mop-pop-in bg-surface rounded-2xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
-                    <div className="bg-surface-alt p-4 border-b border-border flex justify-between items-center shrink-0">
-                      <h3 className="font-bold text-lg text-fg">{currentItem.id ? 'Editar' : 'Novo'} {title}</h3>
-                      <button type="button" onClick={() => setIsOpen(false)} className="text-fg-subtle hover:text-fg"><X size={20}/></button>
+                  <div className="mop-pop-in bg-canvas rounded-xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
+                    <div className="bg-canvas-soft p-4 border-b border-hairline flex justify-between items-center shrink-0">
+                      <h3 className="font-bold text-lg text-ink">{currentItem.id ? 'Editar' : 'Novo'} {title}</h3>
+                      <button type="button" onClick={() => setIsOpen(false)} className="text-ink-faint hover:text-ink"><X size={20}/></button>
                     </div>
                     <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto flex flex-col gap-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -125,12 +132,12 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                           }} required><option value="">Selecione...</option>{opts?.map((opt: any) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}</Select>}
                           {field.type === 'multiselect' && (
                               <div className="mb-4">
-                                  <label className="text-xs font-bold text-fg-muted uppercase block mb-1">{field.label}</label>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-border rounded-lg bg-surface-alt">
+                                  <label className="t-eyebrow text-ink-faint block mb-1">{field.label}</label>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-hairline rounded-lg bg-canvas-soft">
                                       {opts?.map((opt: any) => {
                                           const isSelected = (currentItem[field.key] || []).includes(opt.value);
                                           return (
-                                              <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-surface p-1 rounded text-fg">
+                                              <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-canvas p-1 rounded text-ink">
                                                   <input
                                                       type="checkbox"
                                                       checked={isSelected}
@@ -142,7 +149,7 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                                                               setCurrentItem({...currentItem, [field.key]: curr.filter(v => v !== opt.value)});
                                                           }
                                                       }}
-                                                      className="rounded text-primary focus:ring-primary border-border-strong"
+                                                      className="rounded text-brand-text focus:ring-brand border-hairline-2"
                                                   />
                                                   {opt.label}
                                               </label>
@@ -155,7 +162,7 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                       );
                       })}
                        </div>
-                      <div className="mt-2 pt-4 border-t border-border">
+                      <div className="mt-2 pt-4 border-t border-hairline">
                         <Select label="Status" value={currentItem.status || EntityStatus.ACTIVE} onChange={(e: any) => setCurrentItem({...currentItem, status: e.target.value})}><option value={EntityStatus.ACTIVE}>Ativo</option><option value={EntityStatus.INACTIVE}>Inativo</option></Select>
                       </div>
                       <div className="mt-4 flex justify-end gap-3 shrink-0">
@@ -169,11 +176,11 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
             {/* Delete Modal ... */}
             {isDeleteOpen && itemToDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="mop-pop-in bg-surface rounded-2xl shadow-3 w-full max-w-sm overflow-hidden">
+                    <div className="mop-pop-in bg-canvas rounded-xl shadow-3 w-full max-w-sm overflow-hidden">
                     <div className="p-6 text-center">
-                       <div className="w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-4"><AlertTriangle size={32} /></div>
-                       <h3 className="text-xl font-bold text-fg mb-2">Excluir {title.slice(0, -1)}?</h3>
-                       <p className="text-fg-muted text-sm mb-6">Tem certeza que deseja remover <b>{itemToDelete.nome}</b>?</p>
+                       <div className="w-16 h-16 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-4"><AlertTriangle size={32} /></div>
+                       <h3 className="t-display-md text-ink mb-2">Excluir {title.slice(0, -1)}?</h3>
+                       <p className="text-ink-mute text-sm mb-6">Tem certeza que deseja remover <b>{itemToDelete.nome}</b>?</p>
                        <div className="flex gap-3 justify-center"><Button variant="secondary" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button><Button variant="danger" onClick={confirmDelete}>Sim, Excluir</Button></div>
                     </div>
                   </div>

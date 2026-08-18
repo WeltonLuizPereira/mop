@@ -6,7 +6,10 @@ import { getCollaboratorCalculations, formatDate, formatDateString } from '../ut
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Badge, Button, MultiSelect, Table } from '../components/ui';
+import { Badge, Button, Chip, ChipSelect, MultiSelect, Table, type Ordenacao } from '../components/ui';
+
+/** As cinco colunas por onde a lista pode ser ordenada. */
+type Campo = 'cliente' | 'nome' | 'status' | 'supervisor' | 'ilha';
 import { ClientLogo } from '../components/collaborators/ClientLogo';
 import { resolveClient } from '../lib/clientLogo';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
@@ -17,6 +20,17 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [falhouCarga, setFalhouCarga] = useState(false);
+    const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+    const [ordenacao, setOrdenacao] = useState<Ordenacao<Campo>>({ campo: 'nome', direcao: 'asc' });
+
+    // clicar na coluna ativa inverte o sentido; em outra coluna, recomeça em A → Z
+    const ordenavel = {
+        ordenacao,
+        onOrdenar: (campo: string) => setOrdenacao(o =>
+            o.campo === campo
+                ? { campo: o.campo, direcao: o.direcao === 'asc' ? 'desc' as const : 'asc' as const }
+                : { campo: campo as Campo, direcao: 'asc' as const }),
+    };
     
     // Filtros
     const [filterCoord, setFilterCoord] = useState<string[]>([]);
@@ -98,11 +112,20 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
 
         return matchesSearch && matchesCoord && matchesSup && matchesIlha && matchesOp && matchesClient && matchesStatus && isWithinDateRange;
     }).sort((a, b) => {
-        const nameDiff = a.nome.localeCompare(b.nome);
-        if (nameDiff !== 0) return nameDiff;
-        const ilhaA = ilhas.find(i => i.id === a.ilhaId)?.nome || '';
-        const ilhaB = ilhas.find(i => i.id === b.ilhaId)?.nome || '';
-        return ilhaA.localeCompare(ilhaB);
+        const chave = (c: Collaborator) => {
+            switch (ordenacao.campo) {
+                case 'cliente': return resolveClient(c, ilhas, clients)?.nome ?? '';
+                case 'status': return c.status;
+                case 'supervisor': return supervisors.find(s => s.id === c.supervisorId)?.nome ?? '';
+                case 'ilha': return ilhas.find(i => i.id === c.ilhaId)?.nome ?? '';
+                default: return c.nome;
+            }
+        };
+        const diff = chave(a).localeCompare(chave(b), 'pt-BR');
+        // empate volta para o nome: duas pessoas da mesma ilha não podem
+        // trocar de lugar a cada renderização
+        const resolvido = diff !== 0 ? diff : a.nome.localeCompare(b.nome, 'pt-BR');
+        return ordenacao.direcao === 'asc' ? resolvido : -resolvido;
     });
 
     const handleSave = async (data: Collaborator) => {
@@ -278,6 +301,9 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const coordOptions = coordinators.map(c => ({value: c.id, label: c.nome}));
     const supOptions = supervisors.filter(s => filterCoord.length === 0 || s.coordinatorIds?.some(id => filterCoord.includes(id))).map(s => ({value: s.id, label: s.nome}));
     const statusOptions = Object.values(CollaboratorStatus).map(s => ({value: s, label: s}));
+    const filtrosAtivos = filterCoord.length + filterSup.length + filterIlha.length
+        + filterOp.length + filterClient.length + filterStatus.length;
+
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const years = Array.from({length: 6}, (_, i) => (today.getFullYear() + 1) - i);
 
@@ -287,51 +313,71 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     // além do corte ficavam inalcançáveis — a lista simplesmente terminava.
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-             <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-bold text-gray-800">Colaboradores</h2>
-                    <div className="flex gap-2 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-                        <select className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
-                            <option value={-1}>Todos os Meses</option>
-                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                        </select>
-                        <div className="w-px bg-gray-200 my-1"></div>
-                        <select className="px-3 py-1.5 bg-transparent text-sm font-medium outline-none" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select>
+             <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+                {/* Uma barra so, como no mockup: buscar e recortar de um lado,
+                    exportar e criar do outro. */}
+                <div className="px-4 py-3.5 border-b border-hairline flex items-center flex-wrap gap-x-2.5 gap-y-3">
+                    <div className="relative flex-1 min-w-[180px] max-w-[260px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={15} />
+                        <input
+                            className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm text-[13px] text-ink placeholder:text-ink-faint"
+                            placeholder="Buscar nome ou matrícula"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
                     </div>
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="secondary" onClick={handleExportExcel}><FileSpreadsheet size={16}/> Excel</Button>
-                    <Button variant="secondary" onClick={handleExportPDF}><FileText size={16}/> PDF</Button>
-                    {(isAdmin || currentUser.role === UserRole.SUPPORT) && <Button onClick={() => setIsCreateOpen(true)}><Plus size={16}/> Novo Cadastro</Button>}
-                </div>
-             </div>
-             
-             {/* Filtros ... (omitted same as original) */}
-             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-2"><Filter size={14}/> Filtros Avançados</h3>
-                    {(filterCoord.length > 0 || filterSup.length > 0 || filterIlha.length > 0 || filterOp.length > 0 || filterClient.length > 0 || filterStatus.length > 0) && (
-                        <button onClick={clearFilters} className="text-xs text-brand-600 hover:text-brand-800 font-bold hover:underline">Limpar Filtros</button>
-                    )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                    <div className="space-y-1"><MultiSelect label="Cliente" options={clientOptions} value={filterClient} onChange={setFilterClient} /></div>
-                    <div className="space-y-1"><MultiSelect label="Operação" options={opOptions} value={filterOp} onChange={setFilterOp} /></div>
-                    <div className="space-y-1"><MultiSelect label="Ilha" options={ilhaOptions} value={filterIlha} onChange={setFilterIlha} /></div>
-                    <div className="space-y-1"><MultiSelect label="Coordenador" options={coordOptions} value={filterCoord} onChange={setFilterCoord} /></div>
-                    <div className="space-y-1"><MultiSelect label="Supervisor" options={supOptions} value={filterSup} onChange={setFilterSup} /></div>
-                    <div className="space-y-1"><MultiSelect label="Status" options={statusOptions} value={filterStatus} onChange={setFilterStatus} /></div>
-                </div>
-             </div>
 
-             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex gap-4">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input className="pl-9 w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-brand-500" placeholder="Buscar por nome ou matrícula" value={search} onChange={e => setSearch(e.target.value)} />
+                    <ChipSelect rotulo="Mês" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
+                        <option value={-1}>todos</option>
+                        {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                    </ChipSelect>
+                    <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                    </ChipSelect>
+                    <Chip
+                        onClick={() => setFiltrosAbertos(a => !a)}
+                        aria-expanded={filtrosAbertos}
+                        aria-controls="filtros-avancados"
+                        className={filtrosAbertos || filtrosAtivos > 0 ? 'border-brand text-brand-text' : ''}
+                    >
+                        <span className="inline-flex items-center gap-1.5">
+                            <Filter size={12} />
+                            Filtros{filtrosAtivos > 0 ? ` · ${filtrosAtivos}` : ''}
+                        </span>
+                    </Chip>
+
+                    <div className="ml-auto flex items-center gap-2.5">
+                        <span className="text-[13px] text-ink-mute whitespace-nowrap">
+                            <span className="t-data text-ink-2">{filtered.length}</span> resultados
+                        </span>
+                        <Button variant="ghost" onClick={handleExportExcel}><FileSpreadsheet size={15}/> Excel</Button>
+                        <Button variant="ghost" onClick={handleExportPDF}><FileText size={15}/> PDF</Button>
+                        {(isAdmin || currentUser.role === UserRole.SUPPORT) && (
+                            <Button onClick={() => setIsCreateOpen(true)}><Plus size={15}/> Novo colaborador</Button>
+                        )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 ml-auto"><span className="font-bold">{filtered.length}</span> resultados</div>
                 </div>
+
+                {filtrosAbertos && (
+                    <div id="filtros-avancados" className="px-4 py-4 border-b border-hairline bg-canvas">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="t-eyebrow text-ink-faint">Recortar a lista</span>
+                            {filtrosAtivos > 0 && (
+                                <button onClick={clearFilters} className="text-xs font-medium text-brand-text hover:underline">
+                                    Limpar filtros
+                                </button>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                            <MultiSelect label="Cliente" options={clientOptions} value={filterClient} onChange={setFilterClient} />
+                            <MultiSelect label="Operação" options={opOptions} value={filterOp} onChange={setFilterOp} />
+                            <MultiSelect label="Ilha" options={ilhaOptions} value={filterIlha} onChange={setFilterIlha} />
+                            <MultiSelect label="Coordenador" options={coordOptions} value={filterCoord} onChange={setFilterCoord} />
+                            <MultiSelect label="Supervisor" options={supOptions} value={filterSup} onChange={setFilterSup} />
+                            <MultiSelect label="Status" options={statusOptions} value={filterStatus} onChange={setFilterStatus} />
+                        </div>
+                    </div>
+                )}
                 {falhouCarga ? (
                     <div className="p-10 text-center">
                         <p className="text-sm text-ink-2">Não foi possível carregar os colaboradores.</p>
@@ -349,11 +395,11 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                 ) : (
                     <Table>
                       <Table.Head>
-                        <Table.Th className="w-px pr-0">Cliente</Table.Th>
-                        <Table.Th>Nome</Table.Th>
-                        <Table.Th>Status</Table.Th>
-                        <Table.Th>Supervisor</Table.Th>
-                        <Table.Th>Ilha</Table.Th>
+                        <Table.Th className="w-px pr-0" campo="cliente" {...ordenavel}>Cliente</Table.Th>
+                        <Table.Th campo="nome" {...ordenavel}>Nome</Table.Th>
+                        <Table.Th campo="status" {...ordenavel}>Status</Table.Th>
+                        <Table.Th campo="supervisor" {...ordenavel}>Supervisor</Table.Th>
+                        <Table.Th campo="ilha" {...ordenavel}>Ilha</Table.Th>
                       </Table.Head>
                       <tbody>
                         {filtered.map(c => {
@@ -368,11 +414,27 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                               onKeyDown={e => { if (e.key === 'Enter') onViewDetails(c); }}
                               className="cursor-pointer hover:bg-canvas-soft"
                             >
-                              <Table.Td className="w-px pr-0"><ClientLogo client={cliente} /></Table.Td>
-                              <Table.Td className="font-medium text-ink">{c.nome}</Table.Td>
+                              {/* a logo encosta na direita da coluna para
+                                  formar um bloco só com o nome ao lado */}
+                              <Table.Td className="w-px pr-0">
+                                <div className="flex justify-end"><ClientLogo client={cliente} /></div>
+                              </Table.Td>
+                              {/* nome e matrícula formam o bloco de identidade:
+                                  é por ele que o olho encontra a linha, e a
+                                  matrícula é o que a busca e o RH usam */}
+                              <Table.Td>
+                                <span className="block font-medium text-ink leading-tight">{c.nome}</span>
+                                <span className="block t-data text-[11px] text-ink-faint mt-px">{c.matricula}</span>
+                              </Table.Td>
                               <Table.Td><Badge status={c.status} /></Table.Td>
-                              <Table.Td>{supervisor?.nome ?? '—'}</Table.Td>
-                              <Table.Td>{ilha?.nome ?? '—'}</Table.Td>
+                              <Table.Td className="text-ink-mute">{supervisor?.nome ?? '—'}</Table.Td>
+                              <Table.Td>
+                                {/* a ilha aparece na face de display, como no
+                                    tile do mapa: é a mesma entidade nas duas telas */}
+                                <span className="font-display text-xs tracking-[-.01em] text-ink-2">
+                                  {ilha?.nome ?? '—'}
+                                </span>
+                              </Table.Td>
                             </tr>
                           );
                         })}

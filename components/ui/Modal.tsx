@@ -36,7 +36,7 @@ export const Modal = ({ open, onClose, title, children }: ModalProps) => {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-canvas border border-hairline rounded-xl shadow-3"
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-canvas border border-hairline rounded-lg shadow-3"
       >
         <div className="flex items-center gap-4 px-6 py-4 border-b border-hairline">
           <h2 className="t-display-md text-ink flex-1">{title}</h2>

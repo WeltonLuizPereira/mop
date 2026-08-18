@@ -78,60 +78,60 @@ export const NotificationCenter = () => {
         <div className="relative" ref={containerRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 rounded-full text-fg-muted hover:text-primary hover:bg-primary-tonal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="relative p-2 rounded-full text-ink-mute hover:text-brand-text hover:bg-brand-wash transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
                 <Bell size={20} />
                 {totalAlerts > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface"></span>
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-danger rounded-full border-2 border-canvas"></span>
                 )}
             </button>
 
             {isOpen && (
-                <div className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-surface rounded-2xl shadow-3 border border-border z-50 overflow-hidden">
-                    <div className="p-4 border-b border-border bg-surface-alt flex justify-between items-center">
-                        <h3 className="font-bold text-fg text-sm">Central de Notificações</h3>
-                        <span className="text-xs bg-primary-tonal text-primary px-2 py-0.5 rounded-full font-bold">Hoje</span>
+                <div className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-canvas rounded-xl shadow-3 border border-hairline z-50 overflow-hidden">
+                    <div className="p-4 border-b border-hairline bg-canvas-soft flex justify-between items-center">
+                        <h3 className="font-bold text-ink text-sm">Central de Notificações</h3>
+                        <span className="text-xs bg-brand-wash text-brand-text px-2 py-0.5 rounded-full font-bold">Hoje</span>
                     </div>
 
                     <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
                         {(notifications.birthdays.length > 0 || notifications.expiring.length > 0 || notifications.avisoEnding.length > 0) && (
                             <div className="p-2">
-                                <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider px-2 py-1">Atenção Hoje</p>
+                                <p className="t-eyebrow text-ink-faint px-2 py-1">Atenção Hoje</p>
 
                                 {notifications.avisoEnding.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors bg-warning/10">
-                                        <div className="bg-warning/20 text-fg p-2 rounded-lg">
+                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-canvas-soft rounded-lg transition-colors bg-brand/10">
+                                        <div className="bg-brand/20 text-ink p-2 rounded-lg">
                                             <UserMinus size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-fg">Aviso Prévio Finalizando</p>
-                                            <p className="text-xs text-fg-muted">Último dia de <span className="font-semibold">{c.nome}</span>.</p>
-                                            <p className="text-[10px] text-fg-muted font-medium mt-1">Realizar desligamento no sistema.</p>
+                                            <p className="text-sm font-bold text-ink">Aviso Prévio Finalizando</p>
+                                            <p className="text-xs text-ink-mute">Último dia de <span className="font-semibold">{c.nome}</span>.</p>
+                                            <p className="text-[10px] text-ink-mute font-medium mt-1">Realizar desligamento no sistema.</p>
                                         </div>
                                     </div>
                                 ))}
 
                                 {notifications.birthdays.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors">
-                                        <div className="bg-primary-tonal text-primary p-2 rounded-lg">
+                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-canvas-soft rounded-lg transition-colors">
+                                        <div className="bg-brand-wash text-brand-text p-2 rounded-lg">
                                             <Gift size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-fg">Aniversariante do Dia!</p>
-                                            <p className="text-xs text-fg-muted">Parabéns para <span className="font-semibold">{c.nome}</span></p>
+                                            <p className="text-sm font-bold text-ink">Aniversariante do Dia!</p>
+                                            <p className="text-xs text-ink-mute">Parabéns para <span className="font-semibold">{c.nome}</span></p>
                                         </div>
                                     </div>
                                 ))}
 
                                 {notifications.expiring.map(c => (
-                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors bg-error/10">
-                                        <div className="bg-error/15 text-error p-2 rounded-lg">
+                                    <div key={c.matricula} className="flex items-start gap-3 p-3 hover:bg-canvas-soft rounded-lg transition-colors bg-danger/10">
+                                        <div className="bg-danger/15 text-danger p-2 rounded-lg">
                                             <AlertTriangle size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-fg">Contrato Vencendo Hoje</p>
-                                            <p className="text-xs text-fg-muted">{c.nome} completa o período de experiência.</p>
-                                            <p className="text-[10px] text-error font-medium mt-1">Ação necessária no sistema.</p>
+                                            <p className="text-sm font-bold text-ink">Contrato Vencendo Hoje</p>
+                                            <p className="text-xs text-ink-mute">{c.nome} completa o período de experiência.</p>
+                                            <p className="text-[10px] text-danger font-medium mt-1">Ação necessária no sistema.</p>
                                         </div>
                                     </div>
                                 ))}
@@ -139,32 +139,32 @@ export const NotificationCenter = () => {
                         )}
 
                         {notifications.birthdays.length === 0 && notifications.expiring.length === 0 && notifications.avisoEnding.length === 0 && (
-                            <div className="p-6 text-center text-fg-subtle">
-                                <CheckCircle className="mx-auto mb-2 text-fg-subtle" size={24} />
+                            <div className="p-6 text-center text-ink-faint">
+                                <CheckCircle className="mx-auto mb-2 text-ink-faint" size={24} />
                                 <p className="text-xs">Nenhuma pendência urgente para hoje.</p>
                             </div>
                         )}
 
-                        <div className="w-full h-px bg-border my-1"></div>
+                        <div className="w-full h-px bg-hairline my-1"></div>
 
                         <div className="p-2">
-                            <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider px-2 py-1">Últimas Atualizações</p>
+                            <p className="t-eyebrow text-ink-faint px-2 py-1">Últimas Atualizações</p>
                             {notifications.recentHistory.map(log => (
-                                <div key={log.id} className="flex gap-3 p-3 hover:bg-surface-alt rounded-lg transition-colors">
+                                <div key={log.id} className="flex gap-3 p-3 hover:bg-canvas-soft rounded-lg transition-colors">
                                     <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0
-                                        ${log.type === 'create' ? 'bg-success' :
-                                          log.type === 'delete' ? 'bg-error' : 'bg-primary'}`}
+                                        ${log.type === 'create' ? 'bg-ok' :
+                                          log.type === 'delete' ? 'bg-danger' : 'bg-brand'}`}
                                     />
                                     <div>
-                                        <p className="text-xs text-fg leading-tight">
+                                        <p className="text-xs text-ink leading-tight">
                                             <span className="font-bold">{log.user}</span> {log.action.toLowerCase()}
                                         </p>
-                                        <p className="text-[10px] text-fg-muted mt-1">{log.target} • {log.date.split(' ')[1]}</p>
+                                        <p className="text-[10px] text-ink-mute mt-1">{log.target} • {log.date.split(' ')[1]}</p>
                                     </div>
                                 </div>
                             ))}
                              {notifications.recentHistory.length === 0 && (
-                                <p className="text-xs text-fg-subtle p-3 text-center">Nenhum histórico recente.</p>
+                                <p className="text-xs text-ink-faint p-3 text-center">Nenhum histórico recente.</p>
                             )}
                         </div>
                     </div>

@@ -39,10 +39,10 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="mop-pop-in bg-surface rounded-2xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh]">
-            <div className="bg-surface-alt p-4 border-b border-border flex justify-between items-center shrink-0">
-              <h3 className="font-bold text-lg text-fg">{initialData ? 'Editar' : 'Novo'} Colaborador</h3>
-              <button onClick={onClose} className="text-fg-subtle hover:text-fg"><X size={20}/></button>
+          <div className="mop-pop-in bg-canvas rounded-xl shadow-3 w-full max-w-2xl flex flex-col max-h-[90vh]">
+            <div className="bg-canvas-soft p-4 border-b border-hairline flex justify-between items-center shrink-0">
+              <h3 className="font-bold text-lg text-ink">{initialData ? 'Editar' : 'Novo'} Colaborador</h3>
+              <button onClick={onClose} className="text-ink-faint hover:text-ink"><X size={20}/></button>
             </div>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
                 <Input label="Matrícula" value={formData.matricula} onChange={(e:any) => handleChange('matricula', e.target.value)} required disabled={!!initialData} />
@@ -51,13 +51,13 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                 <Input label="Data Nascimento" type="date" value={formData.dtNasc} onChange={(e:any) => handleChange('dtNasc', e.target.value)} />
 
                 {/* Novos Campos VR */}
-                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 bg-primary-tonal p-3 rounded-lg border border-primary/20">
+                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 bg-brand-wash p-3 rounded-lg border border-brand/20">
                     <Input label="Email VR" value={formData.email_vr || ''} onChange={(e:any) => handleChange('email_vr', e.target.value)} placeholder="Email para sistema VR" />
                     <Input label="Senha de Acesso" value={formData.senha || ''} onChange={(e:any) => handleChange('senha', e.target.value)} placeholder="Senha inicial" />
                 </div>
 
-                <div className="col-span-1 md:col-span-2 bg-surface-alt p-4 rounded-lg border border-border">
-                    <p className="text-xs font-bold text-fg-subtle uppercase tracking-wider mb-2">Alocação</p>
+                <div className="col-span-1 md:col-span-2 bg-canvas-soft p-4 rounded-lg border border-hairline">
+                    <p className="t-eyebrow text-ink-faint mb-2">Alocação</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <Select label="Cliente" value={formData.clientId} onChange={(e:any) => {
                            handleChange('clientId', e.target.value);
@@ -106,38 +106,38 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                     </div>
                 </div>
 
-                <div className="col-span-1 md:col-span-2 border-t border-border pt-4 mt-2">
+                <div className="col-span-1 md:col-span-2 border-t border-hairline pt-4 mt-2">
                     <Select label="Status" value={formData.status} onChange={(e:any) => handleChange('status', e.target.value)}>
                         {Object.values(CollaboratorStatus).map(s => <option key={s} value={s}>{s}</option>)}
                     </Select>
 
                     {formData.status === CollaboratorStatus.FERIAS && (
-                        <div className="grid grid-cols-2 gap-4 bg-warning/15 p-4 rounded-lg border border-warning/40 mop-fade-up">
+                        <div className="grid grid-cols-2 gap-4 bg-brand/15 p-4 rounded-lg border border-brand/40 mop-fade-up">
                              <Input label="Início Férias" type="date" value={formData.feriasInicio} onChange={(e:any) => handleChange('feriasInicio', e.target.value)} />
                              <Input label="Fim Férias" type="date" value={formData.feriasFim} onChange={(e:any) => handleChange('feriasFim', e.target.value)} />
                         </div>
                     )}
 
                     {formData.status === CollaboratorStatus.DESLIGADO && (
-                        <div className="bg-error/10 p-4 rounded-lg border border-error/30 mop-fade-up">
+                        <div className="bg-danger/10 p-4 rounded-lg border border-danger/30 mop-fade-up">
                              <Input label="Data Desligamento" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
                         </div>
                     )}
 
                     {formData.status === CollaboratorStatus.AVISO_PREVIO && (
-                        <div className="bg-warning/25 p-4 rounded-lg border border-warning/50 mop-fade-up">
-                             <div className="flex items-center gap-2 mb-2 text-fg">
+                        <div className="bg-brand/25 p-4 rounded-lg border border-brand/50 mop-fade-up">
+                             <div className="flex items-center gap-2 mb-2 text-ink">
                                 <AlertTriangle size={16} />
                                 <p className="text-sm font-bold">Registro de Aviso Prévio</p>
                              </div>
-                             <p className="text-xs text-fg-muted mb-3">Informe a data prevista para o desligamento final. O sistema usará esta data para cálculos de turnover futuro.</p>
+                             <p className="text-xs text-ink-mute mb-3">Informe a data prevista para o desligamento final. O sistema usará esta data para cálculos de turnover futuro.</p>
                              <Input label="Data Fim do Aviso" type="date" value={formData.dataFim} onChange={(e:any) => handleChange('dataFim', e.target.value)} required />
                         </div>
                     )}
 
                     {formData.status === CollaboratorStatus.AFASTADO && (
-                        <div className="bg-error/10 p-4 rounded-lg border border-error/30 mop-fade-up">
-                             <div className="flex items-center gap-2 mb-2 text-error">
+                        <div className="bg-danger/10 p-4 rounded-lg border border-danger/30 mop-fade-up">
+                             <div className="flex items-center gap-2 mb-2 text-danger">
                                 <Activity size={16} />
                                 <p className="text-sm font-bold">Registro de Afastamento</p>
                              </div>
@@ -146,8 +146,8 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                     )}
 
                     {formData.status === CollaboratorStatus.LICENCA_MATERNIDADE && (
-                        <div className="bg-surface-alt p-4 rounded-lg border border-border-strong mop-fade-up">
-                             <div className="flex items-center gap-2 mb-2 text-fg">
+                        <div className="bg-canvas-soft p-4 rounded-lg border border-hairline-2 mop-fade-up">
+                             <div className="flex items-center gap-2 mb-2 text-ink">
                                 <Stethoscope size={16} />
                                 <p className="text-sm font-bold">Registro de Licença Maternidade</p>
                              </div>
@@ -164,25 +164,25 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                     </div>
                 </div>
             </div>
-            <div className="p-4 bg-surface-alt flex items-center justify-between border-t border-border shrink-0">
+            <div className="p-4 bg-canvas-soft flex items-center justify-between border-t border-hairline shrink-0">
                  {onSchedule ? (
                     <div className="flex items-center gap-2">
                         {!isScheduling ? (
                             <Button variant="secondary" onClick={() => setIsScheduling(true)}>
-                                <CalendarClock size={16}/> {initialData ? "Agendar Alteração" : "Agendar Cadastro"}
+                                <CalendarClock size={16}/> {initialData ? "Agendar alteração" : "Agendar Cadastro"}
                             </Button>
                         ) : (
-                            <div className="flex items-center gap-2 bg-primary-tonal p-2 rounded-lg border border-primary/30 mop-fade-up">
-                                <span className="text-xs font-bold text-primary uppercase">Para:</span>
+                            <div className="flex items-center gap-2 bg-brand-wash p-2 rounded-lg border border-brand/30 mop-fade-up">
+                                <span className="text-xs font-bold text-brand-text uppercase">Para:</span>
                                 <input
                                     type="date"
-                                    className="px-2 py-1 text-sm rounded border border-primary/40 bg-surface text-fg focus:ring-1 focus:ring-primary outline-none"
+                                    className="px-2 py-1 text-sm rounded border border-brand/40 bg-canvas text-ink focus:ring-1 focus:ring-brand outline-none"
                                     value={scheduleDate}
                                     onChange={(e) => setScheduleDate(e.target.value)}
                                 />
                                 <button
                                     onClick={() => setIsScheduling(false)}
-                                    className="p-1 rounded-full text-primary/70 hover:text-primary"
+                                    className="p-1 rounded-full text-brand-text/70 hover:text-brand-text"
                                 >
                                     <X size={14} />
                                 </button>
@@ -195,7 +195,7 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                     <Button variant="secondary" onClick={onClose}>Cancelar</Button>
                     {isScheduling ? (
                         <Button onClick={handleConfirmSchedule}>
-                            Confirmar Agendamento
+                            Confirmar agendamento
                         </Button>
                     ) : (
                         <Button onClick={() => onSave(formData)}>Salvar</Button>

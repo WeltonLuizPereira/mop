@@ -33,7 +33,9 @@ export default defineConfig(({ mode }) => {
         globals: true,
         setupFiles: ['./test/setup.ts'],
         include: ['**/*.test.ts', '**/*.test.tsx'],
-        exclude: ['node_modules/**', 'e2e/**', 'dist/**'],
+        // `.worktrees` guarda cópias de outros branches com node_modules
+        // próprio: sem excluí-las, `npm test` roda o código de outro branch
+        exclude: ['node_modules/**', 'e2e/**', 'dist/**', '.worktrees/**'],
       },
     };
 });
