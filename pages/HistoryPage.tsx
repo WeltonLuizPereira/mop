@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HistoryLog } from '../types';
 import { db } from '../services/mockDb';
+import { Table } from '../components/ui';
 
 export const HistoryPage: React.FC = () => {
     // ... same as original ...
@@ -12,7 +13,10 @@ export const HistoryPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+            <Table.Card>
+                <Table.Toolbar
+                    contagem={{ n: logs.length, um: 'registro', varios: 'registros' }}
+                />
                 <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                     <thead>
                         <tr>
@@ -46,7 +50,7 @@ export const HistoryPage: React.FC = () => {
                         )}
                     </tbody>
                 </table>
-            </div>
+            </Table.Card>
         </div>
     );
 };

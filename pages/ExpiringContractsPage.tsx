@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowLeft, Search, AlignJustify, GanttChartSquare } from 'lucide-react';
+import { ArrowLeft, AlignJustify, GanttChartSquare } from 'lucide-react';
 import { User, UserRole, Collaborator, Operation, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDateString, getInitials } from '../utils';
-import { Button, Badge } from '../components/ui';
+import { Button, Badge, Chip, Table } from '../components/ui';
 import { useChartTokens } from '../lib/tokens';
 
 export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: User }> = ({ onBack, currentUser }) => {
@@ -140,29 +140,31 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
 
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500 h-full">
-           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-               <div className="flex flex-wrap items-center gap-4">
-                  <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>
-               </div>
-               
-               <div className="flex bg-canvas-sunk p-1 rounded-lg border border-hairline">
-                   <button onClick={() => setViewMode('table')} className={`flex items-center gap-2 px-3 py-1.5 text-sm font-bold rounded-md transition-all ${viewMode === 'table' ? 'bg-canvas shadow-1 text-brand-text' : 'text-ink-mute hover:text-ink'}`}>
-                       <AlignJustify size={16}/> Tabela
-                   </button>
-                   <button onClick={() => setViewMode('gantt')} className={`flex items-center gap-2 px-3 py-1.5 text-sm font-bold rounded-md transition-all ${viewMode === 'gantt' ? 'bg-canvas shadow-1 text-brand-text' : 'text-ink-mute hover:text-ink'}`}>
-                       <GanttChartSquare size={16}/> Gantt
-                   </button>
-               </div>
+           <div className="flex items-center gap-4">
+              <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>
            </div>
-           
-           <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
-                <div className="p-4 border-b border-hairline flex gap-4">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={16} />
-                        <input className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm text-[13px] text-ink placeholder:text-ink-faint" placeholder="Buscar por nome" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-ink-mute ml-auto"><span className="font-bold">{filtered.length}</span> resultados</div>
-                </div>
+
+           <Table.Card>
+                <Table.Toolbar
+                    busca={{ valor: searchTerm, aoMudar: setSearchTerm, placeholder: 'Buscar por nome' }}
+                    contagem={{ n: filtered.length, um: 'contrato', varios: 'contratos' }}
+                    chips={<>
+                        <Chip
+                            onClick={() => setViewMode('table')}
+                            aria-pressed={viewMode === 'table'}
+                            className={viewMode === 'table' ? 'border-brand text-brand-text' : ''}
+                        >
+                            <span className="inline-flex items-center gap-1.5"><AlignJustify size={12}/> Tabela</span>
+                        </Chip>
+                        <Chip
+                            onClick={() => setViewMode('gantt')}
+                            aria-pressed={viewMode === 'gantt'}
+                            className={viewMode === 'gantt' ? 'border-brand text-brand-text' : ''}
+                        >
+                            <span className="inline-flex items-center gap-1.5"><GanttChartSquare size={12}/> Gantt</span>
+                        </Chip>
+                    </>}
+                />
                 {viewMode === 'table' ? (
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-[13px] text-ink-mute bg-canvas">
@@ -463,7 +465,7 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
                     </div>
                 </div>
             )}
-           </div>
+           </Table.Card>
       </div>
     );
 }

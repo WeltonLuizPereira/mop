@@ -3,7 +3,7 @@ import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { Collaborator, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString, getInitials } from '../utils';
-import { Button, Badge } from '../components/ui';
+import { Button, Badge, Table } from '../components/ui';
 
 export const AvisoPrevioPage = ({ onBack, onViewDetails }: any) => {
     const [collabs, setCollabs] = useState<Collaborator[]>([]);
@@ -34,7 +34,10 @@ export const AvisoPrevioPage = ({ onBack, onViewDetails }: any) => {
                 {onBack && <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>}
             </div>
             
-            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+            <Table.Card>
+                <Table.Toolbar
+                    contagem={{ n: filtered.length, um: 'em aviso prévio', varios: 'em aviso prévio' }}
+                />
                 <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                      <thead>
                          <tr>
@@ -76,7 +79,7 @@ export const AvisoPrevioPage = ({ onBack, onViewDetails }: any) => {
                          )}
                      </tbody>
                 </table>
-            </div>
+            </Table.Card>
         </div>
     );
 }

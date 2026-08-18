@@ -3,7 +3,7 @@ import { Trash2, Edit2 } from 'lucide-react';
 import { Collaborator, ScheduledTask } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
-import { Button } from '../components/ui';
+import { Button, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
 export const ScheduledTasksPage = () => {
@@ -88,19 +88,15 @@ export const ScheduledTasksPage = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <p className="text-[13px] text-ink-mute">
-                        <span className="t-data text-ink">{tasks.length}</span> {tasks.length === 1 ? 'tarefa agendada' : 'tarefas agendadas'}
-                    </p>
-                </div>
-                {tasks.length > 0 && (
-                    <Button variant="solid-danger" onClick={handleCancelAll}>
-                        <Trash2 size={16} className="mr-2" /> Excluir todas
-                    </Button>
-                )}
-            </div>
-            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+            <Table.Card>
+                <Table.Toolbar
+                    contagem={{ n: tasks.length, um: 'tarefa agendada', varios: 'tarefas agendadas' }}
+                    acoes={tasks.length > 0 && (
+                        <Button variant="danger" onClick={handleCancelAll}>
+                            <Trash2 size={15} /> Excluir todas
+                        </Button>
+                    )}
+                />
                 <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                     <thead>
                         <tr>
@@ -141,7 +137,7 @@ export const ScheduledTasksPage = () => {
                         )}
                     </tbody>
                 </table>
-            </div>
+            </Table.Card>
 
             {isEditOpen && (
                 <CollaboratorFormModal

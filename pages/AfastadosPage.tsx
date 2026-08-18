@@ -3,7 +3,7 @@ import { ArrowLeft, Activity, User as UserIcon, CheckCircle, Eye } from 'lucide-
 import { Collaborator, Supervisor, Ilha, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString, getInitials } from '../utils';
-import { Button, Badge } from '../components/ui';
+import { Button, Badge, Table } from '../components/ui';
 
 export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
     const [collabs, setCollabs] = useState<Collaborator[]>([]);
@@ -51,7 +51,10 @@ export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
                 </div>
             </div>
 
-            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+            <Table.Card>
+                <Table.Toolbar
+                    contagem={{ n: filtered.length, um: 'pessoa afastada', varios: 'pessoas afastadas' }}
+                />
                 <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                      <thead>
                          <tr>
@@ -96,7 +99,7 @@ export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
                          )}
                      </tbody>
                 </table>
-            </div>
+            </Table.Card>
         </div>
     );
 }

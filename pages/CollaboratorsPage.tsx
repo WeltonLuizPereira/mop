@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileSpreadsheet, FileText, Plus, Search, Eye, Filter } from 'lucide-react';
+import { FileSpreadsheet, FileText, Plus, Eye } from 'lucide-react';
 import { Collaborator, User, UserRole, Coordinator, Supervisor, Ilha, Operation, Client, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDate, formatDateString } from '../utils';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Badge, Button, Chip, ChipSelect, MultiSelect, Table, type Ordenacao } from '../components/ui';
+import { Badge, Button, ChipSelect, MultiSelect, Table, type Ordenacao } from '../components/ui';
 
 /** As cinco colunas por onde a lista pode ser ordenada. */
 type Campo = 'cliente' | 'nome' | 'status' | 'supervisor' | 'ilha';
@@ -20,7 +20,6 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [falhouCarga, setFalhouCarga] = useState(false);
-    const [filtrosAbertos, setFiltrosAbertos] = useState(false);
     const [ordenacao, setOrdenacao] = useState<Ordenacao<Campo>>({ campo: 'nome', direcao: 'asc' });
 
     // clicar na coluna ativa inverte o sentido; em outra coluna, recomeça em A → Z
@@ -313,71 +312,37 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     // além do corte ficavam inalcançáveis — a lista simplesmente terminava.
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-             <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
-                {/* Uma barra so, como no mockup: buscar e recortar de um lado,
-                    exportar e criar do outro. */}
-                <div className="px-4 py-3.5 border-b border-hairline flex items-center flex-wrap gap-x-2.5 gap-y-3">
-                    <div className="relative flex-1 min-w-[180px] max-w-[260px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={15} />
-                        <input
-                            className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm text-[13px] text-ink placeholder:text-ink-faint"
-                            placeholder="Buscar nome ou matrícula"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
-
-                    <ChipSelect rotulo="Mês" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
-                        <option value={-1}>todos</option>
-                        {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                    </ChipSelect>
-                    <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
-                        {years.map(y => <option key={y} value={y}>{y}</option>)}
-                    </ChipSelect>
-                    <Chip
-                        onClick={() => setFiltrosAbertos(a => !a)}
-                        aria-expanded={filtrosAbertos}
-                        aria-controls="filtros-avancados"
-                        className={filtrosAbertos || filtrosAtivos > 0 ? 'border-brand text-brand-text' : ''}
-                    >
-                        <span className="inline-flex items-center gap-1.5">
-                            <Filter size={12} />
-                            Filtros{filtrosAtivos > 0 ? ` · ${filtrosAtivos}` : ''}
-                        </span>
-                    </Chip>
-
-                    <div className="ml-auto flex items-center gap-2.5">
-                        <span className="text-[13px] text-ink-mute whitespace-nowrap">
-                            <span className="t-data text-ink-2">{filtered.length}</span> resultados
-                        </span>
+             <Table.Card>
+                <Table.Toolbar
+                    busca={{ valor: search, aoMudar: setSearch, placeholder: 'Buscar nome ou matrícula' }}
+                    contagem={{ n: filtered.length, um: 'resultado', varios: 'resultados' }}
+                    filtrosAtivos={filtrosAtivos}
+                    aoLimparFiltros={clearFilters}
+                    chips={<>
+                        <ChipSelect rotulo="Mês" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
+                            <option value={-1}>todos</option>
+                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                        </ChipSelect>
+                        <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </ChipSelect>
+                    </>}
+                    acoes={<>
                         <Button variant="ghost" onClick={handleExportExcel}><FileSpreadsheet size={15}/> Excel</Button>
                         <Button variant="ghost" onClick={handleExportPDF}><FileText size={15}/> PDF</Button>
                         {(isAdmin || currentUser.role === UserRole.SUPPORT) && (
                             <Button onClick={() => setIsCreateOpen(true)}><Plus size={15}/> Novo colaborador</Button>
                         )}
-                    </div>
-                </div>
-
-                {filtrosAbertos && (
-                    <div id="filtros-avancados" className="px-4 py-4 border-b border-hairline bg-canvas">
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="t-eyebrow text-ink-faint">Recortar a lista</span>
-                            {filtrosAtivos > 0 && (
-                                <button onClick={clearFilters} className="text-xs font-medium text-brand-text hover:underline">
-                                    Limpar filtros
-                                </button>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                            <MultiSelect label="Cliente" options={clientOptions} value={filterClient} onChange={setFilterClient} />
-                            <MultiSelect label="Operação" options={opOptions} value={filterOp} onChange={setFilterOp} />
-                            <MultiSelect label="Ilha" options={ilhaOptions} value={filterIlha} onChange={setFilterIlha} />
-                            <MultiSelect label="Coordenador" options={coordOptions} value={filterCoord} onChange={setFilterCoord} />
-                            <MultiSelect label="Supervisor" options={supOptions} value={filterSup} onChange={setFilterSup} />
-                            <MultiSelect label="Status" options={statusOptions} value={filterStatus} onChange={setFilterStatus} />
-                        </div>
-                    </div>
-                )}
+                    </>}
+                    filtros={<>
+                        <MultiSelect label="Cliente" options={clientOptions} value={filterClient} onChange={setFilterClient} />
+                        <MultiSelect label="Operação" options={opOptions} value={filterOp} onChange={setFilterOp} />
+                        <MultiSelect label="Ilha" options={ilhaOptions} value={filterIlha} onChange={setFilterIlha} />
+                        <MultiSelect label="Coordenador" options={coordOptions} value={filterCoord} onChange={setFilterCoord} />
+                        <MultiSelect label="Supervisor" options={supOptions} value={filterSup} onChange={setFilterSup} />
+                        <MultiSelect label="Status" options={statusOptions} value={filterStatus} onChange={setFilterStatus} />
+                    </>}
+                />
                 {falhouCarga ? (
                     <div className="p-10 text-center">
                         <p className="text-sm text-ink-2">Não foi possível carregar os colaboradores.</p>
@@ -441,7 +406,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                       </tbody>
                     </Table>
                 )}
-             </div>
+             </Table.Card>
 
              {isCreateOpen && (
                  <CollaboratorFormModal onClose={() => setIsCreateOpen(false)} onSave={handleSave} onSchedule={handleScheduleCreate} />

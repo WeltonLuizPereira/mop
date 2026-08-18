@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Collaborator, Ilha } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
-import { Button, ChipSelect } from '../components/ui';
+import { Button, ChipSelect, Table } from '../components/ui';
 
 export const BirthdaysPage = ({ onBack }: any) => {
   const [collabs, setCollabs] = useState<Collaborator[]>([]);
@@ -32,16 +32,19 @@ export const BirthdaysPage = ({ onBack }: any) => {
 
   return (
       <div className="space-y-6 animate-in fade-in duration-500">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                  <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>
-              </div>
-              <ChipSelect rotulo="Mês" value={month} onChange={e => setMonth(parseInt(e.target.value))}>
-                  {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-              </ChipSelect>
+           <div className="flex items-center gap-4">
+              <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>
            </div>
-           
-           <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+
+           <Table.Card>
+                <Table.Toolbar
+                    contagem={{ n: filtered.length, um: 'aniversariante', varios: 'aniversariantes' }}
+                    chips={
+                        <ChipSelect rotulo="Mês" value={month} onChange={e => setMonth(parseInt(e.target.value))}>
+                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                        </ChipSelect>
+                    }
+                />
                 <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                      <thead>
                          <tr>
@@ -71,7 +74,7 @@ export const BirthdaysPage = ({ onBack }: any) => {
                          {filtered.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-ink-faint">Nenhum aniversariante neste mês.</td></tr>}
                      </tbody>
                 </table>
-           </div>
+           </Table.Card>
       </div>
   )
 }

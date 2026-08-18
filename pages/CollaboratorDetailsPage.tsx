@@ -3,7 +3,7 @@ import { ArrowLeft, Edit2, Trash2, User as UserIcon, Briefcase, Clock, MapPin, K
 import { Collaborator, User, UserRole, HistoryLog, Ilha, Operation, Client, Coordinator, Supervisor, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDateString, formatTime, addDays, getInitials } from '../utils';
-import { Badge, Button } from '../components/ui';
+import { Badge, Button, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
 export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: () => void, currentUser: User, onRefresh: () => void }> = ({ collab, onBack, currentUser, onRefresh }) => {
@@ -309,12 +309,13 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 </div>
             </div>
 
-            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
-                <div className="p-4 border-b border-hairline flex justify-between items-center bg-canvas-soft">
-                    <h3 className="font-bold text-ink flex items-center gap-2">
-                        <History size={18} className="text-ink-mute"/> Histórico de Alterações
-                    </h3>
-                </div>
+            <h3 className="font-bold text-ink mb-3 flex items-center gap-2">
+                <History size={18} className="text-ink-mute"/> Histórico de alterações
+            </h3>
+            <Table.Card>
+                <Table.Toolbar
+                    contagem={{ n: historyLogs.length, um: 'alteração', varios: 'alterações' }}
+                />
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                         <thead>
@@ -342,7 +343,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </Table.Card>
 
             {isEditOpen && (
                 <CollaboratorFormModal 

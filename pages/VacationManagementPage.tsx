@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Sun, History, Search, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Sun, History, AlertTriangle } from 'lucide-react';
 import { Collaborator, Ilha, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString, addDays, getInitials } from '../utils';
-import { Button } from '../components/ui';
+import { Button, ChipSelect, Table } from '../components/ui';
 
 export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: any) => {
     // ... same as original ...
@@ -71,13 +71,8 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
     
   return (
         <div className="space-y-8 animate-in fade-in duration-500 relative">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                  {onBack && <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>}
-                  <p className="text-[13px] text-ink-mute">
-                      <span className="t-data text-ink">{activeVacations.length}</span> em férias
-                  </p>
-              </div>
+           <div className="flex items-center gap-4">
+              {onBack && <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>}
            </div>
            <div className="flex gap-4 border-b border-hairline">
                <button 
@@ -101,7 +96,10 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                         <Sun size={18} className="text-brand" />
                         Férias ativas e programadas
                     </h3>
-                    <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+                    <Table.Card>
+                        <Table.Toolbar
+                            contagem={{ n: activeVacations.length, um: 'pessoa em férias', varios: 'pessoas em férias' }}
+                        />
                         <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                             <thead>
                                 <tr>
@@ -162,44 +160,28 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                 )}
                             </tbody>
                     </table>
-                </div>
+                </Table.Card>
                 </>
               ) : (
                 <>
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4">
-                        <h3 className="font-bold text-ink flex items-center gap-2">
-                            <History size={18} className="text-ink-mute" />
-                            Histórico de férias
-                            <span className="bg-canvas-sunk text-ink-mute px-2 py-0.5 rounded-full text-xs font-bold">{filteredHistory.length}</span>
-                        </h3>
-                        <div className="flex flex-col sm:flex-row items-center gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={16} />
-                                <input
-                                    type="text"
-                                    placeholder="Buscar nome ou matrícula"
-                                    value={historySearch}
-                                    onChange={(e) => setHistorySearch(e.target.value)}
-                                    className="pl-9 pr-4 py-2 border border-hairline rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-brand focus:border-brand"
-                                />
-                            </div>
-                            <select 
-                                value={historyYear}
-                                onChange={(e) => setHistoryYear(e.target.value)}
-                                className="px-3 py-2 border border-hairline rounded-lg text-sm bg-canvas focus:ring-2 focus:ring-brand"
-                            >
-                                <option value="">Ano</option>
-                                <option value="2024">2024</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                            </select>
-                            <select 
-                                value={historyMonth}
-                                onChange={(e) => setHistoryMonth(e.target.value)}
-                                className="px-3 py-2 border border-hairline rounded-lg text-sm bg-canvas focus:ring-2 focus:ring-brand"
-                            >
-                                <option value="">Mês</option>
+                    <h3 className="font-bold text-ink mb-3 flex items-center gap-2">
+                        <History size={18} className="text-ink-mute" />
+                        Histórico de férias
+                    </h3>
+                    <Table.Card>
+                        <Table.Toolbar
+                            busca={{ valor: historySearch, aoMudar: setHistorySearch, placeholder: 'Buscar nome ou matrícula' }}
+                            contagem={{ n: filteredHistory.length, um: 'período', varios: 'períodos' }}
+                            chips={<>
+                                <ChipSelect rotulo="Ano" value={historyYear} onChange={e => setHistoryYear(e.target.value)}>
+                                    <option value="">todos</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                </ChipSelect>
+                                <ChipSelect rotulo="Mês" value={historyMonth} onChange={e => setHistoryMonth(e.target.value)}>
+                                    <option value="">todos</option>
                                 <option value="01">Janeiro</option>
                                 <option value="02">Fevereiro</option>
                                 <option value="03">Março</option>
@@ -212,10 +194,9 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                 <option value="10">Outubro</option>
                                 <option value="11">Novembro</option>
                                 <option value="12">Dezembro</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
+                                </ChipSelect>
+                            </>}
+                        />
                         <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                             <thead>
                                 <tr>
@@ -254,7 +235,7 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                 )}
                             </tbody>
                         </table>
-                    </div>
+                    </Table.Card>
                 </>
               )}
            </div>

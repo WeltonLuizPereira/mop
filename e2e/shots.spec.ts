@@ -77,6 +77,21 @@ async function stub(page: Page) {
   });
 }
 
+/**
+ * Quem rola no MOP é um container dentro do shell, não o documento — então
+ * `fullPage` capturava só a altura da janela e a metade de baixo de toda tela
+ * ficava invisível na revisão. Soltar a altura do shell antes do clique faz o
+ * documento crescer e o `fullPage` pegar a página inteira.
+ */
+async function soltarAltura(page: Page) {
+  await page.addStyleTag({
+    content: `
+      main .overflow-y-auto { overflow: visible !important; }
+      .h-screen { height: auto !important; min-height: 100vh; }
+    `,
+  });
+}
+
 const TELAS = [
   'Visão geral', 'Colaboradores', 'Organograma', 'Turnover', 'Aniversariantes',
   'Desligados', 'Vencimento de contratos', 'Férias', 'Aviso prévio',
@@ -130,6 +145,7 @@ for (const tema of ['claro', 'escuro'] as const) {
     for (const [i, tela] of TELAS.entries()) {
       await page.getByRole('button', { name: tela, exact: true }).click();
       await page.locator('h1').filter({ hasText: tela }).waitFor();
+      await soltarAltura(page);
       await page.waitForTimeout(500);
       const slug = tela.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       await page.screenshot({

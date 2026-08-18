@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { User, UserRole, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { generateId } from '../utils';
-import { Button, Input, Select, Badge, Modal } from '../components/ui';
+import { Button, Input, Select, Badge, Modal, Table } from '../components/ui';
 
 export const CrudPage = <T extends { id: string, nome: string, status: string | EntityStatus }>({
   title, singular, data, onSave, onDelete, schema, currentUser, onRefresh
@@ -52,24 +52,12 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
 
     return (
         <div className="space-y-4 mop-fade-up">
-            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden flex flex-col min-h-0 flex-1">
-                {/* Uma barra só: buscar, contar, criar — o mesmo desenho da lista
-                    de colaboradores, para as seis telas de cadastro. */}
-                <div className="px-4 py-3.5 border-b border-hairline flex items-center flex-wrap gap-2.5">
-                  <div className="relative w-full max-w-[340px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={15} />
-                    <input
-                      className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm text-[13px] text-ink placeholder:text-ink-faint"
-                      placeholder={`Buscar em ${title.toLowerCase()}`}
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                    />
-                  </div>
-                  <span className="ml-auto text-[13px] text-ink-mute whitespace-nowrap">
-                    <span className="t-data text-ink-2">{filteredData.length}</span> {filteredData.length === 1 ? 'registro' : 'registros'}
-                  </span>
-                  {isAdmin && <Button onClick={handleCreate}><Plus size={15} /> Novo</Button>}
-                </div>
+            <Table.Card className="flex flex-col min-h-0 flex-1">
+                <Table.Toolbar
+                  busca={{ valor: search, aoMudar: setSearch, placeholder: `Buscar em ${title.toLowerCase()}` }}
+                  contagem={{ n: filteredData.length, um: 'registro', varios: 'registros' }}
+                  acoes={isAdmin && <Button onClick={handleCreate}><Plus size={15} /> Novo {singular}</Button>}
+                />
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                     <thead>
@@ -98,14 +86,14 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                           <p className="text-center text-[13px] text-ink-mute">
                             {search
                               ? 'Nada com esse texto. Ajuste a busca.'
-                              : `Nenhum registro em ${title.toLowerCase()}. Use Novo para criar o primeiro.`}
+                              : `Nenhum ${singular} cadastrado. Use Novo ${singular} para criar o primeiro.`}
                           </p>
                         </td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
-            </div>
+            </Table.Card>
             <Modal
               open={isOpen}
               onClose={() => setIsOpen(false)}

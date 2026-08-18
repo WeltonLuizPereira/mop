@@ -53,7 +53,7 @@
   --brand-text: #D04200; --brand-wash: #FFF4EC; --on-brand: #191310;
   --st-ativo: #12794F; --st-ferias: #1264A3; --st-afastado: #6544C0;
   --st-maternidade: #B4008C; --st-aviso: #C4183C; --st-realocado: #00786F;
-  --st-desligado: #6B615C;
+  --st-desligado: #7A0B22;
   --danger: #C4183C; --ok: #12794F;
 }
 
@@ -65,7 +65,7 @@
   --brand-text: #F27405; --brand-wash: rgb(242 116 5 / .14); --on-brand: #191310;
   --st-ativo: #3FBE84; --st-ferias: #5AA9E6; --st-afastado: #9B8CFF;
   --st-maternidade: #E86FD8; --st-aviso: #FF4D6D; --st-realocado: #38B5A8;
-  --st-desligado: #948B86;
+  --st-desligado: #C2304C;
   --danger: #FF4D6D; --ok: #3FBE84;
 
   --shadow-1: 0 1px 3px rgb(0 0 0 / .4);

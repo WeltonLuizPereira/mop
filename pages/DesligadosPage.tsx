@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, FileSpreadsheet, Eye, UserX } from 'lucide-react';
+import { ArrowLeft, FileSpreadsheet, Eye, UserX } from 'lucide-react';
 import { Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString, getInitials } from '../utils';
 import * as XLSX from 'xlsx';
-import { Button, ChipSelect, MultiSelect } from '../components/ui';
+import { Button, Chip, ChipSelect, MultiSelect, Table } from '../components/ui';
 
 export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
     const [collabs, setCollabs] = useState<Collaborator[]>([]);
@@ -70,6 +70,12 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
         return dateB - dateA;
     });
 
+    const filtrosAtivos = filterCoord.length + filterSup.length + filterIlha.length
+        + filterOp.length + filterClient.length;
+    const limparFiltros = () => {
+        setFilterCoord([]); setFilterSup([]); setFilterIlha([]); setFilterOp([]); setFilterClient([]);
+    };
+
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const years = Array.from({length: 6}, (_, i) => (today.getFullYear() + 1) - i);
 
@@ -98,111 +104,78 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-                 <div className="flex items-center gap-4">
-                    {onBack && <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>}
-                    <p className="text-[13px] text-ink-mute">
-                        <span className="t-data text-ink">{filtered.length}</span> desligados
-                    </p>
-                 </div>
-                 
-                 <div className="flex items-center gap-3">
-                     <div className="flex items-center gap-2">
-                        <input 
-                            type="checkbox" 
-                            id="viewAllMode"
-                            className="w-4 h-4 text-brand bg-canvas-sunk border-hairline rounded focus:ring-brand"
-                            checked={viewAll}
-                            onChange={(e) => setViewAll(e.target.checked)}
-                        />
-                        <label htmlFor="viewAllMode" className="text-sm font-medium text-ink cursor-pointer select-none">
-                            Todo o período
-                        </label>
-                    </div>
-
-                    {!viewAll && (
-                        <div className="flex gap-2.5 animate-in fade-in slide-in-from-right-2">
-                            <ChipSelect rotulo="Mês" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
-                                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                            </ChipSelect>
-                            <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
-                                {years.map(y => <option key={y} value={y}>{y}</option>)}
-                            </ChipSelect>
-                        </div>
-                    )}
-                </div>
+            <div className="flex items-center gap-4">
+                {onBack && <Button variant="secondary" onClick={onBack}><ArrowLeft size={16}/> Voltar</Button>}
             </div>
 
-            <div className="bg-canvas-soft rounded-lg border border-hairline overflow-hidden">
-                {/* Filtros em linha idêntico aos outros */}
-                <div className="p-4 border-b border-hairline bg-canvas-soft flex flex-wrap gap-3 items-center">
-                    <div className="min-w-[180px]">
-                        <MultiSelect 
-                            options={clients.map(c => ({value: c.id, label: c.nome}))}
+            <Table.Card>
+                <Table.Toolbar
+                    busca={{ valor: search, aoMudar: setSearch, placeholder: 'Buscar nome ou matrícula' }}
+                    contagem={{ n: filtered.length, um: 'desligado', varios: 'desligados' }}
+                    filtrosAtivos={filtrosAtivos}
+                    aoLimparFiltros={limparFiltros}
+                    chips={<>
+                        {/* "Todo o período" é o recorte de tempo: quando ligado,
+                            mês e ano não têm mais o que dizer e saem de cena. */}
+                        <Chip
+                            onClick={() => setViewAll(v => !v)}
+                            aria-pressed={viewAll}
+                            className={viewAll ? 'border-brand text-brand-text' : ''}
+                        >
+                            Todo o período
+                        </Chip>
+                        {!viewAll && (
+                            <>
+                                <ChipSelect rotulo="Mês" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
+                                    {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                                </ChipSelect>
+                                <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
+                                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                </ChipSelect>
+                            </>
+                        )}
+                    </>}
+                    acoes={
+                        <Button variant="ghost" onClick={handleExportExcel}>
+                            <FileSpreadsheet size={15} /> Excel
+                        </Button>
+                    }
+                    filtros={<>
+                        <MultiSelect
+                            label="Cliente"
+                            options={clients.map(c => ({ value: c.id, label: c.nome }))}
                             value={filterClient}
                             onChange={setFilterClient}
-                            label="Cliente"
                         />
-                    </div>
-                    <div className="min-w-[180px]">
-                        <MultiSelect 
-                            options={operations.filter(o => filterClient.length === 0 || filterClient.includes(o.clientId)).map(o => ({value: o.id, label: o.nome}))}
+                        <MultiSelect
+                            label="Operação"
+                            options={operations.filter(o => filterClient.length === 0 || filterClient.includes(o.clientId)).map(o => ({ value: o.id, label: o.nome }))}
                             value={filterOp}
                             onChange={setFilterOp}
-                            label="Operação"
                         />
-                    </div>
-                    <div className="min-w-[180px]">
-                        <MultiSelect 
-                            options={coordinators.map(c => ({value: c.id, label: c.nome}))}
+                        <MultiSelect
+                            label="Coordenador"
+                            options={coordinators.map(c => ({ value: c.id, label: c.nome }))}
                             value={filterCoord}
                             onChange={setFilterCoord}
-                            label="Coordenador"
                         />
-                    </div>
-                    <div className="min-w-[180px]">
-                        <MultiSelect 
-                            options={supervisors.filter(s => filterCoord.length === 0 || s.coordinatorIds?.some(id => filterCoord.includes(id))).map(s => ({value: s.id, label: s.nome}))}
+                        <MultiSelect
+                            label="Supervisor"
+                            options={supervisors.filter(s => filterCoord.length === 0 || s.coordinatorIds?.some(id => filterCoord.includes(id))).map(s => ({ value: s.id, label: s.nome }))}
                             value={filterSup}
                             onChange={setFilterSup}
-                            label="Supervisor"
                         />
-                    </div>
-                    <div className="min-w-[180px]">
-                        <MultiSelect 
-                            options={ilhas.filter(i => 
+                        <MultiSelect
+                            label="Ilha"
+                            options={ilhas.filter(i =>
                                 (filterOp.length === 0 || filterOp.includes(i.operationId)) &&
                                 (filterClient.length === 0 || filterClient.includes(i.clientId))
-                            ).map(i => ({value: i.id, label: i.nome}))}
+                            ).map(i => ({ value: i.id, label: i.nome }))}
                             value={filterIlha}
                             onChange={setFilterIlha}
-                            label="Ilha"
                         />
-                    </div>
-                    {(filterCoord.length > 0 || filterSup.length > 0 || filterIlha.length > 0 || filterOp.length > 0 || filterClient.length > 0) && (
-                        <button 
-                            onClick={() => { setFilterCoord([]); setFilterSup([]); setFilterIlha([]); setFilterOp([]); setFilterClient([]); }}
-                            className="text-xs text-danger hover:text-danger font-medium px-2 py-1 rounded bg-danger/10 hover:bg-danger/15 transition-colors"
-                        >
-                            Limpar filtros
-                        </button>
-                    )}
-                </div>
-
-                <div className="p-4 border-b border-hairline flex gap-4 justify-between">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={16} />
-                        <input
-                            className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm text-[13px] text-ink placeholder:text-ink-faint"
-                            placeholder="Buscar nome ou matrícula"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <Button variant="secondary" onClick={handleExportExcel}>
-                        <FileSpreadsheet size={16} /> Excel
-                    </Button>
-                </div>
+                    </>}
+                />
                 <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                     <thead>
                         <tr>
@@ -248,7 +221,7 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                         )}
                     </tbody>
                 </table>
-            </div>
+            </Table.Card>
         </div>
     );
 }
