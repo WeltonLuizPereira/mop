@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus, UserRole } from '../types';
 import { CollaboratorsPage } from './CollaboratorsPage';
@@ -8,6 +9,10 @@ vi.mock('../services/mockDb', () => ({
     getCollaborators: vi.fn(async () => ([
       { matricula: '4127', nome: 'Adriana Lopes Ferreira', ilhaId: 'i1',
         supervisorId: 's1', status: CollaboratorStatus.ATIVO },
+      // saiu em 2019: fica fora do período corrente, e só o "todos" o alcança
+      { matricula: '2011', nome: 'Marcos Vieira Antunes', ilhaId: 'i1',
+        supervisorId: 's1', status: CollaboratorStatus.DESLIGADO,
+        dtEntradaProduto: '2018-01-10', dataFim: '2019-06-30' },
     ])),
     getIlhas: vi.fn(async () => ([
       { id: 'i1', nome: 'Ilha 01 — SAC', clientId: 'c1', operationId: 'o1',
@@ -40,6 +45,17 @@ describe('Colaboradores', () => {
     expect(within(linha).getByText('Ativo')).toBeInTheDocument();
     expect(within(linha).getByText('Juliana Prado')).toBeInTheDocument();
     expect(within(linha).getByText('Ilha 01 — SAC')).toBeInTheDocument();
+  });
+
+  it('alcança quem saiu em outro ano quando o filtro de ano é "todos"', async () => {
+    montar();
+    await screen.findByText('Adriana Lopes Ferreira');
+    expect(screen.queryByText('Marcos Vieira Antunes')).not.toBeInTheDocument();
+
+    const ano = screen.getByRole('combobox', { name: /Ano/ });
+    await userEvent.selectOptions(ano, within(ano).getByRole('option', { name: 'todos' }));
+
+    expect(await screen.findByText('Marcos Vieira Antunes')).toBeInTheDocument();
   });
 
   it('cai no monograma quando o cliente não tem logo cadastrada', async () => {

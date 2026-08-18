@@ -5,6 +5,7 @@ import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDateString, getInitials } from '../utils';
 import { Button, Badge, Chip, Table } from '../components/ui';
 import { useChartTokens } from '../lib/tokens';
+import { porProximoMarco } from '../lib/vencimento';
 
 export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: User }> = ({ onBack, currentUser }) => {
     // as barras do gantt recebem cor como valor; vêm do tema em vigor
@@ -81,9 +82,7 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
         return { ...c, calc, daysRemaining45, daysRemaining90 };
     })
     .filter(c => c.calc.experiencia === "SIM")
-    .sort((a, b) => {
-        return a.daysRemaining90 - b.daysRemaining90;
-    });
+    .sort(porProximoMarco);
 
     const ganttDates = useMemo(() => {
         if (filtered.length === 0) return [];

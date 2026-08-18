@@ -107,7 +107,11 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
         // que alguém precisa achar para corrigir.
         const enteredBeforeEnd = !entryDate || entryDate <= endOfMonth;
         const stillActiveAfterStart = !exitDate || exitDate >= startOfMonth;
-        const isWithinDateRange = enteredBeforeEnd && stillActiveAfterStart;
+        // Ano "todos" desliga o recorte de período: é como se alcança quem
+        // entrou ou saiu fora dos seis anos que o seletor oferece.
+        const isWithinDateRange = selectedYear === -1
+            ? true
+            : enteredBeforeEnd && stillActiveAfterStart;
 
         return matchesSearch && matchesCoord && matchesSup && matchesIlha && matchesOp && matchesClient && matchesStatus && isWithinDateRange;
     }).sort((a, b) => {
@@ -171,7 +175,11 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     };
 
     const prepareExportData = (isExcel = false) => {
-        const referencia = selectedMonth === -1 ? `Ano ${selectedYear}` : `01/${String(selectedMonth + 1).padStart(2, '0')}/${selectedYear}`;
+        const referencia = selectedYear === -1
+            ? 'Todos os anos'
+            : selectedMonth === -1
+                ? `Ano ${selectedYear}`
+                : `01/${String(selectedMonth + 1).padStart(2, '0')}/${selectedYear}`;
         return filtered.map(c => {
             const calc = getCollaboratorCalculations(c.dtEntradaProduto);
             const sup = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';
@@ -324,6 +332,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                             {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
                         </ChipSelect>
                         <ChipSelect rotulo="Ano" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
+                            <option value={-1}>todos</option>
                             {years.map(y => <option key={y} value={y}>{y}</option>)}
                         </ChipSelect>
                     </>}
