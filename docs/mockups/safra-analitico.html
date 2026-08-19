@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOP — Safra, o analítico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#FFFFFF;--canvas-soft:#FAFAFA;--canvas-sunk:#F2F2F1;
+  --hairline:#E4E4E4;--hairline-2:#CFCFCF;
+  --ink:#191310;--ink-2:#453C38;--ink-mute:#6B615C;--ink-faint:#9A918C;
+  --brand:#F27405;--brand-hot:#F54E00;--brand-text:#D04200;--brand-wash:#FFF4EC;--on-brand:#191310;
+  --st-ativo:#12794F;--st-ferias:#1264A3;--st-afastado:#6544C0;
+  --st-maternidade:#B4008C;--st-aviso:#C4183C;--st-realocado:#00786F;--st-desligado:#7A0B22;
+  --danger:#C4183C;--ok:#12794F;
+  --sh-1:0 1px 3px rgb(0 0 0/.06);--sh-3:0 16px 48px rgb(0 0 0/.12);
+  --font-display:'Archivo',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-data:'IBM Plex Mono',ui-monospace,monospace;
+}
+[data-theme="dark"]{
+  --canvas:#121110;--canvas-soft:#1A1817;--canvas-sunk:#0C0B0A;
+  --hairline:#2E2A28;--hairline-2:#423D3A;
+  --ink:#F5F1EF;--ink-2:#C4BCB7;--ink-mute:#948B86;--ink-faint:#6E6560;
+  --brand:#F27405;--brand-hot:#FF6A1A;--brand-text:#F27405;--brand-wash:rgb(242 116 5/.14);
+  --st-ativo:#3FBE84;--st-ferias:#5AA9E6;--st-afastado:#9B8CFF;
+  --st-maternidade:#E86FD8;--st-aviso:#FF4D6D;--st-realocado:#38B5A8;--st-desligado:#C2304C;
+  --danger:#FF4D6D;--ok:#3FBE84;
+  --sh-1:0 1px 3px rgb(0 0 0/.4);--sh-3:0 16px 48px rgb(0 0 0/.6);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.eyebrow{font-family:var(--font-display);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.18em;line-height:1;color:var(--ink-faint)}
+.d-md{font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.015em;line-height:1.25}
+
+.spec{max-width:1360px;margin:0 auto;padding:48px 28px 12px}
+.spec h2{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:-.01em;margin:0 0 5px}
+.spec p{margin:0 0 6px;color:var(--ink-mute);font-size:13px;max-width:80ch}
+.spec .tag{display:inline-block;font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand-text);background:var(--brand-wash);border-radius:4px;padding:4px 9px;margin-bottom:10px}
+.frame{max-width:1360px;margin:16px auto 0;border:1px solid var(--hairline-2);border-radius:16px;overflow:hidden;box-shadow:var(--sh-1)}
+.switch{position:fixed;right:20px;top:20px;z-index:60;display:flex;gap:4px;padding:4px;border-radius:6px;background:var(--canvas-soft);border:1px solid var(--hairline-2);box-shadow:var(--sh-3)}
+.switch button{font-family:var(--font-display);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.12em;padding:6px 12px;border:0;border-radius:4px;background:transparent;color:var(--ink-mute);cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--brand);color:var(--on-brand)}
+
+.shell{display:grid;grid-template-columns:236px 1fr;background:var(--canvas)}
+.side{background:var(--canvas-soft);border-right:1px solid var(--hairline);padding:14px 0}
+.side .grp{padding:0 18px;margin:16px 0 7px}
+.side a{display:flex;align-items:center;gap:10px;padding:7px 16px;font-size:13px;font-weight:500;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent}
+.side a.on{background:var(--brand-wash);color:var(--ink);border-left-color:var(--brand);font-weight:600}
+.side a .dot{width:14px;height:14px;border-radius:3px;border:1.5px solid currentColor;opacity:.5;flex:none}
+.top{height:52px;border-bottom:1px solid var(--hairline);display:flex;align-items:center;padding:0 24px;font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:-.015em}
+.body{padding:22px 24px 34px}
+
+.volta{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--brand-text);background:var(--brand-wash);border:0;border-radius:6px;padding:9px 14px;cursor:pointer}
+.heroi{padding:22px 0;border-bottom:1px solid var(--hairline);margin-bottom:26px}
+.heroi .big{font-family:var(--font-display);font-weight:700;font-size:56px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-top:12px}
+.heroi .big span{font-size:30px;color:var(--ink-mute)}
+.faixa{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin-top:20px}
+.faixa .it{display:flex;align-items:baseline;gap:7px}
+.faixa .n{font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.faixa .l{font-size:13px;color:var(--ink-mute)}
+.faixa .sep{width:1px;height:15px;background:var(--hairline-2)}
+.aviso{font-size:12px;color:var(--ink-mute);margin-top:16px}
+.aviso b{color:var(--ink-2);font-weight:600}
+
+/* ── toggle de turma ── */
+.toggle{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tg{font-size:12px;font-weight:500;color:var(--ink-2);border:1px solid var(--hairline-2);border-radius:6px;background:var(--canvas);padding:6px 12px;cursor:pointer;white-space:nowrap}
+.tg[aria-pressed="true"]{border-color:var(--brand);color:var(--brand-text);background:var(--brand-wash)}
+.tg .qt{color:var(--ink-faint);font-family:var(--font-data);margin-left:6px}
+.tg[aria-pressed="true"] .qt{color:var(--brand-text)}
+
+/* ── painel dos gráficos ── */
+.painel{border:1px solid var(--hairline);border-radius:12px;background:var(--canvas);padding:20px 22px 12px;position:relative}
+.cab{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:4px}
+.leg{display:flex;gap:14px;font-size:12px;color:var(--ink-mute)}
+.leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:0}
+.leg .ln{width:12px;height:2.5px;border-radius:2px;vertical-align:3px}
+.sub{font-size:12px;color:var(--ink-mute);margin:2px 0 16px}
+.sub b{color:var(--ink-2);font-weight:600}
+
+svg.g{display:block;width:100%;overflow:visible}
+.col-hit{fill:transparent;cursor:pointer}
+.col-hit:hover,.col-hit.on{fill:var(--brand);fill-opacity:.06}
+
+/* tooltip: um só para os dois gráficos */
+.tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-100%);transition:opacity .1s ease;background:var(--canvas);border:1px solid var(--hairline-2);border-radius:8px;box-shadow:var(--sh-3);padding:11px 13px;min-width:180px;z-index:5}
+.tip.on{opacity:1}
+.tip .t{font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:-.01em;margin-bottom:2px}
+.tip .m{font-size:11px;color:var(--ink-faint);margin-bottom:8px}
+.tip .l{display:flex;align-items:baseline;gap:7px;font-size:12.5px;color:var(--ink-mute);margin-top:4px}
+.tip .l b{font-family:var(--font-data);font-weight:500;color:var(--ink);font-size:13px}
+.tip .l i{display:inline-block;width:8px;height:8px;border-radius:2px;flex:none;position:relative;top:-1px}
+.tip .nada{font-size:12.5px;color:var(--ink-faint);margin-top:4px}
+
+/* ── cartões de turma ── */
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px}
+.cartao{border:1px solid var(--hairline);border-radius:12px;background:var(--canvas);overflow:hidden}
+.cartao header{padding:18px;border-bottom:1px solid var(--hairline)}
+.cartao .sub2{font-size:12px;color:var(--ink-mute);margin-top:2px}
+.split{display:flex;align-items:center;gap:12px;margin-top:14px}
+.split .pct{font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;width:44px;text-align:right}
+.bar2{height:7px;border-radius:99px;background:var(--st-desligado);overflow:hidden}
+.bar2 i{display:block;background:var(--st-ativo);height:100%;border-radius:99px}
+.legenda{font-size:11.5px;color:var(--ink-mute);margin-top:5px;display:flex;gap:12px}
+.legenda b{font-family:var(--font-data);font-weight:500;color:var(--ink-2)}
+.sw{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px;vertical-align:1px}
+
+.pessoas{width:100%;border-collapse:collapse}
+.pessoas thead th{font-family:var(--font-display);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--ink-faint);text-align:left;padding:9px 18px;border-bottom:1px solid var(--hairline);white-space:nowrap}
+.pessoas thead th.r{text-align:right}
+.pessoas td{padding:9px 18px;border-top:1px solid var(--hairline);font-size:13px;font-variant-numeric:tabular-nums}
+.pessoas tr:hover td{background:var(--canvas-soft)}
+.nome{font-weight:500;color:var(--ink)}
+.mat{font-family:var(--font-data);font-size:11px;color:var(--ink-faint);display:block;margin-top:1px}
+.dt{font-family:var(--font-data);font-weight:500;color:var(--ink-2);font-size:12.5px}
+.dtv{color:var(--ink-faint)}
+.dias{font-family:var(--font-data);font-weight:500;font-size:11px;color:var(--ink-faint);display:block;margin-top:1px}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:var(--ink-mute)}
+.b-ativo::before{background:var(--st-ativo)}
+.b-ferias::before{background:var(--st-ferias)}
+.b-afast::before{background:var(--st-afastado)}
+.b-desl::before{background:var(--st-desligado)}
+
+.rodape{max-width:1360px;margin:0 auto;padding:36px 28px 70px;color:var(--ink-faint);font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="switch">
+  <button type="button" data-set="light" aria-pressed="true">Claro</button>
+  <button type="button" data-set="dark" aria-pressed="false">Escuro</button>
+</div>
+
+<section class="spec">
+  <span class="tag">O analítico da safra</span>
+  <h2>Os dois gráficos dividem o mesmo eixo de meses</h2>
+  <p><b>Passe o mouse sobre qualquer mês</b> — a coluna acende nos dois painéis ao mesmo tempo e o tooltip diz tudo daquele mês em uma frase: quantos entraram, quantos saíram e quantos ainda estavam na casa.</p>
+  <p>Em cima, pessoas: as barras de entrada e de saída, mês a mês. Embaixo, a mesma história em percentual: a linha da retenção. Compartilhar o eixo é o que permite ler "em março saíram 2" e "a retenção caiu para 75%" na mesma coluna — separados em dois cartões, essa ligação se perde.</p>
+</section>
+
+<div class="frame">
+  <div class="shell">
+    <aside class="side">
+      <div class="grp eyebrow">Gestão</div>
+      <a href="#"><span class="dot"></span>Colaboradores</a>
+      <a href="#"><span class="dot"></span>Organograma</a>
+      <a href="#"><span class="dot"></span>Turnover</a>
+      <a href="#" class="on"><span class="dot"></span>Safra</a>
+      <div class="grp eyebrow">RH</div>
+      <a href="#"><span class="dot"></span>Aniversariantes</a>
+      <a href="#"><span class="dot"></span>Desligados</a>
+    </aside>
+    <div>
+      <div class="top">Safra de janeiro de 2026</div>
+      <div class="body">
+        <button class="volta">← Todas as safras</button>
+
+        <div class="heroi">
+          <span class="eyebrow">Safra · janeiro de 2026 · 7 meses de vida</span>
+          <div class="big">70<span>%</span></div>
+          <div style="font-size:14px;color:var(--ink-mute);margin-top:9px">da safra continua na casa</div>
+          <div class="faixa">
+            <div class="it"><span class="n">20</span><span class="l">entraram</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">2</span><span class="l">turmas</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">14</span><span class="l">ficaram</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">6</span><span class="l">saíram</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">64</span><span class="l">dias em média, em 5 saídas</span></div>
+          </div>
+          <p class="aviso"><b>1 saída está sem data no cadastro</b> — ela conta como perdida, mas fica fora da média e dos gráficos.</p>
+        </div>
+
+        <h2 class="eyebrow" style="margin-bottom:12px">Quando a safra perdeu gente</h2>
+
+        <div class="toggle" id="toggle"></div>
+
+        <div class="painel" id="painel">
+          <div class="cab">
+            <span class="leg">
+              <span><i style="background:var(--st-ativo)"></i>entraram</span>
+              <span><i style="background:var(--st-desligado)"></i>saíram</span>
+              <span><i class="ln" style="background:var(--brand)"></i>continuavam na casa</span>
+            </span>
+          </div>
+          <p class="sub" id="sub"></p>
+          <svg class="g" id="grafico" viewBox="0 0 900 340" role="img" aria-label="Entradas e saídas por mês, e a retenção da safra"></svg>
+          <div class="tip" id="tip"></div>
+        </div>
+
+        <h2 class="eyebrow" style="margin:30px 0 12px">As turmas</h2>
+        <div class="grade" id="cartoes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="rodape">
+  Mockup de direção · MOP — Quality Contact Center. Dados de exemplo.
+  O toggle recorta os gráficos; os cartões abaixo mostram sempre todas as turmas, porque eles <i>são</i> as turmas.
+</section>
+
+<script>
+/* ─────────────── dados de exemplo ─────────────── */
+const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MES_LONGO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+const TURMAS = [
+  { data:'05/01/2026', mesEntrada:0, pessoas:[
+    ['Adriana Lopes Ferreira','7000','Desligado','b-desl','22/02/2026',48],
+    ['Bruno Cardoso Alves','7001','Desligado','b-desl','01/03/2026',55],
+    ['Camila Souza Rocha','7002','Ativo','b-ativo',null,null],
+    ['Diego Nunes Duarte','7003','Férias','b-ferias',null,null],
+    ['Eduarda Martins Esteves','7004','Ativo','b-ativo',null,null],
+    ['Fábio Henrique Faria','7005','Ativo','b-ativo',null,null],
+    ['Gabriela Nascimento Gomes','7006','Ativo','b-ativo',null,null],
+    ['Henrique Dias Moreira','7007','Ativo','b-ativo',null,null],
+    ['Isabela Ramos Iglesias','7008','Ativo','b-ativo',null,null],
+    ['João Vitor Justino','7009','Ativo','b-ativo',null,null],
+  ]},
+  { data:'19/01/2026', mesEntrada:0, pessoas:[
+    ['Diego Barbosa Nunes','7050','Desligado','b-desl',null,null],
+    ['Eduarda Cardoso Lima','7051','Desligado','b-desl','25/03/2026',65],
+    ['Fábio Duarte Pires','7052','Desligado','b-desl','01/04/2026',72],
+    ['Gabriela Esteves Rocha','7053','Desligado','b-desl','08/04/2026',79],
+    ['Henrique Faria Melo','7054','Ativo','b-ativo',null,null],
+    ['Isabela Gomes Vidal','7055','Ativo','b-ativo',null,null],
+    ['João Henrique Salles','7056','Ativo','b-ativo',null,null],
+    ['Karina Iglesias Braga','7057','Ativo','b-ativo',null,null],
+    ['Lucas Justino Ferraz','7058','Ativo','b-ativo',null,null],
+    ['Mariana Klein Lacerda','7059','Ativo','b-ativo',null,null],
+  ]},
+];
+
+const MES_HOJE = 7; // agosto
+const mesDaData = s => Number(s.slice(3,5)) - 1;
+
+/* monta as séries de um recorte: todas as turmas, ou uma só */
+function serie(indice) {
+  const turmas = indice === null ? TURMAS : [TURMAS[indice]];
+  const inicio = Math.min(...turmas.map(t => t.mesEntrada));
+  const meses = [];
+  for (let m = inicio; m <= MES_HOJE; m++) meses.push(m);
+
+  const total = turmas.reduce((s,t) => s + t.pessoas.length, 0);
+  const entradas = meses.map(m => turmas.filter(t => t.mesEntrada === m)
+    .reduce((s,t) => s + t.pessoas.length, 0));
+  const saidas = meses.map(m => turmas.flatMap(t => t.pessoas)
+    .filter(p => p[4] && mesDaData(p[4]) === m).length);
+
+  let restantes = total;
+  const retencao = meses.map((_, i) => { restantes -= saidas[i]; return restantes; });
+
+  const semData = turmas.flatMap(t => t.pessoas).filter(p => p[2] === 'Desligado' && !p[4]).length;
+  return { meses, total, entradas, saidas, retencao, semData };
+}
+
+/* ─────────────── desenho ─────────────── */
+const L = 52, R = 16, W = 900;
+const BAR_TOPO = 16, BAR_BASE = 176;     // painel de cima, em pessoas
+const LIN_TOPO = 216, LIN_BASE = 300;    // painel de baixo, em %
+const EIXO_Y = 326;
+
+function desenhar(s) {
+  const n = s.meses.length;
+  const passo = (W - L - R) / n;
+  const cx = i => L + passo * (i + 0.5);
+
+  const maxPessoas = Math.max(...s.entradas, ...s.saidas, 1);
+  const escala = v => (v / maxPessoas) * (BAR_BASE - BAR_TOPO - 14);
+
+  // piso da retenção em múltiplo de 25%, para a grade cair em número redondo
+  const menor = Math.min(...s.retencao) / s.total;
+  const piso = Math.max(0, Math.floor(menor * 4) / 4);
+  const faixa = Math.max(.25, 1 - piso);
+  const y = v => LIN_BASE - ((v / s.total - piso) / faixa) * (LIN_BASE - LIN_TOPO);
+
+  const grade = [];
+  for (let v = piso; v <= 1.0001; v += .25) grade.push(Math.round(v * 100) / 100);
+
+  let svg = '';
+
+  /* grade e rótulos do painel de pessoas */
+  const marcasP = maxPessoas <= 4 ? [0, maxPessoas] : [0, Math.round(maxPessoas/2), maxPessoas];
+  marcasP.forEach(v => {
+    const yy = BAR_BASE - escala(v);
+    svg += `<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="var(--hairline)" stroke-dasharray="3 3"/>`;
+    svg += `<text x="${L-9}" y="${yy+3.5}" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="var(--font-data)">${v}</text>`;
+  });
+  svg += `<text x="${L-9}" y="${BAR_TOPO}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--font-display)" letter-spacing="1.4">PESSOAS</text>`;
+
+  /* grade e rótulos do painel de retenção */
+  svg += `<text x="${L-9}" y="${LIN_TOPO-8}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--font-display)" letter-spacing="1.4">NA CASA</text>`;
+  grade.forEach(v => {
+    const yy = y(v * s.total);
+    svg += `<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="var(--hairline)" stroke-dasharray="3 3"/>`;
+    svg += `<text x="${L-9}" y="${yy+3.5}" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="var(--font-data)">${Math.round(v*100)}%</text>`;
+  });
+
+  /* barras */
+  const larg = Math.min(15, passo * .3);
+  s.meses.forEach((m, i) => {
+    if (s.entradas[i] > 0) {
+      const h = escala(s.entradas[i]);
+      svg += `<rect x="${cx(i)-larg-2}" y="${BAR_BASE-h}" width="${larg}" height="${h}" rx="2" fill="var(--st-ativo)"/>`;
+      svg += `<text x="${cx(i)-larg/2-2}" y="${BAR_BASE-h-6}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--st-ativo)" font-family="var(--font-data)">${s.entradas[i]}</text>`;
+    }
+    if (s.saidas[i] > 0) {
+      const h = escala(s.saidas[i]);
+      svg += `<rect x="${cx(i)+2}" y="${BAR_BASE-h}" width="${larg}" height="${h}" rx="2" fill="var(--st-desligado)"/>`;
+      svg += `<text x="${cx(i)+larg/2+2}" y="${BAR_BASE-h-6}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--st-desligado)" font-family="var(--font-data)">${s.saidas[i]}</text>`;
+    }
+  });
+  svg += `<line x1="${L}" y1="${BAR_BASE}" x2="${W-R}" y2="${BAR_BASE}" stroke="var(--hairline-2)"/>`;
+
+  /* linha de retenção */
+  const pts = s.retencao.map((v,i) => `${cx(i)},${y(v)}`).join(' ');
+  svg += `<polygon points="${cx(0)},${LIN_BASE} ${pts} ${cx(n-1)},${LIN_BASE}" fill="var(--brand)" fill-opacity=".10"/>`;
+  svg += `<polyline points="${pts}" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s.retencao.forEach((v,i) => {
+    svg += `<circle cx="${cx(i)}" cy="${y(v)}" r="3.5" fill="var(--canvas)" stroke="var(--brand)" stroke-width="2"/>`;
+  });
+
+  /* eixo de meses, um só para os dois painéis */
+  s.meses.forEach((m,i) => {
+    svg += `<text x="${cx(i)}" y="${EIXO_Y}" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)" font-family="var(--font-data)">${MES[m]}</text>`;
+  });
+
+  /* colunas de captura: acendem os dois painéis de uma vez */
+  s.meses.forEach((m,i) => {
+    svg += `<rect class="col-hit" data-i="${i}" x="${L + passo*i}" y="${BAR_TOPO-10}" width="${passo}" height="${EIXO_Y - BAR_TOPO}"/>`;
+  });
+
+  document.getElementById('grafico').innerHTML = svg;
+
+  /* tooltip */
+  const tip = document.getElementById('tip');
+  const painel = document.getElementById('painel');
+  const svgEl = document.getElementById('grafico');
+
+  svgEl.querySelectorAll('.col-hit').forEach(el => {
+    const i = Number(el.dataset.i);
+    el.addEventListener('mouseenter', () => {
+      svgEl.querySelectorAll('.col-hit').forEach(o => o.classList.remove('on'));
+      el.classList.add('on');
+
+      const m = s.meses[i];
+      const desde = m - s.meses[0];
+      const restam = s.retencao[i];
+      const pct = Math.round(restam / s.total * 100);
+      const nada = s.entradas[i] === 0 && s.saidas[i] === 0;
+
+      tip.innerHTML =
+        `<div class="t">${MES_LONGO[m]} de 2026</div>` +
+        `<div class="m">${desde === 0 ? 'mês da entrada' : `${desde} ${desde === 1 ? 'mês' : 'meses'} depois da entrada`}</div>` +
+        (s.entradas[i] > 0 ? `<div class="l"><i style="background:var(--st-ativo)"></i><b>${s.entradas[i]}</b> entraram</div>` : '') +
+        (s.saidas[i] > 0 ? `<div class="l"><i style="background:var(--st-desligado)"></i><b>${s.saidas[i]}</b> ${s.saidas[i]===1?'saiu':'saíram'}</div>` : '') +
+        (nada ? `<div class="nada">Ninguém entrou nem saiu neste mês.</div>` : '') +
+        `<div class="l" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--hairline)">` +
+          `<i style="background:var(--brand)"></i><b>${restam} de ${s.total}</b> na casa · ${pct}%</div>`;
+
+      tip.classList.add('on');
+    });
+  });
+
+  // o tooltip acompanha o ponteiro e vira de lado perto da borda, para nunca
+  // cobrir a coluna que a pessoa está olhando
+  svgEl.addEventListener('mousemove', ev => {
+    const cx = painel.getBoundingClientRect();
+    const x = ev.clientX - cx.left;
+    const y = ev.clientY - cx.top;
+    const larg = tip.offsetWidth || 200;
+    const meio = larg / 2 + 14;
+    tip.style.left = `${Math.min(Math.max(x, meio), cx.width - meio)}px`;
+    tip.style.top = `${Math.max(y - 16, tip.offsetHeight + 8)}px`;
+  });
+
+  svgEl.addEventListener('mouseleave', () => {
+    tip.classList.remove('on');
+    svgEl.querySelectorAll('.col-hit').forEach(o => o.classList.remove('on'));
+  });
+
+  const fim = Math.round(s.retencao.at(-1) / s.total * 100);
+  const real = Math.round((s.retencao.at(-1) - s.semData) / s.total * 100);
+  document.getElementById('sub').innerHTML = s.semData > 0
+    ? `A linha para em <b>${fim}%</b> porque ${s.semData} saída está sem data e não tem onde ser desenhada. Contando ela, a safra está em <b>${real}%</b>.`
+    : `De ${MES[s.meses[0]]} a ${MES[s.meses.at(-1)]} de 2026.`;
+}
+
+/* ─────────────── toggle ─────────────── */
+let atual = null;
+function renderToggle() {
+  const opcoes = [['Todas as turmas', null, TURMAS.reduce((s,t)=>s+t.pessoas.length,0)]]
+    .concat(TURMAS.map((t,i) => [`Turma de ${t.data.slice(0,5)}`, i, t.pessoas.length]));
+
+  document.getElementById('toggle').innerHTML = opcoes.map(([rot,idx,qt]) =>
+    `<button class="tg" data-idx="${idx}" aria-pressed="${idx === atual}">${rot}<span class="qt">${qt}</span></button>`
+  ).join('');
+
+  document.querySelectorAll('.tg').forEach(b => b.addEventListener('click', () => {
+    atual = b.dataset.idx === 'null' ? null : Number(b.dataset.idx);
+    renderToggle();
+    desenhar(serie(atual));
+  }));
+}
+
+/* ─────────────── cartões ─────────────── */
+document.getElementById('cartoes').innerHTML = TURMAS.map(t => {
+  const sai = t.pessoas.filter(p => p[2] === 'Desligado').length;
+  const fic = t.pessoas.length - sai;
+  const pct = Math.round(fic / t.pessoas.length * 100);
+  return `<div class="cartao">
+    <header>
+      <div class="d-md">Turma de ${t.data}</div>
+      <div class="sub2">${t.pessoas.length} pessoas entraram</div>
+      <div class="split">
+        <span class="pct">${pct}%</span>
+        <span style="flex:1">
+          <span class="bar2" style="display:block"><i style="width:${pct}%"></i></span>
+          <span class="legenda">
+            <span><span class="sw" style="background:var(--st-ativo)"></span><b>${fic}</b> ficaram</span>
+            <span><span class="sw" style="background:var(--st-desligado)"></span><b>${sai}</b> saíram</span>
+          </span>
+        </span>
+      </div>
+    </header>
+    <table class="pessoas">
+      <thead><tr><th>Nome</th><th>Status</th><th>Entrada</th><th class="r">Saída</th></tr></thead>
+      <tbody>
+      ${t.pessoas.map(p => `<tr>
+        <td><span class="nome">${p[0]}</span><span class="mat">${p[1]}</span></td>
+        <td><span class="badge ${p[3]}">${p[2]}</span></td>
+        <td><span class="dt">${t.data}</span></td>
+        <td style="text-align:right">
+          ${p[4]
+            ? `<span class="dt">${p[4]}</span><span class="dias">${p[5]} dias</span>`
+            : (p[2] === 'Desligado'
+                ? `<span class="dt dtv">sem data</span><span class="dias">no cadastro</span>`
+                : `<span class="dt dtv">—</span>`)}
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}).join('');
+
+renderToggle();
+desenhar(serie(null));
+
+document.querySelectorAll('.switch button').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.set;
+  document.querySelectorAll('.switch button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  desenhar(serie(atual));
+}));
+</script>
+</body>
+</html>

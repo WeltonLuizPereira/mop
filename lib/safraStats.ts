@@ -143,37 +143,91 @@ export function computeSafras(
     });
 }
 
-/** Um ponto da curva: quantos por cento da safra continuavam na casa. */
-export interface PontoDaCurva {
-  /** Meses desde a entrada. 0 é o mês da própria entrada. */
+/** Um mês da vida da safra, com o que entrou, o que saiu e o que restou. */
+export interface PontoMensal {
+  /** "2026-01", para servir de chave estável na lista. */
+  chave: string;
+  ano: number;
+  /** 0 = janeiro. */
   mes: number;
-  /** De 0 a 1. */
+  /** "jan", ou "jan/27" quando a série atravessa o ano. */
+  rotulo: string;
+  /** "Março de 2026" — o que o tooltip diz, sem abreviar. */
+  rotuloLongo: string;
+  entraram: number;
+  sairam: number;
+  /** Quantos ainda estavam na casa ao fim do mês. */
+  naCasa: number;
+  /** `naCasa` ÷ total da série, de 0 a 1. */
   retencao: number;
-  /** Quantos ainda estavam na casa nesse ponto. */
-  restantes: number;
+  mesesDesdeEntrada: number;
+}
+
+const MES_CURTO = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/** Saídas que ninguém datou — contam como perdidas, mas não têm mês. */
+export function saidasSemData(pessoas: PessoaDaSafra[]): number {
+  return pessoas.filter(p => !p.ficou && p.diasAteSair === null).length;
 }
 
 /**
- * Quando a safra perdeu gente, mês a mês desde a entrada.
+ * A vida da safra mês a mês, do mês de entrada até hoje.
  *
- * Só quem saiu *com data* move a curva. Uma saída sem data não tem onde ser
- * colocada na linha do tempo, então ela ficaria em qualquer ponto que
- * escolhêssemos — e um ponto inventado é pior do que um degrau a menos. A
- * contagem de `semData` na safra é o que avisa da lacuna.
+ * O eixo acompanha a safra, não o calendário: quem entrou em janeiro de 2026 e
+ * saiu em fevereiro de 2027 continua aparecendo. Preso ao ano, esse desligamento
+ * sumiria do gráfico e a conta da tela discordaria da conta do desenho.
+ *
+ * Só saída com data entra aqui. Uma saída sem data não tem mês onde ser posta, e
+ * escolher um seria inventar — por isso a linha pode terminar acima da retenção
+ * real, e a tela diz isso em texto em vez de esconder.
  */
-export function curvaSobrevivencia(safra: Safra): PontoDaCurva[] {
-  if (safra.entraram === 0) return [];
+export function serieMensal(
+  pessoas: PessoaDaSafra[],
+  hoje: Date = new Date(),
+): PontoMensal[] {
+  if (pessoas.length === 0) return [];
 
-  const pessoas = safra.turmas.flatMap(t => t.pessoas);
-  const pontos: PontoDaCurva[] = [];
+  const absoluto = (d: Date) => d.getFullYear() * 12 + d.getMonth();
+  const entradas = new Map<number, number>();
+  const saidas = new Map<number, number>();
 
-  for (let mes = 0; mes <= safra.idadeMeses; mes++) {
-    const limite = (mes + 1) * 30;
-    const perdidos = pessoas.filter(
-      p => p.diasAteSair !== null && p.diasAteSair < limite,
-    ).length;
-    const restantes = safra.entraram - perdidos;
-    pontos.push({ mes, retencao: restantes / safra.entraram, restantes });
+  pessoas.forEach(p => {
+    const entrada = lerData(p.colaborador.dtEntradaProduto);
+    if (entrada) entradas.set(absoluto(entrada), (entradas.get(absoluto(entrada)) ?? 0) + 1);
+
+    if (p.ficou || p.diasAteSair === null) return;
+    const saida = lerData(p.colaborador.dataFim);
+    if (saida) saidas.set(absoluto(saida), (saidas.get(absoluto(saida)) ?? 0) + 1);
+  });
+
+  if (entradas.size === 0) return [];
+
+  const inicio = Math.min(...entradas.keys());
+  const fim = Math.max(inicio, absoluto(hoje), ...saidas.keys());
+  const total = pessoas.length;
+  const anoInicial = Math.floor(inicio / 12);
+
+  const pontos: PontoMensal[] = [];
+  let naCasa = total;
+
+  for (let m = inicio; m <= fim; m++) {
+    const ano = Math.floor(m / 12);
+    const mes = m % 12;
+    const sairam = saidas.get(m) ?? 0;
+    naCasa -= sairam;
+    pontos.push({
+      chave: `${ano}-${String(mes + 1).padStart(2, '0')}`,
+      ano,
+      mes,
+      // o ano só aparece quando a série atravessa a virada, senão "jan" repetiria
+      rotulo: ano === anoInicial ? MES_CURTO[mes] : `${MES_CURTO[mes]}/${String(ano).slice(2)}`,
+      rotuloLongo: `${MESES[mes]} de ${ano}`,
+      entraram: entradas.get(m) ?? 0,
+      sairam,
+      naCasa,
+      retencao: naCasa / total,
+      mesesDesdeEntrada: m - inicio,
+    });
   }
 
   return pontos;

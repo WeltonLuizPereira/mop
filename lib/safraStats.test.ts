@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CollaboratorStatus } from '../types';
-import { computeSafras, curvaSobrevivencia, lerData } from './safraStats';
+import { computeSafras, lerData, saidasSemData, serieMensal } from './safraStats';
 
 const HOJE = new Date(2026, 7, 20); // 20/08/2026
 
@@ -131,32 +131,69 @@ describe('computeSafras', () => {
   });
 });
 
-describe('curvaSobrevivencia', () => {
-  it('começa em 100% e desce a cada saída', () => {
-    const [janeiro] = computeSafras([
-      colab('1', '2026-01-01'),
-      colab('2', '2026-01-01'),
-      colab('3', '2026-01-01', CollaboratorStatus.DESLIGADO, '2026-02-15'), // 45 dias
-      colab('4', '2026-01-01', CollaboratorStatus.DESLIGADO, '2026-04-11'), // 100 dias
-    ], 2026, new Date(2026, 4, 1)); // idade 4 meses
+describe('serieMensal', () => {
 
-    const curva = curvaSobrevivencia(janeiro);
-    expect(curva[0]).toEqual({ mes: 0, retencao: 1, restantes: 4 });
-    expect(curva[1].restantes).toBe(3);   // a saída de 45 dias já entrou
-    expect(curva[4].restantes).toBe(2);   // a de 100 dias também
-    expect(curva.at(-1)!.retencao).toBeCloseTo(0.5);
+  it('vai do mês de entrada até hoje, mesmo sem movimento no meio', () => {
+    const [janeiro] = computeSafras([colab('1', '2026-01-05')], 2026, HOJE);
+    const serie = serieMensal(janeiro.turmas[0].pessoas, HOJE);
+
+    expect(serie.map(p => p.rotulo)).toEqual(['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago']);
+    expect(serie[0].entraram).toBe(1);
+    expect(serie.every(p => p.naCasa === 1)).toBe(true);
   });
 
-  it('a saída sem data não move a curva', () => {
+  it('põe a entrada e a saída cada uma no seu mês', () => {
     const [janeiro] = computeSafras([
-      colab('1', '2026-01-01'),
-      colab('2', '2026-01-01', CollaboratorStatus.DESLIGADO), // sem dataFim
-    ], 2026, new Date(2026, 2, 1));
+      colab('1', '2026-01-05'),
+      colab('2', '2026-01-05', CollaboratorStatus.DESLIGADO, '2026-03-20'),
+    ], 2026, HOJE);
+    const serie = serieMensal(janeiro.turmas[0].pessoas, HOJE);
 
-    expect(curvaSobrevivencia(janeiro).every(p => p.restantes === 2)).toBe(true);
+    expect(serie[0].entraram).toBe(2);
+    expect(serie[2].rotulo).toBe('mar');
+    expect(serie[2].sairam).toBe(1);
+    expect(serie[2].naCasa).toBe(1);
+    expect(serie[2].retencao).toBeCloseTo(0.5);
   });
 
-  it('não devolve curva para safra vazia', () => {
-    expect(curvaSobrevivencia({ entraram: 0, turmas: [], idadeMeses: 3 } as any)).toEqual([]);
+  it('a retenção só cai, e fica parada onde ninguém saiu', () => {
+    const [janeiro] = computeSafras([
+      colab('1', '2026-01-05'),
+      colab('2', '2026-01-05'),
+      colab('3', '2026-01-05', CollaboratorStatus.DESLIGADO, '2026-02-10'),
+    ], 2026, HOJE);
+    const serie = serieMensal(janeiro.turmas[0].pessoas, HOJE);
+
+    expect(serie.map(p => p.naCasa)).toEqual([3, 2, 2, 2, 2, 2, 2, 2]);
+  });
+
+  it('acompanha a safra na virada do ano, em vez de parar em dezembro', () => {
+    const [novembro] = computeSafras([
+      colab('1', '2025-11-10'),
+      colab('2', '2025-11-10', CollaboratorStatus.DESLIGADO, '2026-02-14'),
+    ], 2025, new Date(2026, 2, 5));
+    const serie = serieMensal(novembro.turmas[0].pessoas, new Date(2026, 2, 5));
+
+    // sem o ano no rótulo, "nov" e "fev" de anos diferentes se confundiriam
+    expect(serie.map(p => p.rotulo)).toEqual(['nov', 'dez', 'jan/26', 'fev/26', 'mar/26']);
+    expect(serie[3].sairam).toBe(1);
+  });
+
+  it('a saída sem data não entra em mês nenhum', () => {
+    const [janeiro] = computeSafras([
+      colab('1', '2026-01-05'),
+      colab('2', '2026-01-05', CollaboratorStatus.DESLIGADO),
+    ], 2026, HOJE);
+    const serie = serieMensal(janeiro.turmas[0].pessoas, HOJE);
+
+    expect(serie.every(p => p.sairam === 0)).toBe(true);
+    // a linha termina em 100% enquanto a safra real está em 50% — é por isso
+    // que a tela precisa dizer a diferença em texto
+    expect(serie.at(-1)!.retencao).toBe(1);
+    expect(saidasSemData(janeiro.turmas[0].pessoas)).toBe(1);
+  });
+
+  it('não devolve série para turma vazia', () => {
+    expect(serieMensal([], HOJE)).toEqual([]);
   });
 });

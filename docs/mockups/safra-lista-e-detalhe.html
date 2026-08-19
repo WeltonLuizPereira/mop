@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOP — Safra, mockup de direção</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas:#FFFFFF; --canvas-soft:#FAFAFA; --canvas-sunk:#F2F2F1;
+  --hairline:#E4E4E4; --hairline-2:#CFCFCF;
+  --ink:#191310; --ink-2:#453C38; --ink-mute:#6B615C; --ink-faint:#9A918C;
+  --brand:#F27405; --brand-hot:#F54E00; --brand-text:#D04200; --brand-wash:#FFF4EC;
+  --on-brand:#191310;
+  --st-ativo:#12794F; --st-ferias:#1264A3; --st-afastado:#6544C0;
+  --st-maternidade:#B4008C; --st-aviso:#C4183C; --st-realocado:#00786F;
+  --st-desligado:#7A0B22;
+  --danger:#C4183C; --ok:#12794F;
+  --sh-1:0 1px 3px rgb(0 0 0 / .06); --sh-3:0 16px 48px rgb(0 0 0 / .12);
+  --font-display:'Archivo',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-data:'IBM Plex Mono',ui-monospace,monospace;
+}
+[data-theme="dark"] {
+  --canvas:#121110; --canvas-soft:#1A1817; --canvas-sunk:#0C0B0A;
+  --hairline:#2E2A28; --hairline-2:#423D3A;
+  --ink:#F5F1EF; --ink-2:#C4BCB7; --ink-mute:#948B86; --ink-faint:#6E6560;
+  --brand:#F27405; --brand-hot:#FF6A1A; --brand-text:#F27405; --brand-wash:rgb(242 116 5 / .14);
+  --st-ativo:#3FBE84; --st-ferias:#5AA9E6; --st-afastado:#9B8CFF;
+  --st-maternidade:#E86FD8; --st-aviso:#FF4D6D; --st-realocado:#38B5A8;
+  --st-desligado:#C2304C;
+  --danger:#FF4D6D; --ok:#3FBE84;
+  --sh-1:0 1px 3px rgb(0 0 0 / .4); --sh-3:0 16px 48px rgb(0 0 0 / .6);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.eyebrow{font-family:var(--font-display);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.18em;line-height:1;color:var(--ink-faint)}
+.data{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.d-md{font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.015em;line-height:1.25}
+
+/* chrome do mockup, não faz parte do produto */
+.spec{max-width:1360px;margin:0 auto;padding:52px 28px 12px}
+.spec h2{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:-.01em;margin:0 0 5px}
+.spec p{margin:0;color:var(--ink-mute);font-size:13px;max-width:78ch}
+.spec .tag{display:inline-block;font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand-text);background:var(--brand-wash);border-radius:4px;padding:4px 9px;margin-bottom:10px}
+.frame{max-width:1360px;margin:16px auto 0;border:1px solid var(--hairline-2);border-radius:16px;overflow:hidden;box-shadow:var(--sh-1)}
+.switch{position:fixed;right:20px;top:20px;z-index:60;display:flex;gap:4px;padding:4px;border-radius:6px;background:var(--canvas-soft);border:1px solid var(--hairline-2);box-shadow:var(--sh-3)}
+.switch button{font-family:var(--font-display);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.12em;padding:6px 12px;border:0;border-radius:4px;background:transparent;color:var(--ink-mute);cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--brand);color:var(--on-brand)}
+
+/* shell */
+.shell{display:grid;grid-template-columns:236px 1fr;min-height:520px;background:var(--canvas)}
+.side{background:var(--canvas-soft);border-right:1px solid var(--hairline);padding:14px 0}
+.side .grp{padding:0 18px;margin:16px 0 7px}
+.side a{display:flex;align-items:center;gap:10px;padding:7px 16px;font-size:13px;font-weight:500;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent}
+.side a.on{background:var(--brand-wash);color:var(--ink);border-left-color:var(--brand);font-weight:600}
+.side a .dot{width:14px;height:14px;border-radius:3px;border:1.5px solid currentColor;opacity:.5;flex:none}
+.top{height:52px;border-bottom:1px solid var(--hairline);display:flex;align-items:center;padding:0 24px;font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:-.015em}
+.body{padding:22px 24px}
+
+/* barra da lista, igual às outras telas */
+.card{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:12px;overflow:hidden}
+.bar{padding:13px 16px;border-bottom:1px solid var(--hairline);display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.chip{font-size:12px;font-weight:500;color:var(--ink-2);border:1px solid var(--hairline-2);border-radius:6px;background:var(--canvas);padding:5px 10px;white-space:nowrap;cursor:pointer}
+.chip .k{color:var(--ink-mute)}
+.chip.on{border-color:var(--brand);color:var(--brand-text)}
+.count{margin-left:auto;font-size:13px;color:var(--ink-mute);white-space:nowrap}
+.count b{font-family:var(--font-data);font-weight:500;color:var(--ink-2)}
+
+table{width:100%;border-collapse:collapse;background:var(--canvas)}
+thead th{font-family:var(--font-display);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--ink-faint);text-align:left;padding:10px 14px;border-bottom:1px solid var(--hairline);white-space:nowrap}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--hairline);font-size:13px;vertical-align:middle;font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--canvas-soft)}
+tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--brand)}
+td.num,th.num{text-align:right}
+td.num,td.dado{font-family:var(--font-data);font-weight:500}
+
+.mes{font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:-.01em;color:var(--ink)}
+.idade{font-size:11px;color:var(--ink-faint);margin-top:1px}
+.jovem{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:var(--font-display);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-text);background:var(--brand-wash);border-radius:3px;padding:2px 6px;margin-top:3px}
+
+/* a coluna que carrega a história: o que aconteceu com a safra */
+.split{display:flex;align-items:center;gap:12px;min-width:250px}
+.split .pct{font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink);width:44px;text-align:right}
+.split .col{flex:1}
+.bar2{height:7px;border-radius:99px;background:var(--st-desligado);overflow:hidden;display:flex}
+.bar2 i{display:block;background:var(--ok);height:100%}
+.legenda{font-size:11.5px;color:var(--ink-mute);margin-top:5px;display:flex;gap:12px}
+.legenda b{font-family:var(--font-data);font-weight:500;color:var(--ink-2)}
+.sw{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px;vertical-align:1px}
+
+.acao{border:1px solid var(--hairline-2);background:var(--canvas);border-radius:6px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.acao:hover{border-color:var(--brand);color:var(--brand-text)}
+
+.media{font-family:var(--font-data);font-weight:500;color:var(--ink-2)}
+.base{font-size:11px;color:var(--ink-faint);font-family:var(--font-body)}
+.vazio{color:var(--ink-faint)}
+
+/* aviso de dado incompleto */
+.nota{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--ink-mute);background:var(--canvas-sunk);border-top:1px solid var(--hairline);padding:11px 16px}
+.nota b{color:var(--ink-2);font-weight:600}
+
+/* ---------- detalhe: turmas ---------- */
+.turma-h{display:flex;align-items:baseline;gap:10px;padding:13px 16px 9px}
+.turma-h .dt{font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:-.01em}
+.turma-h .qt{font-size:12px;color:var(--ink-mute)}
+.turma-h .mini{margin-left:auto;font-size:12px;color:var(--ink-mute)}
+.turma-h .mini b{font-family:var(--font-data);font-weight:500;color:var(--ink-2)}
+.pessoas{width:100%;border-collapse:collapse}
+.pessoas td{padding:8px 16px;border-top:1px solid var(--hairline);font-size:13px;font-variant-numeric:tabular-nums}
+.pessoas tr:hover td{background:var(--canvas-soft)}
+.nome{font-weight:500;color:var(--ink)}
+.mat{font-family:var(--font-data);font-size:11px;color:var(--ink-faint);display:block;margin-top:1px}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--d,var(--ink-mute));flex:none}
+.b-ativo::before{background:var(--st-ativo)}
+.b-ferias::before{background:var(--st-ferias)}
+.b-afast::before{background:var(--st-afastado)}
+.b-aviso::before{background:var(--st-aviso)}
+.b-desl::before{background:var(--st-desligado)}
+
+/* opção A — diálogo */
+.overlay{position:relative;background:rgb(0 0 0 / .5);padding:36px;display:grid;place-items:center;min-height:520px}
+.dialog{width:100%;max-width:760px;max-height:460px;display:flex;flex-direction:column;background:var(--canvas);border:1px solid var(--hairline);border-radius:12px;box-shadow:var(--sh-3);overflow:hidden}
+.dialog .dh{display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid var(--hairline)}
+.dialog .dh .x{margin-left:auto;width:30px;height:30px;border:0;background:transparent;color:var(--ink-2);border-radius:6px;cursor:pointer;font-size:16px}
+.dialog .dbody{overflow-y:auto;flex:1}
+.dialog .df{padding:13px 22px;border-top:1px solid var(--hairline);display:flex;justify-content:flex-end;gap:10px}
+.btn{font-family:var(--font-body);font-weight:600;font-size:13px;border:1px solid transparent;border-radius:6px;padding:9px 16px;cursor:pointer}
+.btn-g{background:transparent;color:var(--ink);border-color:var(--hairline-2)}
+.btn-p{background:var(--brand);color:var(--on-brand)}
+
+/* opção B — linha expande */
+.aberta td{background:var(--canvas-soft)!important}
+.aberta td:first-child{box-shadow:inset 2px 0 0 var(--brand)}
+.expand td{padding:0;background:var(--canvas-sunk);border-bottom:1px solid var(--hairline)}
+.expand-in{padding:4px 0 10px;margin:0 14px 12px;background:var(--canvas);border:1px solid var(--hairline);border-radius:10px;overflow:hidden}
+
+/* opção C — tela própria */
+.volta{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--brand-text);background:var(--brand-wash);border:0;border-radius:6px;padding:8px 13px;cursor:pointer;margin-bottom:18px}
+.heroi{padding-bottom:22px;border-bottom:1px solid var(--hairline);margin-bottom:22px}
+.heroi .big{font-family:var(--font-display);font-weight:700;font-size:56px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-top:12px}
+.heroi .big span{font-size:30px;color:var(--ink-mute)}
+.faixa{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin-top:20px}
+.faixa .it{display:flex;align-items:baseline;gap:7px}
+.faixa .n{font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.faixa .l{font-size:13px;color:var(--ink-mute)}
+.faixa .sep{width:1px;height:15px;background:var(--hairline-2)}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px}
+
+.rodape{max-width:1360px;margin:0 auto;padding:40px 28px 70px;color:var(--ink-faint);font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="switch">
+  <button type="button" data-set="light" aria-pressed="true">Claro</button>
+  <button type="button" data-set="dark" aria-pressed="false">Escuro</button>
+</div>
+
+<!-- ═══════════════ TELA PRINCIPAL ═══════════════ -->
+<section class="spec">
+  <span class="tag">A tela</span>
+  <h2>Safra — o que aconteceu com quem entrou</h2>
+  <p>Uma linha por mês de entrada do ano escolhido. A coluna do meio é a única que precisa ser lida com atenção: ela mostra, de uma vez, quantos ficaram e quantos saíram daquela safra. A idade da safra fica ao lado do mês, porque quem entrou em agosto ainda não teve tempo de sair — comparar essa safra com a de janeiro sem esse aviso leva à conclusão errada.</p>
+</section>
+
+<div class="frame">
+  <div class="shell">
+    <aside class="side">
+      <div class="grp eyebrow">Gestão</div>
+      <a href="#"><span class="dot"></span>Colaboradores</a>
+      <a href="#"><span class="dot"></span>Organograma</a>
+      <a href="#"><span class="dot"></span>Turnover</a>
+      <a href="#" class="on"><span class="dot"></span>Safra</a>
+      <div class="grp eyebrow">RH</div>
+      <a href="#"><span class="dot"></span>Aniversariantes</a>
+      <a href="#"><span class="dot"></span>Desligados</a>
+    </aside>
+    <div>
+      <div class="top">Safra</div>
+      <div class="body">
+        <div class="card">
+          <div class="bar">
+            <span class="chip"><span class="k">Ano:</span> 2026</span>
+            <span class="chip">⌕ Filtros</span>
+            <span class="count"><b>8</b> safras · <b>130</b> pessoas</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Safra</th>
+                <th class="num">Entraram</th>
+                <th class="num">Turmas</th>
+                <th>O que aconteceu</th>
+                <th>Tempo até sair</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="linhas"></tbody>
+          </table>
+          <div class="nota">
+            <span>⚠</span>
+            <span><b>3 pessoas desligadas estão sem data de saída</b> no cadastro. Elas contam como perdidas, mas ficam fora do tempo médio — não dá para medir o que não tem data.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ OPÇÃO A ═══════════════ -->
+<section class="spec">
+  <span class="tag">Opção A — diálogo</span>
+  <h2>As turmas abrem sobre a tela</h2>
+  <p>A tabela de comparação continua atrás, e fechar devolve você exatamente onde estava. Herda o que o diálogo do sistema já faz: Esc fecha, o foco fica preso dentro, o fundo não rola. Turma grande rola dentro do próprio diálogo. O limite é a largura — com muita gente, a leitura fica em coluna estreita.</p>
+</section>
+
+<div class="frame">
+  <div class="overlay">
+    <div class="dialog">
+      <div class="dh">
+        <div>
+          <div class="d-md">Janeiro de 2026</div>
+          <div style="font-size:12px;color:var(--ink-mute);margin-top:2px">20 pessoas em 2 turmas · 14 ficaram, 6 saíram</div>
+        </div>
+        <button class="x">✕</button>
+      </div>
+      <div class="dbody" id="dlg"></div>
+      <div class="df">
+        <button class="btn btn-g">Exportar</button>
+        <button class="btn btn-p">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ OPÇÃO B ═══════════════ -->
+<section class="spec">
+  <span class="tag">Opção B — a linha expande</span>
+  <h2>As turmas abrem dentro da própria tabela</h2>
+  <p>A safra se abre para baixo, no lugar. Dá para deixar duas safras abertas ao mesmo tempo e comparar turma a turma sem sair da tela. O limite aparece com turma cheia: a lista empurra as safras seguintes para longe e a tabela vira uma rolagem só.</p>
+</section>
+
+<div class="frame">
+  <div class="shell">
+    <aside class="side">
+      <div class="grp eyebrow">Gestão</div>
+      <a href="#"><span class="dot"></span>Colaboradores</a>
+      <a href="#"><span class="dot"></span>Organograma</a>
+      <a href="#"><span class="dot"></span>Turnover</a>
+      <a href="#" class="on"><span class="dot"></span>Safra</a>
+    </aside>
+    <div>
+      <div class="top">Safra</div>
+      <div class="body">
+        <div class="card">
+          <div class="bar">
+            <span class="chip"><span class="k">Ano:</span> 2026</span>
+            <span class="chip">⌕ Filtros</span>
+            <span class="count"><b>8</b> safras · <b>130</b> pessoas</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Safra</th><th class="num">Entraram</th><th class="num">Turmas</th>
+                <th>O que aconteceu</th><th>Tempo até sair</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="linhasB"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ OPÇÃO C ═══════════════ -->
+<section class="spec">
+  <span class="tag">Opção C — tela própria</span>
+  <h2>A safra vira uma tela só dela</h2>
+  <p>Espaço para o que não cabe nas outras duas: a curva de sobrevivência da safra mês a mês, cada turma como um cartão, e a lista inteira sem aperto. O preço é perder a tabela de comparação de vista — para olhar outra safra, é preciso voltar.</p>
+</section>
+
+<div class="frame">
+  <div class="shell">
+    <aside class="side">
+      <div class="grp eyebrow">Gestão</div>
+      <a href="#"><span class="dot"></span>Colaboradores</a>
+      <a href="#"><span class="dot"></span>Organograma</a>
+      <a href="#"><span class="dot"></span>Turnover</a>
+      <a href="#" class="on"><span class="dot"></span>Safra</a>
+    </aside>
+    <div>
+      <div class="top">Safra de janeiro de 2026</div>
+      <div class="body">
+        <button class="volta">← Todas as safras</button>
+
+        <div class="heroi">
+          <span class="eyebrow">Safra · janeiro de 2026 · 7 meses de vida</span>
+          <div class="big">70<span>%</span></div>
+          <div style="font-size:14px;color:var(--ink-mute);margin-top:9px">da safra continua na casa</div>
+          <div class="faixa">
+            <div class="it"><span class="n">20</span><span class="l">entraram</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">2</span><span class="l">turmas</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">14</span><span class="l">ficaram</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">6</span><span class="l">saíram</span></div>
+            <div class="sep"></div>
+            <div class="it"><span class="n">62</span><span class="l">dias em média até sair</span></div>
+          </div>
+        </div>
+
+        <div class="eyebrow" style="margin-bottom:12px">Quando a safra perdeu gente</div>
+        <div style="border:1px solid var(--hairline);border-radius:12px;background:var(--canvas);padding:20px 22px;margin-bottom:26px">
+          <svg viewBox="0 0 720 150" style="width:100%;height:150px;display:block" role="img" aria-label="Curva de sobrevivência da safra de janeiro">
+            <line x1="40" y1="10" x2="710" y2="10" stroke="var(--hairline)" stroke-dasharray="3 3"/>
+            <line x1="40" y1="45" x2="710" y2="45" stroke="var(--hairline)" stroke-dasharray="3 3"/>
+            <line x1="40" y1="80" x2="710" y2="80" stroke="var(--hairline)" stroke-dasharray="3 3"/>
+            <line x1="40" y1="115" x2="710" y2="115" stroke="var(--hairline)" stroke-dasharray="3 3"/>
+            <text x="34" y="14" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="IBM Plex Mono">100%</text>
+            <text x="34" y="49" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="IBM Plex Mono">85%</text>
+            <text x="34" y="84" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="IBM Plex Mono">70%</text>
+            <text x="34" y="119" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="IBM Plex Mono">55%</text>
+            <polyline points="60,10 153,10 246,33 339,56 432,68 525,80 618,80 700,80"
+                      fill="none" stroke="var(--brand)" stroke-width="2.5"/>
+            <g font-size="10" fill="var(--ink-faint)" font-family="IBM Plex Mono" text-anchor="middle">
+              <text x="60" y="140">entrada</text><text x="153" y="140">+1</text><text x="246" y="140">+2</text>
+              <text x="339" y="140">+3</text><text x="432" y="140">+4</text><text x="525" y="140">+5</text>
+              <text x="618" y="140">+6</text><text x="700" y="140">+7</text>
+            </g>
+          </svg>
+          <p style="margin:8px 0 0;font-size:12px;color:var(--ink-mute)">A safra perdeu mais gente entre o 2º e o 4º mês. Depois do 5º, estabilizou.</p>
+        </div>
+
+        <div class="eyebrow" style="margin-bottom:12px">As duas turmas</div>
+        <div class="grade" id="cartoes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="rodape">
+  Mockup de direção · MOP — Quality Contact Center. Dados de exemplo. As três opções mostram o mesmo detalhe da safra de janeiro de 2026, mudando só onde ele aparece.
+</section>
+
+<script>
+/* ─── dados de exemplo ─── */
+const SAFRAS = [
+  { mes:'Janeiro',   idade:7, entraram:20, turmas:2, ficaram:14, sairam:6, dias:62, base:6 },
+  { mes:'Fevereiro', idade:6, entraram:12, turmas:1, ficaram:9,  sairam:3, dias:44, base:3 },
+  { mes:'Março',     idade:5, entraram:25, turmas:3, ficaram:20, sairam:5, dias:71, base:4 },
+  { mes:'Abril',     idade:4, entraram:8,  turmas:1, ficaram:7,  sairam:1, dias:29, base:1 },
+  { mes:'Maio',      idade:3, entraram:18, turmas:2, ficaram:13, sairam:5, dias:38, base:5 },
+  { mes:'Junho',     idade:2, entraram:15, turmas:2, ficaram:13, sairam:2, dias:33, base:2 },
+  { mes:'Julho',     idade:1, entraram:22, turmas:2, ficaram:21, sairam:1, dias:18, base:1 },
+  { mes:'Agosto',    idade:0, entraram:10, turmas:1, ficaram:10, sairam:0, dias:null, base:0 },
+];
+
+const TURMAS = [
+  { data:'05/01/2026', qt:10, ficaram:8, sairam:2, pessoas:[
+    ['Adriana Lopes Ferreira','4001','Ativo','b-ativo','—'],
+    ['Bruno Cardoso Alves','4002','Ativo','b-ativo','—'],
+    ['Camila Souza Rocha','4003','Férias','b-ferias','—'],
+    ['Diego Nunes Barbosa','4004','Desligado','b-desl','48 dias'],
+    ['Eduarda Martins Pinto','4005','Ativo','b-ativo','—'],
+    ['Fábio Henrique Costa','4006','Afastado','b-afast','—'],
+    ['Gabriela Nascimento Reis','4007','Desligado','b-desl','91 dias'],
+    ['Henrique Dias Moreira','4008','Ativo','b-ativo','—'],
+    ['Isabela Ramos Teixeira','4009','Ativo','b-ativo','—'],
+    ['João Vitor Almeida','4010','Ativo','b-ativo','—'],
+  ]},
+  { data:'19/01/2026', qt:10, ficaram:6, sairam:4, pessoas:[
+    ['Karina Freitas Lopes','4011','Ativo','b-ativo','—'],
+    ['Lucas Andrade Pires','4012','Desligado','b-desl','35 dias'],
+    ['Mariana Coelho Braga','4013','Ativo','b-ativo','—'],
+    ['Nathan Oliveira Cruz','4014','Desligado','b-desl','52 dias'],
+    ['Otávio Prado Salles','4015','Aviso prévio','b-aviso','—'],
+    ['Patrícia Gomes Vidal','4016','Ativo','b-ativo','—'],
+    ['Rafael Monteiro Lins','4017','Desligado','b-desl','77 dias'],
+    ['Sabrina Duarte Faria','4018','Ativo','b-ativo','—'],
+    ['Thiago Bastos Ferraz','4019','Desligado','b-desl','69 dias'],
+    ['Vanessa Ribeiro Lacerda','4020','Ativo','b-ativo','—'],
+  ]},
+];
+
+/* ─── linha da tabela de safras ─── */
+function linha(s, comAcao) {
+  const pct = Math.round(s.ficaram / s.entraram * 100);
+  const jovem = s.idade < 3;
+  return `<tr>
+    <td>
+      <div class="mes">${s.mes}</div>
+      <div class="idade">${s.idade === 0 ? 'entrou este mês' : s.idade + (s.idade === 1 ? ' mês de vida' : ' meses de vida')}</div>
+      ${jovem ? '<div class="jovem">safra jovem</div>' : ''}
+    </td>
+    <td class="num">${s.entraram}</td>
+    <td class="num">${s.turmas}</td>
+    <td>
+      <div class="split">
+        <span class="pct">${pct}%</span>
+        <span class="col">
+          <span class="bar2"><i style="width:${pct}%"></i></span>
+          <span class="legenda">
+            <span><span class="sw" style="background:var(--ok)"></span><b>${s.ficaram}</b> ficaram</span>
+            <span><span class="sw" style="background:var(--st-desligado)"></span><b>${s.sairam}</b> saíram</span>
+          </span>
+        </span>
+      </div>
+    </td>
+    <td>
+      ${s.dias === null
+        ? '<span class="vazio">— ninguém saiu</span>'
+        : `<span class="media">${s.dias} dias</span> <span class="base">em ${s.base} ${s.base === 1 ? 'saída' : 'saídas'}</span>`}
+    </td>
+    <td style="text-align:right">${comAcao ? '<button class="acao">Ver turmas</button>' : ''}</td>
+  </tr>`;
+}
+
+document.getElementById('linhas').innerHTML = SAFRAS.map(s => linha(s, true)).join('');
+
+/* ─── bloco de turmas, reaproveitado pelas opções A e B ─── */
+function blocoTurmas() {
+  return TURMAS.map(t => `
+    <div class="turma-h">
+      <span class="dt">Turma de ${t.data}</span>
+      <span class="qt">${t.qt} pessoas</span>
+      <span class="mini"><b>${t.ficaram}</b> ficaram · <b>${t.sairam}</b> saíram</span>
+    </div>
+    <table class="pessoas">
+      ${t.pessoas.map(p => `<tr>
+        <td><span class="nome">${p[0]}</span><span class="mat">${p[1]}</span></td>
+        <td><span class="badge ${p[3]}">${p[2]}</span></td>
+        <td style="text-align:right;font-family:var(--font-data);font-weight:500;color:${p[4] === '—' ? 'var(--ink-faint)' : 'var(--ink-2)'}">${p[4]}</td>
+      </tr>`).join('')}
+    </table>`).join('');
+}
+document.getElementById('dlg').innerHTML = blocoTurmas();
+
+/* ─── opção B: janeiro já vem aberta ─── */
+document.getElementById('linhasB').innerHTML = SAFRAS.map((s, i) => {
+  const l = linha(s, true).replace('Ver turmas', i === 0 ? 'Fechar' : 'Ver turmas');
+  if (i !== 0) return l;
+  return l.replace('<tr>', '<tr class="aberta">') +
+    `<tr class="expand"><td colspan="6"><div class="expand-in">${blocoTurmas()}</div></td></tr>`;
+}).join('');
+
+/* ─── opção C: cada turma vira cartão ─── */
+document.getElementById('cartoes').innerHTML = TURMAS.map(t => {
+  const pct = Math.round(t.ficaram / t.qt * 100);
+  return `<div style="border:1px solid var(--hairline);border-radius:12px;background:var(--canvas);overflow:hidden">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--hairline)">
+      <div class="d-md">Turma de ${t.data}</div>
+      <div style="font-size:12px;color:var(--ink-mute);margin-top:2px">${t.qt} pessoas entraram</div>
+      <div class="split" style="margin-top:14px;min-width:0">
+        <span class="pct">${pct}%</span>
+        <span class="col">
+          <span class="bar2"><i style="width:${pct}%"></i></span>
+          <span class="legenda">
+            <span><b>${t.ficaram}</b> ficaram</span><span><b>${t.sairam}</b> saíram</span>
+          </span>
+        </span>
+      </div>
+    </div>
+    <table class="pessoas">
+      ${t.pessoas.map(p => `<tr>
+        <td><span class="nome">${p[0]}</span><span class="mat">${p[1]}</span></td>
+        <td><span class="badge ${p[3]}">${p[2]}</span></td>
+        <td style="text-align:right;font-family:var(--font-data);font-weight:500;color:${p[4] === '—' ? 'var(--ink-faint)' : 'var(--ink-2)'}">${p[4]}</td>
+      </tr>`).join('')}
+    </table>
+  </div>`;
+}).join('');
+
+/* ─── tema ─── */
+document.querySelectorAll('.switch button').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.set;
+  document.querySelectorAll('.switch button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>

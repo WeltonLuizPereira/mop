@@ -109,16 +109,58 @@ describe('Safra', () => {
     expect(screen.getByText('Davi Melo')).toBeInTheDocument();
   });
 
-  it('mostra os dias até sair de quem saiu, e traço de quem ficou', async () => {
+  it('mostra a data de entrada e a de saída de cada pessoa', async () => {
     const user = userEvent.setup();
     render(<SafraPage />);
     await abrirJaneiro(user);
 
     const bruno = screen.getByText('Bruno Sá').closest('tr')!;
+    expect(within(bruno).getByText('05/01/2026')).toBeInTheDocument();
+    expect(within(bruno).getByText('06/03/2026')).toBeInTheDocument();
     expect(within(bruno).getByText('60 dias')).toBeInTheDocument();
-    // Davi saiu sem data: não dá para dizer em quantos dias
+
+    // quem ficou não tem saída
+    const ana = screen.getByText('Ana Lima').closest('tr')!;
+    expect(within(ana).getByText('05/01/2026')).toBeInTheDocument();
+    expect(within(ana).getByText('—')).toBeInTheDocument();
+
+    // Davi saiu, mas ninguém datou — dizer isso vale mais que um traço mudo
     const davi = screen.getByText('Davi Melo').closest('tr')!;
-    expect(within(davi).getByText('—')).toBeInTheDocument();
+    expect(within(davi).getByText('sem data')).toBeInTheDocument();
+  });
+
+  it('as colunas da turma são nome, status, entrada e saída', async () => {
+    const user = userEvent.setup();
+    render(<SafraPage />);
+    await abrirJaneiro(user);
+
+    const cabecalhos = screen.getAllByRole('columnheader').map(c => c.textContent?.trim());
+    expect(cabecalhos.slice(0, 4)).toEqual(['Nome', 'Status', 'Entrada', 'Saída']);
+  });
+
+  it('o recorte por turma só aparece quando há mais de uma', async () => {
+    const user = userEvent.setup();
+    render(<SafraPage />);
+    await abrirJaneiro(user);
+
+    const grupo = screen.getByRole('group', { name: 'Recortar os gráficos por turma' });
+    expect(within(grupo).getByRole('button', { name: /Todas as turmas/ })).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(within(grupo).getByRole('button', { name: /Turma de 19\/01/ }));
+    expect(within(grupo).getByRole('button', { name: /Turma de 19\/01/ })).toHaveAttribute('aria-pressed', 'true');
+
+    // os cartões continuam mostrando as duas turmas: o recorte é dos gráficos
+    expect(screen.getByText('Turma de 05/01/2026')).toBeInTheDocument();
+    expect(screen.getByText('Turma de 19/01/2026')).toBeInTheDocument();
+  });
+
+  it('a safra de uma turma só não oferece recorte', async () => {
+    const user = userEvent.setup();
+    render(<SafraPage />);
+    const linha = (await screen.findByText('Março')).closest('tr')!;
+    await user.click(within(linha).getByRole('button', { name: 'Ver turmas' }));
+
+    expect(screen.queryByRole('group', { name: 'Recortar os gráficos por turma' })).not.toBeInTheDocument();
   });
 
   it('volta para a lista de safras', async () => {

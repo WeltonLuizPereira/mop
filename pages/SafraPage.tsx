@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { Chip } from '../components/ui';
 import type { Client, Collaborator, Ilha, Operation, Supervisor } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
 import { Badge, Button, ChipSelect, MultiSelect, Table } from '../components/ui';
-import { SafraCurva } from '../components/dashboard/SafraCurva';
+import { SafraGrafico } from '../components/dashboard/SafraGrafico';
 import {
-  computeSafras, curvaSobrevivencia, IDADE_JOVEM, type Safra, type Turma,
+  computeSafras, IDADE_JOVEM, saidasSemData, serieMensal,
+  type Safra, type Turma,
 } from '../lib/safraStats';
 
 /** Quantos ficaram e quantos saíram, na mesma barra e nas cores de status. */
@@ -52,6 +54,19 @@ const TurmaCard = ({ turma }: { turma: Turma }) => (
       </div>
     </header>
     <table className="w-full border-collapse">
+      <thead>
+        <tr>
+          {['Nome', 'Status', 'Entrada', 'Saída'].map((c, i) => (
+            <th
+              key={c}
+              className={`t-eyebrow text-ink-faint px-[18px] py-2.5 border-b border-hairline whitespace-nowrap
+                          ${i === 3 ? 'text-right' : 'text-left'}`}
+            >
+              {c}
+            </th>
+          ))}
+        </tr>
+      </thead>
       <tbody>
         {turma.pessoas.map(p => (
           <tr key={p.colaborador.matricula} className="border-t border-hairline hover:bg-canvas-soft">
@@ -60,10 +75,28 @@ const TurmaCard = ({ turma }: { turma: Turma }) => (
               <span className="block t-data text-[11px] text-ink-faint mt-px">{p.colaborador.matricula}</span>
             </td>
             <td className="px-2 py-2.5"><Badge status={p.colaborador.status} /></td>
+            <td className="px-[18px] py-2.5 whitespace-nowrap">
+              <span className="t-data font-medium text-[12.5px] text-ink-2">
+                {formatDateString(turma.data)}
+              </span>
+            </td>
             <td className="px-[18px] py-2.5 text-right whitespace-nowrap">
-              {p.diasAteSair === null
-                ? <span className="text-ink-faint text-[13px]">—</span>
-                : <span className="t-data font-medium text-[13px] text-ink-2">{p.diasAteSair} dias</span>}
+              {p.colaborador.dataFim && p.diasAteSair !== null ? (
+                <>
+                  <span className="block t-data font-medium text-[12.5px] text-ink-2">
+                    {formatDateString(p.colaborador.dataFim)}
+                  </span>
+                  <span className="block t-data text-[11px] text-ink-faint">{p.diasAteSair} dias</span>
+                </>
+              ) : p.ficou ? (
+                <span className="t-data text-[12.5px] text-ink-faint">—</span>
+              ) : (
+                // saiu, mas ninguém datou: dizer isso vale mais que um traço mudo
+                <>
+                  <span className="block t-data text-[12.5px] text-ink-faint">sem data</span>
+                  <span className="block t-data text-[11px] text-ink-faint">no cadastro</span>
+                </>
+              )}
             </td>
           </tr>
         ))}
@@ -73,17 +106,18 @@ const TurmaCard = ({ turma }: { turma: Turma }) => (
 );
 
 const Detalhe = ({ safra, onVoltar }: { safra: Safra; onVoltar: () => void }) => {
-  const curva = useMemo(() => curvaSobrevivencia(safra), [safra]);
-  const queda = useMemo(() => {
-    // o mês em que a safra mais perdeu gente — a frase abaixo do gráfico
-    let pior = 0;
-    let maior = 0;
-    for (let i = 1; i < curva.length; i++) {
-      const perda = curva[i - 1].restantes - curva[i].restantes;
-      if (perda > maior) { maior = perda; pior = i; }
-    }
-    return { mes: pior, perda: maior };
-  }, [curva]);
+  // `null` = todas as turmas juntas
+  const [turma, setTurma] = useState<number | null>(null);
+
+  const recorte = turma === null ? safra.turmas : [safra.turmas[turma]];
+  const pessoas = useMemo(() => recorte.flatMap(t => t.pessoas), [recorte]);
+  const serie = useMemo(() => serieMensal(pessoas), [pessoas]);
+  const semData = saidasSemData(pessoas);
+
+  const total = pessoas.length;
+  const naCasa = serie.length === 0 ? total : serie[serie.length - 1].naCasa;
+  const desenhado = total === 0 ? 0 : Math.round((naCasa / total) * 100);
+  const real = total === 0 ? 0 : Math.round(((naCasa - semData) / total) * 100);
 
   return (
     <div className="space-y-8">
@@ -128,22 +162,52 @@ const Detalhe = ({ safra, onVoltar }: { safra: Safra; onVoltar: () => void }) =>
               {safra.semData} {safra.semData === 1 ? 'saída está' : 'saídas estão'} sem data no cadastro
             </b>{' '}
             — {safra.semData === 1 ? 'ela conta' : 'elas contam'} como perdida
-            {safra.semData === 1 ? '' : 's'}, mas fica{safra.semData === 1 ? '' : 'm'} fora da média e da curva.
+            {safra.semData === 1 ? '' : 's'}, mas fica{safra.semData === 1 ? '' : 'm'} fora da média e dos gráficos.
           </p>
         )}
       </section>
 
-      {curva.length > 1 && (
+      {serie.length > 0 && (
         <section>
-          <h2 className="t-eyebrow text-ink-faint mb-4">Quando a safra perdeu gente</h2>
-          <div className="border border-hairline rounded-lg bg-canvas p-5">
-            <SafraCurva pontos={curva} />
-            <p className="text-xs text-ink-mute mt-2">
-              {queda.perda === 0
-                ? 'A safra não perdeu ninguém com data registrada até aqui.'
-                : `A maior perda foi no ${queda.mes}º mês depois da entrada: ${queda.perda} ${queda.perda === 1 ? 'pessoa' : 'pessoas'}.`}
-            </p>
-          </div>
+          <h2 className="t-eyebrow text-ink-faint mb-3">Quando a safra perdeu gente</h2>
+
+          {/* o recorte vale só para os gráficos: os cartões abaixo são as turmas,
+              escondê-los faria este controle ter dois significados */}
+          {safra.turmas.length > 1 && (
+            <div className="flex flex-wrap gap-2 mb-3.5" role="group" aria-label="Recortar os gráficos por turma">
+              {([
+                { valor: null as number | null, rotulo: 'Todas as turmas', quantos: safra.entraram },
+                ...safra.turmas.map((t, i) => ({
+                  valor: i as number | null,
+                  rotulo: `Turma de ${formatDateString(t.data).slice(0, 5)}`,
+                  quantos: t.pessoas.length,
+                })),
+              ]).map(({ valor, rotulo, quantos }) => (
+                  <Chip
+                    key={rotulo}
+                    onClick={() => setTurma(valor)}
+                    aria-pressed={turma === valor}
+                    className={turma === valor ? 'border-brand text-brand-text bg-brand-wash' : ''}
+                  >
+                    {rotulo}
+                    <span className={`t-data ml-1.5 ${turma === valor ? '' : 'text-ink-faint'}`}>{quantos}</span>
+                  </Chip>
+                ))}
+            </div>
+          )}
+
+          <SafraGrafico serie={serie} total={total} />
+
+          <p className="text-xs text-ink-mute mt-2.5">
+            {semData > 0
+              ? <>A linha para em <b className="text-ink-2 font-semibold">{desenhado}%</b> porque{' '}
+                  {semData === 1 ? 'uma saída está' : `${semData} saídas estão`} sem data e não{' '}
+                  {semData === 1 ? 'tem' : 'têm'} onde ser desenhada{semData === 1 ? '' : 's'}.
+                  Contando {semData === 1 ? 'ela' : 'elas'}, o recorte está em{' '}
+                  <b className="text-ink-2 font-semibold">{real}%</b>.</>
+              : <>Passe o mouse sobre um mês para ver quantos entraram, quantos saíram e quantos
+                  continuavam na casa.</>}
+          </p>
         </section>
       )}
 
@@ -151,7 +215,7 @@ const Detalhe = ({ safra, onVoltar }: { safra: Safra; onVoltar: () => void }) =>
         <h2 className="t-eyebrow text-ink-faint mb-4">
           {safra.turmas.length === 1 ? 'A turma' : 'As turmas'}
         </h2>
-        <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
+        <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(430px, 1fr))' }}>
           {safra.turmas.map(t => <TurmaCard key={t.data} turma={t} />)}
         </div>
       </section>

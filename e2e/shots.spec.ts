@@ -183,6 +183,14 @@ test('safra — detalhe de uma coorte', async ({ page }) => {
   await soltarAltura(page);
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${DIR}/safra-detalhe.png`, fullPage: true });
+
+  // o tooltip é o pedido principal: precisa aparecer na captura
+  const painel = page.locator('.recharts-wrapper').first();
+  const caixa = (await painel.boundingBox())!;
+  await page.mouse.move(caixa.x + caixa.width * 0.32, caixa.y + caixa.height * 0.6);
+  await page.waitForTimeout(500);
+  await page.locator('section', { hasText: 'Quando a safra perdeu gente' }).first()
+    .screenshot({ path: `${DIR}/safra-tooltip.png` });
 });
 
 for (const tema of ['claro', 'escuro'] as const) {

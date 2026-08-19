@@ -52,9 +52,13 @@
   --brand: #F27405; --brand-hot: #F54E00; --brand-press: #D04200;
   --brand-text: #D04200; --brand-wash: #FFF4EC; --on-brand: #191310;
   --st-ativo: #12794F; --st-ferias: #1264A3; --st-afastado: #6544C0;
-  --st-maternidade: #B4008C; --st-aviso: #C4183C; --st-realocado: #00786F;
-  --st-desligado: #7A0B22;
-  --danger: #C4183C; --ok: #12794F;
+  --st-maternidade: #B4008C; --st-aviso: #FF4D6D; --st-realocado: #00786F;
+  --st-desligado: #C2304C;
+  /* Os pontos de status só precisam de 3:1, então levam o vermelho do modo
+     escuro tal e qual. `--danger` não: ele vira texto ("Excluir", mensagens de
+     erro) e fundo de botão com texto claro em cima, onde o piso é 4,5:1 —
+     #FF4D6D dá 3,21 sobre branco. #DE2E50 é o mais claro que ainda passa. */
+  --danger: #DE2E50; --ok: #12794F;
 }
 
 .dark {

@@ -43,7 +43,7 @@ describe('tinta sobre canvas', () => {
 });
 
 describe('pontos de status', () => {
-  const claro = ['#12794F','#1264A3','#6544C0','#B4008C','#C4183C','#00786F','#7A0B22'];
+  const claro = ['#12794F','#1264A3','#6544C0','#B4008C','#FF4D6D','#00786F','#C2304C'];
   const escuro = ['#3FBE84','#5AA9E6','#9B8CFF','#E86FD8','#FF4D6D','#38B5A8','#C2304C'];
 
   it.each(claro)('%s alcança 3:1 sobre o canvas claro', c => {
@@ -56,8 +56,18 @@ describe('pontos de status', () => {
   // Aviso prévio e desligado contam a mesma história em estágios diferentes:
   // mesmo vermelho, o encerrado mais fundo. Se os dois se aproximarem demais,
   // o ponto deixa de separar quem está saindo de quem já saiu.
+  // `--danger` não é só ponto: ele vira texto e vira fundo com texto claro em
+  // cima. Se alguém o clarear até o vermelho dos pontos, "Excluir" e as
+  // mensagens de erro caem abaixo do piso de leitura — este teste é o freio.
   it.each([
-    ['claro',  '#C4183C', '#7A0B22'],
+    ['sobre o canvas claro', '#DE2E50', '#FFFFFF'],
+    ['com texto claro em cima', '#FFFFFF', '#DE2E50'],
+  ])('o vermelho de ação passa AA %s', (_o, a, b) => {
+    expect(contrastRatio(a, b)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each([
+    ['claro',  '#FF4D6D', '#C2304C'],
     ['escuro', '#FF4D6D', '#C2304C'],
   ])('no modo %s, aviso e desligado ficam distinguíveis entre si', (_m, aviso, desligado) => {
     expect(contrastRatio(aviso, desligado)).toBeGreaterThanOrEqual(1.6);
