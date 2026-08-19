@@ -40,7 +40,7 @@ describe('CrudPage', () => {
   it('filtra a lista pela busca', async () => {
     const user = userEvent.setup();
     render(<CrudPage {...baseProps} data={[clienteA, clienteB]} onSave={vi.fn()} onDelete={vi.fn()} currentUser={admin} />);
-    await user.type(screen.getByRole('textbox', { name: 'Buscar Clientes' }), 'Cliente A');
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar Clientes' }), 'Cliente A');
     expect(screen.getByText('Cliente A')).toBeInTheDocument();
     expect(screen.queryByText('Cliente B')).not.toBeInTheDocument();
   });
@@ -57,7 +57,7 @@ describe('CrudPage', () => {
 
   it('não oferece mutações para quem não é administrador', () => {
     render(<CrudPage {...baseProps} data={[clienteA]} onSave={vi.fn()} onDelete={vi.fn()} currentUser={viewer} />);
-    expect(screen.queryByRole('button', { name: /^novo$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^novo\b/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /excluir/i })).not.toBeInTheDocument();
   });
@@ -66,7 +66,7 @@ describe('CrudPage', () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<CrudPage {...baseProps} data={[]} onSave={onSave} onDelete={vi.fn()} currentUser={admin} />);
-    await user.click(screen.getAllByRole('button', { name: /^novo$/i })[0]);
+    await user.click(screen.getAllByRole('button', { name: /^novo\b/i })[0]);
     await user.type(screen.getByLabelText('Nome'), 'Cliente Novo');
     await user.selectOptions(screen.getByLabelText('Cliente'), 'x1');
     await user.selectOptions(screen.getByLabelText('Operação'), 'op1');
@@ -100,12 +100,12 @@ describe('CrudPage', () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<CrudPage {...baseProps} data={[]} onSave={onSave} onDelete={vi.fn()} currentUser={admin} />);
-    await user.click(screen.getAllByRole('button', { name: /^novo$/i })[0]);
+    await user.click(screen.getAllByRole('button', { name: /^novo\b/i })[0]);
     await user.type(screen.getByLabelText('Nome'), 'Cliente X');
     await user.selectOptions(screen.getByLabelText('Cliente'), 'x1');
     await user.selectOptions(screen.getByLabelText('Operação'), 'op1');
-    await user.click(screen.getByRole('button', { name: 'Marcas' }));
-    await user.click(screen.getByRole('option', { name: 'Tag 1' }));
+    // as marcas são caixas de seleção dentro do próprio formulário
+    await user.click(screen.getByRole('checkbox', { name: 'Tag 1' }));
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
     expect(onSave.mock.calls[0][0].tags).toEqual(['t1']);
   });

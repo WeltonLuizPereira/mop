@@ -1,14 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EntityStatus, UserRole } from '../types';
 import { UsersPage } from './UsersPage';
 
-const usuarioExistente = { id: 'u1', matricula: '100', nome: 'Beatriz Souza', email: 'bia@q.com', role: UserRole.SUPPORT, status: EntityStatus.ACTIVE };
+const usuarioExistente = { id: 'u1', matricula: '100', nome: 'Beatriz Souza', email: 'bia@q.com', password: 'senha-atual', role: UserRole.SUPPORT, status: EntityStatus.ACTIVE };
 
 vi.mock('../services/mockDb', () => ({
   db: {
-    getUsers: vi.fn(async () => ([{ id: 'u1', matricula: '100', nome: 'Beatriz Souza', email: 'bia@q.com', role: UserRole.SUPPORT, status: EntityStatus.ACTIVE }])),
+    getUsers: vi.fn(async () => ([{ id: 'u1', matricula: '100', nome: 'Beatriz Souza', email: 'bia@q.com', password: 'senha-atual', role: UserRole.SUPPORT, status: EntityStatus.ACTIVE }])),
     addUser: vi.fn(async () => {}),
     updateUser: vi.fn(async () => {}),
     deleteUser: vi.fn(async () => {}),
@@ -20,6 +20,10 @@ const admin = { id: '1', matricula: '1', nome: 'Admin', email: 'a@a.com', role: 
 const montar = (currentUser = admin) => render(<UsersPage currentUser={currentUser} onRefresh={vi.fn()} />);
 
 describe('UsersPage', () => {
+  // sem isto a contagem de chamadas atravessa os testes e "não chamou addUser"
+  // passa a depender de quem rodou antes
+  beforeEach(() => { vi.clearAllMocks(); });
+
   it('lista usuários com as colunas Nome, Status e Função', async () => {
     montar();
     await screen.findByText('Beatriz Souza');
@@ -37,7 +41,7 @@ describe('UsersPage', () => {
     const user = userEvent.setup();
     montar();
     await screen.findByText('Beatriz Souza');
-    await user.click(screen.getByRole('button', { name: /^novo$/i }));
+    await user.click(screen.getByRole('button', { name: /^novo\b/i }));
     expect(screen.getByLabelText('Matrícula')).toBeInTheDocument();
     expect(screen.getByLabelText('Nome')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
@@ -49,7 +53,7 @@ describe('UsersPage', () => {
     const user = userEvent.setup();
     montar();
     await screen.findByText('Beatriz Souza');
-    await user.click(screen.getByRole('button', { name: /^novo$/i }));
+    await user.click(screen.getByRole('button', { name: /^novo\b/i }));
     const opcoes = within(screen.getByLabelText('Função')).getAllByRole('option').map(o => o.textContent);
     expect(opcoes).toEqual(['Selecione...', 'Admin', 'Gerente', 'Coordenador', 'Supervisor', 'RH', 'Visualizador', 'Suporte']);
   });
@@ -59,7 +63,7 @@ describe('UsersPage', () => {
     const user = userEvent.setup();
     montar();
     await screen.findByText('Beatriz Souza');
-    await user.click(screen.getByRole('button', { name: /^novo$/i }));
+    await user.click(screen.getByRole('button', { name: /^novo\b/i }));
     fireEvent.change(screen.getByLabelText('Matrícula'), { target: { value: '200' } });
     fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Carlos Lima' } });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'carlos@q.com' } });
@@ -100,7 +104,7 @@ describe('UsersPage', () => {
   it('não permite mutações para quem não é administrador', async () => {
     montar({ ...admin, role: UserRole.VIEWER });
     await screen.findByText('Beatriz Souza');
-    expect(screen.queryByRole('button', { name: /^novo$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^novo\b/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /excluir/i })).not.toBeInTheDocument();
   });

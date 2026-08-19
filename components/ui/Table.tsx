@@ -32,7 +32,11 @@ Table.Card = ({ children, className = '' }: { children: React.ReactNode; classNa
 );
 
 interface ToolbarProps {
-  busca?: { valor: string; aoMudar: (v: string) => void; placeholder?: string };
+  busca?: {
+    valor: string; aoMudar: (v: string) => void; placeholder?: string;
+    /** Nome acessível do campo. Placeholder some ao digitar; rótulo não. */
+    rotulo?: string;
+  };
   /** Chips que ficam sempre à vista, ao lado da busca. */
   chips?: React.ReactNode;
   /** Quantas linhas a lista está mostrando agora. */
@@ -71,6 +75,7 @@ Table.Toolbar = ({
               className="pl-9 w-full px-3 py-[7px] bg-canvas border border-hairline-2 rounded-sm
                          text-[13px] text-ink placeholder:text-ink-faint"
               placeholder={busca.placeholder ?? 'Buscar'}
+              aria-label={busca.rotulo ?? busca.placeholder ?? 'Buscar'}
               value={busca.valor}
               onChange={e => busca.aoMudar(e.target.value)}
             />

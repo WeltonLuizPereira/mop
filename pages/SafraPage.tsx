@@ -107,7 +107,10 @@ const Detalhe = ({ safra, onVoltar }: { safra: Safra; onVoltar: () => void }) =>
              [safra.turmas.length === 1 ? 'turma' : 'turmas', safra.turmas.length],
              ['ficaram', safra.ficaram],
              ['saíram', safra.sairam],
-             ['dias em média até sair', safra.diasMedios ?? '—']] as const)
+             [safra.baseMedia === 0
+               ? 'dias em média até sair'
+               : `dias em média, em ${safra.baseMedia} ${safra.baseMedia === 1 ? 'saída' : 'saídas'}`,
+              safra.diasMedios ?? '—']] as const)
             .map(([rotulo, valor], i) => (
               <React.Fragment key={rotulo}>
                 {i > 0 && <div className="w-px h-4 bg-hairline-2" aria-hidden="true" />}
@@ -146,7 +149,7 @@ const Detalhe = ({ safra, onVoltar }: { safra: Safra; onVoltar: () => void }) =>
 
       <section>
         <h2 className="t-eyebrow text-ink-faint mb-4">
-          {safra.turmas.length === 1 ? 'A turma' : `As ${safra.turmas.length} turmas`}
+          {safra.turmas.length === 1 ? 'A turma' : 'As turmas'}
         </h2>
         <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
           {safra.turmas.map(t => <TurmaCard key={t.data} turma={t} />)}
@@ -222,7 +225,8 @@ export const SafraPage = () => {
         filtrosAtivos={filtrosAtivos}
         aoLimparFiltros={limparFiltros}
         chips={
-          <ChipSelect rotulo="Ano" value={ano} onChange={e => setAno(Number(e.target.value))}>
+          <ChipSelect rotulo="Ano" value={ano} onChange={e => setAno(Number(e.target.value))}
+                      aria-label="Ordenar as safras por ano">
             {anos.map(a => <option key={a} value={a}>{a}</option>)}
           </ChipSelect>
         }

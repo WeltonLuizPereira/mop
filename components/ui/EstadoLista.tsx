@@ -17,10 +17,14 @@ export const Carregando = ({ o_que }: { o_que: string }) => (
 
 /** Quando a consulta falha. `role="alert"` porque a pessoa precisa saber
  *  agora, e um caminho de volta: tentar de novo. */
-export const FalhaAoCarregar = ({ mensagem, aoTentar }: { mensagem: string; aoTentar: () => void }) => (
+export const FalhaAoCarregar = ({ mensagem, aoTentar, rotuloAcao = 'Tentar de novo' }: {
+  mensagem: string;
+  aoTentar: () => void;
+  rotuloAcao?: string;
+}) => (
   <div role="alert" className="p-10 text-center">
     <p className="text-sm text-ink-2">{mensagem}</p>
-    <Button variant="secondary" className="mt-3" onClick={aoTentar}>Tentar de novo</Button>
+    <Button variant="secondary" className="mt-3" onClick={aoTentar}>{rotuloAcao}</Button>
   </div>
 );
 

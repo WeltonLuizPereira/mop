@@ -6,8 +6,8 @@ const chaves = (role: UserRole) =>
   visibleGroups(role).flatMap(g => g.items.map(i => i.key));
 
 describe('visibleGroups', () => {
-  it('mostra as 23 telas para o administrador', () => {
-    expect(chaves(UserRole.ADMIN)).toHaveLength(23);
+  it('mostra as 24 telas para o administrador', () => {
+    expect(chaves(UserRole.ADMIN)).toHaveLength(24);
   });
 
   it('esconde cadastros, administração e sistema do visualizador', () => {

@@ -147,16 +147,39 @@ export const OrganogramPage = () => {
             setScale(newScale);
         }
     };
-    const handleMouseDown = (e: React.MouseEvent) => {
+    // ponteiro, e não mouse: assim o arrasto vale igual no dedo e na caneta
+    const handlePointerDown = (e: React.PointerEvent) => {
         if (tool === 'mouse') return;
         setIsDragging(true);
         setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
     };
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDragging || tool === 'mouse') return;
         setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
     };
-    const handleMouseUp = () => setIsDragging(false);
+    const handlePointerUp = () => setIsDragging(false);
+
+    const PASSO = 40;
+    const aproxima = (s: number) => Math.min(Math.max(0.2, s), 2);
+
+    /** O organograma inteiro é operável pelo teclado: setas movem, + e -
+     *  aproximam e afastam, Home devolve tudo ao lugar. Sem isso, quem não
+     *  usa mouse não alcança nada além do primeiro cartão. */
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        const mover = (dx: number, dy: number) => {
+            e.preventDefault();
+            setPosition(p => ({ x: p.x + dx, y: p.y + dy }));
+        };
+        switch (e.key) {
+            case 'ArrowRight': return mover(PASSO, 0);
+            case 'ArrowLeft':  return mover(-PASSO, 0);
+            case 'ArrowDown':  return mover(0, PASSO);
+            case 'ArrowUp':    return mover(0, -PASSO);
+            case '+': case '=': e.preventDefault(); return setScale(s => aproxima(s + 0.1));
+            case '-': case '_': e.preventDefault(); return setScale(s => aproxima(s - 0.1));
+            case 'Home': e.preventDefault(); setScale(1); return setPosition({ x: 0, y: 0 });
+        }
+    };
 
     // ... TreeNode ...
     const TreeNode = ({ node }: { node: any }) => {
@@ -184,19 +207,19 @@ export const OrganogramPage = () => {
                         <div className="mt-1 text-[10px] text-ink-mute font-medium">{node.children.length} Colaboradores</div>
                     </div>
                     <div className="w-px h-8 bg-hairline-2"></div>
-                    <div className="grid grid-cols-2 gap-4 bg-brand-wash/30 p-3 rounded-lg border border-hairline relative w-max">
+                    <ul className="grid grid-cols-2 gap-4 bg-brand-wash/30 p-3 rounded-lg border border-hairline relative w-max">
                         <div className="absolute -top-3 left-1/2 w-px h-3 bg-hairline-2"></div>
                         {node.children.map((child: any) => (
-                             <div key={child.id} className="bg-canvas p-3 rounded-lg border border-hairline shadow-1 text-left flex flex-col justify-between w-44 hover:border-brand-hot transition-colors">
+                             <li key={child.id} className="bg-canvas p-3 rounded-lg border border-hairline shadow-1 text-left flex flex-col justify-between w-44 hover:border-brand-hot transition-colors">
                                  <div className="mb-2">
                                      <div className="font-bold text-xs text-ink truncate" title={child.name}>{child.name}</div>
                                      <div className="text-[10px] text-ink-mute font-medium truncate mt-0.5">Matrícula: {child.id}</div>
                                  </div>
                                  <div className="flex justify-end mt-1"><Badge status={child.status}/></div>
-                             </div>
+                             </li>
                         ))}
-                         {node.children.length === 0 && <div className="col-span-2 text-xs text-ink-faint p-2 italic text-center">Nenhum colaborador nesta ilha/supervisor.</div>}
-                    </div>
+                         {node.children.length === 0 && <li className="col-span-2 text-xs text-ink-faint p-2 italic text-center">Nenhum colaborador nesta ilha/supervisor.</li>}
+                    </ul>
                 </div>
             );
         }
@@ -212,16 +235,16 @@ export const OrganogramPage = () => {
                         <div className="w-px h-6 bg-hairline-2"></div>
                         <div className="flex relative">
                             {node.children.length > 1 && <div className="absolute top-0 left-[calc(50%-50%)] right-[calc(50%-50%)] h-px bg-hairline-2"></div>}
-                             <div className="flex items-start pt-6 relative before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-px before:bg-hairline-2">
+                             <ul className="flex items-start pt-6 relative before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-px before:bg-hairline-2">
                                 {node.children.map((child: any) => (
-                                    <div key={child.id} className="relative flex flex-col items-center before:content-[''] before:absolute before:-top-6 before:left-1/2 before:-ml-px before:w-px before:h-6 before:bg-hairline-2 first:before:bg-transparent last:before:bg-transparent only:before:bg-hairline-2"> 
+                                    <li key={child.id} className="relative flex flex-col items-center before:content-[''] before:absolute before:-top-6 before:left-1/2 before:-ml-px before:w-px before:h-6 before:bg-hairline-2 first:before:bg-transparent last:before:bg-transparent only:before:bg-hairline-2"> 
                                         <div className="absolute -top-6 left-0 w-1/2 h-px bg-canvas first:block hidden"></div>
                                         <div className="absolute -top-6 right-0 w-1/2 h-px bg-canvas last:block hidden"></div>
                                         <div className="absolute -top-6 left-1/2 w-px h-6 bg-hairline-2"></div>
                                         <TreeNode node={child} />
-                                    </div>
+                                    </li>
                                 ))}
-                             </div>
+                             </ul>
                         </div>
                     </>
                 )}
@@ -237,33 +260,45 @@ export const OrganogramPage = () => {
             <div className="flex justify-between items-center mb-4">
                 <div className="flex gap-4">
                     <div className="flex gap-2.5">
-                        <ChipSelect rotulo="Coordenador" value={filterCoord} onChange={(e) => setFilterCoord(e.target.value)}>
+                        <ChipSelect rotulo="Coordenador" aria-label="Coordenador" value={filterCoord} onChange={(e) => setFilterCoord(e.target.value)}>
                             <option value="">todos</option>
                             {coordinatorsList.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                         </ChipSelect>
-                        <ChipSelect rotulo="Supervisor" value={filterSup} onChange={(e) => setFilterSup(e.target.value)}>
+                        <ChipSelect rotulo="Supervisor" aria-label="Supervisor" value={filterSup} onChange={(e) => setFilterSup(e.target.value)}>
                             <option value="">todos</option>
                             {supervisorsList.filter(s => !filterCoord || s.coordinatorIds?.includes(filterCoord)).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                         </ChipSelect>
                     </div>
                     <div className="flex items-center gap-2 bg-canvas px-2 py-1 rounded-lg border border-hairline shadow-1">
-                        <button onClick={() => setTool('hand')} className={`p-2 rounded-md transition-colors ${tool === 'hand' ? 'bg-brand-wash text-brand' : 'text-ink-faint hover:text-ink-mute'}`}><Hand size={18} /></button>
+                        <button type="button" onClick={() => setTool('hand')} aria-label="Mover" aria-pressed={tool === 'hand'} className={`p-2 rounded-md transition-colors ${tool === 'hand' ? 'bg-brand-wash text-brand' : 'text-ink-faint hover:text-ink-mute'}`}><Hand size={18} /></button>
                          <div className="w-px h-6 bg-hairline"></div>
-                        <button onClick={() => { setTool('mouse'); }} className={`p-2 rounded-md transition-colors ${tool === 'mouse' ? 'bg-brand-wash text-brand' : 'text-ink-faint hover:text-ink-mute'}`}><MousePointer2 size={18} /></button>
+                        <button type="button" onClick={() => { setTool('mouse'); }} aria-label="Selecionar" aria-pressed={tool === 'mouse'} className={`p-2 rounded-md transition-colors ${tool === 'mouse' ? 'bg-brand-wash text-brand' : 'text-ink-faint hover:text-ink-mute'}`}><MousePointer2 size={18} /></button>
                     </div>
                 </div>
             </div>
             
             <div className="flex-1 bg-canvas-sunk rounded-lg border border-hairline relative overflow-hidden select-none">
                  <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-canvas rounded-lg shadow-2 p-2">
-                     <button onClick={() => setScale(s => Math.min(s + 0.1, 2))} className="p-1 hover:bg-canvas-sunk rounded text-ink-mute"><Plus size={16}/></button>
-                     <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-1 hover:bg-canvas-sunk rounded text-ink-mute"><ChevronDown size={16}/></button>
-                     <button onClick={() => { setScale(1); setPosition({x:0, y:0}); }} className="p-1 hover:bg-canvas-sunk rounded text-ink-mute" title="Reset"><Maximize size={16}/></button>
+                     <button type="button" onClick={() => setScale(s => Math.min(s + 0.1, 2))} aria-label="Aumentar zoom" className="p-1 hover:bg-canvas-sunk rounded text-ink-mute"><Plus size={16}/></button>
+                     <button type="button" onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} aria-label="Diminuir zoom" className="p-1 hover:bg-canvas-sunk rounded text-ink-mute"><ChevronDown size={16}/></button>
+                     <button type="button" onClick={() => { setScale(1); setPosition({x:0, y:0}); }} aria-label="Redefinir posição e zoom" className="p-1 hover:bg-canvas-sunk rounded text-ink-mute"><Maximize size={16}/></button>
                  </div>
                  
-                 <div ref={containerRef} className={`w-full h-full overflow-hidden flex items-start justify-center pt-10 ${tool === 'hand' ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default overflow-auto'}`} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel}>
+                 <div
+                     ref={containerRef}
+                     role="region"
+                     aria-label="Organograma operacional"
+                     tabIndex={0}
+                     className={`w-full h-full overflow-hidden flex items-start justify-center pt-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand ${tool === 'hand' ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default overflow-auto'}`}
+                     onPointerDown={handlePointerDown}
+                     onPointerMove={handlePointerMove}
+                     onPointerUp={handlePointerUp}
+                     onPointerLeave={handlePointerUp}
+                     onKeyDown={handleKeyDown}
+                     onWheel={handleWheel}
+                 >
                      <div style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transformOrigin: 'top center', transition: isDragging ? 'none' : 'transform 0.1s ease-out' }}>
-                         <TreeNode node={hierarchy} />
+                         <ul><li className="list-none"><TreeNode node={hierarchy} /></li></ul>
                      </div>
                  </div>
             </div>

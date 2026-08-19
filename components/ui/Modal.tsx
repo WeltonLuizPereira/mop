@@ -35,6 +35,13 @@ export const Modal = ({
   const painel = useRef<HTMLDivElement>(null);
   const anterior = useRef<HTMLElement | null>(null);
 
+  // `onClose` quase sempre chega como arrow inline, ou seja, com identidade
+  // nova a cada renderização. Se ele entrasse nas dependências, o efeito se
+  // desfaria e refaria a cada tecla — e a limpeza devolve o foco ao gatilho,
+  // engolindo tudo o que fosse digitado depois da primeira letra.
+  const fechar = useRef(onClose);
+  fechar.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     anterior.current = document.activeElement as HTMLElement;
@@ -45,7 +52,7 @@ export const Modal = ({
     document.body.style.overflow = 'hidden';
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'Escape') { fechar.current(); return; }
       if (e.key !== 'Tab' || !painel.current) return;
 
       // sem prender o Tab, a tabulação escapa para a página atrás do fundo
@@ -71,7 +78,7 @@ export const Modal = ({
       if (abertos === 0) document.body.style.overflow = rolagemOriginal;
       anterior.current?.focus();
     };
-  }, [open, onClose, initialFocusRef]);
+  }, [open, initialFocusRef]);
 
   if (!open) return null;
 

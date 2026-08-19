@@ -3,7 +3,7 @@ import { ArrowLeft, Edit2, Trash2, User as UserIcon, Briefcase, Clock, MapPin, K
 import { Collaborator, User, UserRole, HistoryLog, Ilha, Operation, Client, Coordinator, Supervisor, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDateString, formatTime, addDays, getInitials } from '../utils';
-import { Badge, Button, Table } from '../components/ui';
+import { Badge, Button, Modal, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
 export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: () => void, currentUser: User, onRefresh: () => void }> = ({ collab, onBack, currentUser, onRefresh }) => {
@@ -173,12 +173,13 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
         alert(`Alteração agendada para ${formatDateString(date)} com sucesso!`);
     };
 
+    const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+
     const handleDelete = async () => {
-        if(confirm('Tem certeza que deseja excluir este colaborador?')) {
-            await db.deleteCollaborator(currentCollab.matricula);
-            onRefresh(); 
-            onBack();
-        }
+        await db.deleteCollaborator(currentCollab.matricula);
+        setConfirmandoExclusao(false);
+        onRefresh();
+        onBack();
     };
 
     const Field = ({ label, value, className = "" }: any) => (
@@ -202,13 +203,17 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 )}
 
                 <div className="flex-1">
-                    <h1 className="t-display-lg text-ink">{currentCollab.nome}</h1>
+                    <h2 className="t-display-lg text-ink">{currentCollab.nome}</h2>
                     <p className="text-ink-mute">Matrícula: {currentCollab.matricula}</p>
                 </div>
                 {(isAdmin || currentUser.role === UserRole.SUPPORT) && (
                     <div className="flex gap-2">
                         <Button onClick={() => setIsEditOpen(true)}><Edit2 size={16}/> Editar cadastro</Button>
-                        {isAdmin && <Button variant="danger" onClick={handleDelete}><Trash2 size={16}/></Button>}
+                        {isAdmin && (
+                            <Button variant="danger" aria-label="Excluir colaborador" onClick={() => setConfirmandoExclusao(true)}>
+                                <Trash2 size={16}/>
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>
@@ -216,7 +221,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="space-y-6">
                     <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
-                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><UserIcon size={18} className="text-brand"/> Dados Pessoais</h3>
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><UserIcon size={18} className="text-brand"/> Dados pessoais</h3>
                         <Field label="Email" value={currentCollab.email} className="break-all" />
                         <Field label="Data de Nascimento" value={formatDateString(currentCollab.dtNasc)} />
                         <Field label="Status" value={<Badge status={currentCollab.status} />} />
@@ -261,7 +266,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 
                 <div className="space-y-6">
                      <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
-                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Key size={18} className="text-brand"/> Dados de Acesso</h3>
+                        <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Key size={18} className="text-brand"/> Dados de acesso</h3>
                         <Field label="Email VR" value={currentCollab.email_vr} className="break-all" />
                         <Field label="Senha" value={currentCollab.senha} />
                     </div>
@@ -344,6 +349,24 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                     </table>
                 </div>
             </Table.Card>
+
+            <Modal
+                open={confirmandoExclusao}
+                onClose={() => setConfirmandoExclusao(false)}
+                title="Excluir colaborador?"
+                tamanho="sm"
+                rodape={
+                    <>
+                        <Button variant="secondary" onClick={() => setConfirmandoExclusao(false)}>Cancelar</Button>
+                        <Button variant="danger" onClick={handleDelete}>Excluir</Button>
+                    </>
+                }
+            >
+                <p className="text-sm text-ink-2">
+                    {currentCollab.nome} sai do cadastro junto com o vínculo à ilha. O histórico de
+                    alterações permanece. Não há como desfazer.
+                </p>
+            </Modal>
 
             {isEditOpen && (
                 <CollaboratorFormModal 

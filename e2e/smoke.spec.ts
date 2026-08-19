@@ -8,6 +8,7 @@ const ROTAS: Array<[string, string]> = [
   ['Colaboradores', 'Colaboradores'],
   ['Organograma', 'Organograma'],
   ['Turnover', 'Turnover'],
+  ['Safra', 'Safra'],
   ['Aniversariantes', 'Aniversariantes'],
   ['Desligados', 'Desligados'],
   ['Vencimento de contratos', 'Vencimento de contratos'],
@@ -44,7 +45,7 @@ test('entra no sistema com matrícula e senha', async ({ page }) => {
   await entrar(page);
 });
 
-test('todas as 23 telas abrem sem erro de console', async ({ page }) => {
+test('todas as 24 telas abrem sem erro de console', async ({ page }) => {
   const erros: string[] = [];
   page.on('console', m => { if (m.type() === 'error') erros.push(m.text()); });
   page.on('pageerror', e => erros.push(String(e)));

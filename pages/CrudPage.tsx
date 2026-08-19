@@ -3,7 +3,9 @@ import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { User, UserRole, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { generateId } from '../utils';
-import { Button, Input, Select, Badge, Modal, Table } from '../components/ui';
+import {
+  Button, Input, Select, Badge, Modal, Table, Carregando, FalhaAoCarregar,
+} from '../components/ui';
 
 export const CrudPage = <T extends { id: string, nome: string, status: string | EntityStatus }>({
   title, singular, data, onSave, onDelete, schema, currentUser, onRefresh
@@ -18,15 +20,29 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
     const [search, setSearch] = useState('');
     const [listData, setListData] = useState<T[]>([]);
     const [loading, setLoading] = useState(false);
+    const [carregando, setCarregando] = useState(data instanceof Promise);
+    const [falhou, setFalhou] = useState(false);
 
     const isAdmin = currentUser.role === UserRole.ADMIN;
 
     useEffect(() => {
+        let valido = true;
         const load = async () => {
-            if (data instanceof Promise) setListData(await data);
-            else setListData(data);
-        }
+            if (!(data instanceof Promise)) { setListData(data); setCarregando(false); return; }
+            setCarregando(true); setFalhou(false);
+            try {
+                const lista = await data;
+                if (valido) setListData(lista);
+            } catch {
+                // lista vazia por falha e lista vazia por cadastro novo são
+                // coisas diferentes, e só o aviso separa as duas
+                if (valido) setFalhou(true);
+            } finally {
+                if (valido) setCarregando(false);
+            }
+        };
         load();
+        return () => { valido = false; };
     }, [data]);
 
     const handleEdit = (item: any) => { setCurrentItem(item); setIsOpen(true); };
@@ -54,10 +70,19 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
         <div className="space-y-4 mop-fade-up">
             <Table.Card className="flex flex-col min-h-0 flex-1">
                 <Table.Toolbar
-                  busca={{ valor: search, aoMudar: setSearch, placeholder: `Buscar em ${title.toLowerCase()}` }}
+                  busca={{ valor: search, aoMudar: setSearch, rotulo: `Buscar ${title}`, placeholder: `Buscar em ${title.toLowerCase()}` }}
                   contagem={{ n: filteredData.length, um: 'registro', varios: 'registros' }}
                   acoes={isAdmin && <Button onClick={handleCreate}><Plus size={15} /> Novo {singular}</Button>}
                 />
+                {carregando ? (
+                  <Carregando o_que="cadastros" />
+                ) : falhou ? (
+                  <FalhaAoCarregar
+                    mensagem={`Não foi possível carregar ${title.toLowerCase()}.`}
+                    aoTentar={onRefresh}
+                    rotuloAcao="Tentar novamente"
+                  />
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm text-ink-mute bg-canvas">
                     <thead>
@@ -78,7 +103,7 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
     const selectedOpt = opts?.find(o => o.value === (item as any)[s.key]);
     return <td key={s.key} className="p-4">{selectedOpt?.label || '-'}</td>;
 })}
-                          {isAdmin && (<td className="p-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="text-brand-text hover:text-brand-press p-1.5 bg-brand-wash rounded-lg transition-colors"><Edit2 size={16} /></button><button onClick={() => handleDeleteRequest(item)} className="text-danger hover:opacity-80 p-1.5 bg-danger/10 rounded-lg transition-colors"><Trash2 size={16} /></button></div></td>)}
+                          {isAdmin && (<td className="p-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => handleEdit(item)} aria-label={`Editar ${item.nome}`} className="text-brand-text hover:text-brand-press p-1.5 bg-brand-wash rounded-lg transition-colors"><Edit2 size={16} /></button><button onClick={() => handleDeleteRequest(item)} aria-label={`Excluir ${item.nome}`} className="text-danger hover:opacity-80 p-1.5 bg-danger/10 rounded-lg transition-colors"><Trash2 size={16} /></button></div></td>)}
                         </tr>
                       ))}
                       {filteredData.length === 0 && (
@@ -93,6 +118,7 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                     </tbody>
                   </table>
                 </div>
+                )}
             </Table.Card>
             <Modal
               open={isOpen}

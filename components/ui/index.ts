@@ -8,3 +8,4 @@ export { Chip, ChipSelect } from './Chip';
 export { Modal } from './Modal';
 export { Table, type Ordenacao, type Direcao } from './Table';
 export { Carregando, FalhaAoCarregar, ListaVazia } from './EstadoLista';
+export { linhaAtivavel } from './linhaAtivavel';

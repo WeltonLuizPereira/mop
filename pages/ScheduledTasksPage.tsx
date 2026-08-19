@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trash2, Edit2 } from 'lucide-react';
 import { Collaborator, ScheduledTask } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
-import { Button, Table } from '../components/ui';
+import {
+  Button, Table, Carregando, FalhaAoCarregar, ListaVazia,
+} from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
 export const ScheduledTasksPage = () => {
@@ -31,7 +33,22 @@ export const ScheduledTasksPage = () => {
         setCollabNames(names);
     };
 
-    useEffect(() => { loadTasks(); }, []);
+    const [carregando, setCarregando] = useState(true);
+    const [falhou, setFalhou] = useState(false);
+
+    const carregar = useCallback(async () => {
+        setCarregando(true);
+        setFalhou(false);
+        try {
+            await loadTasks();
+        } catch {
+            setFalhou(true);
+        } finally {
+            setCarregando(false);
+        }
+    }, []);
+
+    useEffect(() => { carregar(); }, [carregar]);
 
     const handleCancel = async (id: string) => {
         if(confirm("Deseja cancelar esta tarefa agendada?")) {
@@ -97,17 +114,24 @@ export const ScheduledTasksPage = () => {
                         </Button>
                     )}
                 />
-                <table className="w-full text-left text-sm text-ink-mute bg-canvas">
-                    <thead>
-                        <tr>
-                            <th className="p-4">Data Programada</th>
-                            <th className="p-4">Matrícula</th>
-                            <th className="p-4">Colaborador</th>
-                            <th className="p-4">Resumo Alterações</th>
-                            <th className="p-4">Criado Por</th>
-                            <th className="p-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
+                {carregando ? (
+                    <Carregando o_que="as tarefas agendadas" />
+                ) : falhou ? (
+                    <FalhaAoCarregar mensagem="Não foi possível carregar as tarefas agendadas." aoTentar={carregar} />
+                ) : tasks.length === 0 ? (
+                    <ListaVazia titulo="Nenhuma tarefa pendente">
+                        Alterações agendadas para uma data futura aparecem aqui.
+                    </ListaVazia>
+                ) : (
+                <Table label="Tarefas agendadas">
+                    <Table.Head>
+                        <Table.Th>Data programada</Table.Th>
+                        <Table.Th>Matrícula</Table.Th>
+                        <Table.Th>Colaborador</Table.Th>
+                        <Table.Th>Resumo alterações</Table.Th>
+                        <Table.Th>Criado por</Table.Th>
+                        <Table.Th className="text-right">Ações</Table.Th>
+                    </Table.Head>
                     <tbody className="divide-y divide-hairline">
                         {tasks.map(task => (
                             <tr key={task.id} className="hover:bg-canvas-soft">
@@ -115,7 +139,7 @@ export const ScheduledTasksPage = () => {
                                 <td className="p-4 font-mono text-xs">{task.matricula}</td>
                                 <td className="p-4 font-medium text-ink">{collabNames[task.matricula] || '...'}</td>
                                 <td className="p-4 text-xs text-ink-mute">
-                                    {Object.keys(task.changes).length > 5 ? 'Alteração Completa (Cadastro)' : Object.keys(task.changes).join(', ')}
+                                    {Object.keys(task.changes).length > 5 ? 'Alteração completa (cadastro)' : Object.keys(task.changes).join(', ')}
                                 </td>
                                 <td className="p-4 text-xs">{task.created_by}</td>
                                 <td className="p-4 text-right">
@@ -130,13 +154,9 @@ export const ScheduledTasksPage = () => {
                                 </td>
                             </tr>
                         ))}
-                        {tasks.length === 0 && (
-                            <tr>
-                                <td colSpan={6} className="p-8 text-center text-ink-faint">Nenhuma tarefa pendente.</td>
-                            </tr>
-                        )}
                     </tbody>
-                </table>
+                </Table>
+                )}
             </Table.Card>
 
             {isEditOpen && (
