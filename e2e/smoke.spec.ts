@@ -4,6 +4,7 @@ import { stubSupabase } from '../test/supabaseFixtures';
 /** Todo item de navegação visível para ADMIN, com um texto que prova a tela. */
 const ROTAS: Array<[string, string]> = [
   ['Visão geral', 'Visão geral'],
+  ['Dashboard', 'Dashboard'],
   ['Colaboradores', 'Colaboradores'],
   ['Organograma', 'Organograma'],
   ['Turnover', 'Turnover'],
@@ -43,7 +44,7 @@ test('entra no sistema com matrícula e senha', async ({ page }) => {
   await entrar(page);
 });
 
-test('todas as 22 telas abrem sem erro de console', async ({ page }) => {
+test('todas as 23 telas abrem sem erro de console', async ({ page }) => {
   const erros: string[] = [];
   page.on('console', m => { if (m.type() === 'error') erros.push(m.text()); });
   page.on('pageerror', e => erros.push(String(e)));
@@ -60,4 +61,32 @@ test('todas as 22 telas abrem sem erro de console', async ({ page }) => {
   }
 
   expect(erros, `erros de console:\n${erros.join('\n')}`).toEqual([]);
+});
+
+test('o rodape do login mostra a versao do package.json', async ({ page }) => {
+  await page.goto('/');
+  // `npm version minor` sobe o numero; `lib/versao.ts` some com o patch zerado
+  await expect(page.getByText(/MOP v/)).toHaveText(/MOP v\d+\.\d+/);
+});
+
+test('o tile do mapa abre a lista recortada pela ilha clicada', async ({ page }) => {
+  await entrar(page);
+  await page.getByRole('button', { name: /Ilha 07 — Cobranca|Ilha 07 — Cobrança/ }).click();
+
+  await expect(page.locator('h1')).toHaveText('Colaboradores');
+  await expect(page.getByText('Camila Souza Rocha')).toBeVisible();
+  await expect(page.getByText('Adriana Lopes Ferreira')).toBeHidden();
+});
+
+test('voltar a Colaboradores pelo menu devolve a lista inteira', async ({ page }) => {
+  await entrar(page);
+  await page.getByRole('button', { name: /Ilha 07 — Cobranca|Ilha 07 — Cobrança/ }).click();
+  await expect(page.getByText('Adriana Lopes Ferreira')).toBeHidden();
+
+  // pedir Colaboradores pelo menu e pedir a lista toda, nao o recorte anterior
+  await page.getByRole('button', { name: 'Visão geral', exact: true }).click();
+  await page.getByRole('button', { name: 'Colaboradores', exact: true }).click();
+
+  await expect(page.getByText('Adriana Lopes Ferreira')).toBeVisible();
+  await expect(page.getByText('Camila Souza Rocha')).toBeVisible();
 });

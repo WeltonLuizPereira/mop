@@ -1,7 +1,8 @@
 import {
   AlertCircle, AlertTriangle, Briefcase, Building2, Cake, Calendar, Globe,
-  History, Info, LayoutDashboard, ListChecks, MapPin, Network, ShieldCheck,
-  Stethoscope, Sun, TrendingUp, Upload, UserCog, UserMinus, UserX, Users,
+  History, Info, LayoutDashboard, ListChecks, MapPin, Network, PieChart,
+  ShieldCheck, Stethoscope, Sun, TrendingUp, Upload, UserCog, UserMinus,
+  UserX, Users,
 } from 'lucide-react';
 import { UserRole } from '../types';
 
@@ -23,6 +24,7 @@ const SO_ADMIN = [UserRole.ADMIN] as const;
 export const NAV_GROUPS: NavGroup[] = [
   { group: 'Principal', items: [
     { key: 'dashboard', label: 'Visão geral', icon: LayoutDashboard, roles: TODOS },
+    { key: 'distribuicao', label: 'Dashboard', icon: PieChart, roles: TODOS },
   ]},
   { group: 'Gestão', items: [
     { key: 'collaborators', label: 'Colaboradores', icon: Users, roles: TODOS },

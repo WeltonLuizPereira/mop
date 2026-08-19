@@ -6,8 +6,8 @@ const chaves = (role: UserRole) =>
   visibleGroups(role).flatMap(g => g.items.map(i => i.key));
 
 describe('visibleGroups', () => {
-  it('mostra as 22 telas para o administrador', () => {
-    expect(chaves(UserRole.ADMIN)).toHaveLength(22);
+  it('mostra as 23 telas para o administrador', () => {
+    expect(chaves(UserRole.ADMIN)).toHaveLength(23);
   });
 
   it('esconde cadastros, administração e sistema do visualizador', () => {
@@ -42,6 +42,7 @@ describe('visibleGroups', () => {
 describe('pageTitle', () => {
   it('traduz a chave da rota', () => {
     expect(pageTitle('dashboard')).toBe('Visão geral');
+    expect(pageTitle('distribuicao')).toBe('Dashboard');
     expect(pageTitle('aviso_previo')).toBe('Aviso prévio');
   });
 

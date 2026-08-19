@@ -36,20 +36,20 @@ const usuario = { id: '1', matricula: '3924', nome: 'Welton', email: 'w@q.com',
 
 describe('Visão geral', () => {
   it('mostra cada ilha como um tile com o percentual em operação', async () => {
-    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     expect(await screen.findByText('Ilha 01 — SAC')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
   });
 
   it('deixa a ilha inativa fora do mapa', async () => {
-    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
     expect(screen.queryByText('Ilha 02 — Desativada')).not.toBeInTheDocument();
   });
 
   it('recorta o mapa pela operação escolhida no chip', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
 
     await user.selectOptions(screen.getByLabelText('Filtrar ilhas por operação'), 'o2');
@@ -60,7 +60,7 @@ describe('Visão geral', () => {
 
   it('só oferece as operações do cliente escolhido e zera a anterior', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
 
     const operacao = screen.getByLabelText('Filtrar ilhas por operação') as HTMLSelectElement;
@@ -75,7 +75,7 @@ describe('Visão geral', () => {
 
   it('recorta o mapa pelo cliente escolhido no chip', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
 
     await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c2');
@@ -86,7 +86,7 @@ describe('Visão geral', () => {
 
   it('abre em ordem alfabética e troca de ordem pelo chip', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
 
     const nomes = () => screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent);
@@ -103,8 +103,32 @@ describe('Visão geral', () => {
     expect(nomes()).toEqual(['Ilha 01 — SAC', 'Ilha 07 — Cobrança']);
   });
 
+  it('o tile leva para a lista recortada pela ilha clicada', async () => {
+    const user = userEvent.setup();
+    const abrir = vi.fn();
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={abrir} />);
+    await screen.findByText('Ilha 07 — Cobrança');
+
+    await user.click(screen.getByRole('button', { name: /Ilha 07 — Cobrança/ }));
+
+    // a ilha clicada, e não um genérico "abrir colaboradores"
+    expect(abrir).toHaveBeenCalledWith('i2');
+  });
+
+  it('o tile responde ao teclado, não só ao clique', async () => {
+    const user = userEvent.setup();
+    const abrir = vi.fn();
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={abrir} />);
+    await screen.findByText('Ilha 01 — SAC');
+
+    screen.getByRole('button', { name: /Ilha 01 — SAC/ }).focus();
+    await user.keyboard('{Enter}');
+
+    expect(abrir).toHaveBeenCalledWith('i1');
+  });
+
   it('não afirma tendência que não calculou', async () => {
-    render(<DashboardPage currentUser={usuario} onNavigate={vi.fn()} />);
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
     expect(screen.queryByText(/vs mês anterior/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\+4%/)).not.toBeInTheDocument();

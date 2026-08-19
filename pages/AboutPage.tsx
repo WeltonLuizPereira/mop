@@ -1,8 +1,11 @@
 import React from 'react';
 import { Info, Mail } from 'lucide-react';
+import { versaoExibida } from '../lib/versao';
 
 declare const __APP_VERSION__: string;
 declare const __UPDATE_DATE__: string;
+
+const VERSAO = versaoExibida(typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.0');
 
 export const AboutPage = () => (
     <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center animate-in fade-in duration-500">
@@ -15,7 +18,7 @@ export const AboutPage = () => (
       <div className="bg-canvas p-8 rounded-xl shadow-1 border border-hairline max-w-lg w-full space-y-6">
         <div className="flex justify-between items-center border-b border-hairline pb-4">
           <span className="text-ink-mute font-medium">Versão</span>
-          <span className="font-bold text-ink bg-canvas-sunk px-3 py-1 rounded-full text-sm">{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.1'}</span>
+          <span className="font-bold text-ink bg-canvas-sunk px-3 py-1 rounded-full text-sm">{VERSAO}</span>
         </div>
         <div className="flex justify-between items-center border-b border-hairline pb-4">
           <span className="text-ink-mute font-medium">Última atualização</span>

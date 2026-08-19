@@ -4,8 +4,11 @@ import { User, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { Logo } from '../components/brand/Logo';
 import { Input, Button } from '../components/ui';
+import { versaoExibida } from '../lib/versao';
 
 declare const __APP_VERSION__: string;
+
+const VERSAO = versaoExibida(typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.0');
 
 export const LoginPage = ({ onLogin }: { onLogin: (u: User) => void }) => {
     const [matricula, setMatricula] = useState('');
@@ -63,7 +66,7 @@ export const LoginPage = ({ onLogin }: { onLogin: (u: User) => void }) => {
               </form>
 
               <p className="mt-6 text-xs text-ink-faint">
-                Quality Contact Center · MOP v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0'}
+                Quality Contact Center · MOP v{VERSAO}
               </p>
             </div>
           </div>

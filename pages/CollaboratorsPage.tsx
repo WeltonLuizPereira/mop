@@ -14,7 +14,14 @@ import { ClientLogo } from '../components/collaborators/ClientLogo';
 import { resolveClient } from '../lib/clientLogo';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
-export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collaborator) => void, onRefresh: () => void }> = ({ currentUser, onViewDetails, onRefresh }) => {
+/** Recorte que a tela já abre aplicado — é assim que o clique numa fatia do
+ *  Dashboard entrega a lista das pessoas daquele item. */
+export interface FiltroInicial {
+    campo: 'operacao' | 'ilha' | 'supervisor';
+    id: string;
+}
+
+export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collaborator) => void, onRefresh: () => void, filtroInicial?: FiltroInicial | null }> = ({ currentUser, onViewDetails, onRefresh, filtroInicial }) => {
     // ... same as original ...
     const [collabs, setCollabs] = useState<Collaborator[]>([]);
     const [search, setSearch] = useState('');
@@ -32,12 +39,20 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     };
     
     // Filtros
+    const partida = (campo: FiltroInicial['campo']) =>
+        filtroInicial?.campo === campo ? [filtroInicial.id] : [];
+
+    // Quem chega de uma fatia do Dashboard pediu aquelas N pessoas, e lá o N
+    // não conta desligado. Sem excluir o desligado aqui, o cartão diz 6 e a
+    // lista responde 7 — e é o Dashboard que passa a parecer errado.
+    const quadro = Object.values(CollaboratorStatus).filter(s => s !== CollaboratorStatus.DESLIGADO);
+
     const [filterCoord, setFilterCoord] = useState<string[]>([]);
-    const [filterSup, setFilterSup] = useState<string[]>([]);
-    const [filterIlha, setFilterIlha] = useState<string[]>([]);
-    const [filterOp, setFilterOp] = useState<string[]>([]);
+    const [filterSup, setFilterSup] = useState<string[]>(() => partida('supervisor'));
+    const [filterIlha, setFilterIlha] = useState<string[]>(() => partida('ilha'));
+    const [filterOp, setFilterOp] = useState<string[]>(() => partida('operacao'));
     const [filterClient, setFilterClient] = useState<string[]>([]);
-    const [filterStatus, setFilterStatus] = useState<string[]>([]);
+    const [filterStatus, setFilterStatus] = useState<string[]>(() => filtroInicial ? quadro : []);
 
     // Date Filters
     const today = new Date();

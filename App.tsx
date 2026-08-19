@@ -6,7 +6,7 @@ import {
 import { db } from './services/mockDb';
 import { AppShell } from './components/shell/AppShell';
 import { LoginPage } from './pages/LoginPage';
-import { CollaboratorsPage } from './pages/CollaboratorsPage';
+import { CollaboratorsPage, type FiltroInicial } from './pages/CollaboratorsPage';
 import { CollaboratorDetailsPage } from './pages/CollaboratorDetailsPage';
 import { CrudPage } from './pages/CrudPage';
 import { ScheduledTasksPage } from './pages/ScheduledTasksPage';
@@ -17,6 +17,7 @@ import { AboutPage } from './pages/AboutPage';
 import { TurnoverPage } from './pages/TurnoverPage';
 import { OrganogramPage } from './pages/OrganogramPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { DistribuicaoPage } from './pages/DistribuicaoPage';
 import { ImportPage } from './pages/ImportPage';
 import { BulkUpdatePage } from './pages/BulkUpdatePage';
 import { ExpiringContractsPage } from './pages/ExpiringContractsPage';
@@ -30,6 +31,9 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedCollab, setSelectedCollab] = useState<Collaborator | null>(null);
+  // Recorte que o Dashboard entrega junto com a navegação. Vive aqui porque
+  // quem o produz e quem o consome são duas telas irmãs.
+  const [filtroLista, setFiltroLista] = useState<FiltroInicial | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const refreshData = () => setDataVersion(v => v + 1);
 
@@ -76,16 +80,24 @@ const App = () => {
     setCurrentPage('dashboard');
   };
 
+  /** Leva para a lista de colaboradores ja recortada por um item. E por aqui
+   *  que o tile do mapa e a fatia do Dashboard entregam o que prometem. */
+  const abrirLista = (campo: FiltroInicial['campo'], id: string) => {
+    setFiltroLista({ campo, id });
+    setCurrentPage('collaborators');
+  };
+
   const renderContent = () => {
     const commonProps = { onRefresh: refreshData, currentUser: currentUser! };
 
     switch (currentPage) {
-      case 'dashboard': return <DashboardPage currentUser={currentUser!} onNavigate={setCurrentPage} key={dataVersion} />;
+      case 'dashboard': return <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} key={dataVersion} />;
+      case 'distribuicao': return <DistribuicaoPage key={dataVersion} onAbrirLista={abrirLista} />;
       case 'turnover': return <TurnoverPage key={dataVersion} />;
       case 'organogram': return <OrganogramPage key={dataVersion} />;
       case 'collaborators':
         if (selectedCollab) return <CollaboratorDetailsPage key={dataVersion} collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
-        return <CollaboratorsPage key={dataVersion} onViewDetails={setSelectedCollab} {...commonProps} />;
+        return <CollaboratorsPage key={dataVersion} onViewDetails={setSelectedCollab} filtroInicial={filtroLista} {...commonProps} />;
       case 'coordinators': return <CrudPage key={dataVersion} title="Coordenadores" singular="coordenador" data={db.getCoordinators()} onSave={db.saveCoordinator.bind(db)} onDelete={db.deleteCoordinator.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}]} {...commonProps} />;
       case 'supervisors': return <CrudPage key={dataVersion} title="Supervisores" singular="supervisor" data={db.getSupervisors()} onSave={db.saveSupervisor.bind(db)} onDelete={db.deleteSupervisor.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'coordinatorIds', label:'Coordenadores', type:'multiselect', options: dropdownOptions.coordinators }]} {...commonProps} />;
       case 'clients': return <CrudPage key={dataVersion} title="Clientes" singular="cliente" data={db.getClients()} onSave={db.saveClient.bind(db)} onDelete={db.deleteClient.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'logo', label:'URL da logo', type:'text'}]} {...commonProps} />;
@@ -118,7 +130,7 @@ const App = () => {
       case 'bulk_update': return <BulkUpdatePage key={dataVersion} {...commonProps} />;
       case 'reset': return <ResetDataPage key={dataVersion} />;
       case 'about': return <AboutPage key={dataVersion} />;
-      default: return <DashboardPage currentUser={currentUser!} onNavigate={setCurrentPage} key={dataVersion} />;
+      default: return <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} key={dataVersion} />;
     }
   };
 
@@ -128,7 +140,10 @@ const App = () => {
     <AppShell
       currentUser={currentUser}
       currentPage={currentPage}
-      onNavigate={p => { setCurrentPage(p); setSelectedCollab(null); }}
+      // Ir a Colaboradores pelo menu é pedir a lista inteira. Sem zerar o
+      // recorte aqui, o filtro de um clique antigo no Dashboard voltaria
+      // sozinho e a lista pareceria ter perdido gente.
+      onNavigate={p => { setCurrentPage(p); setSelectedCollab(null); setFiltroLista(null); }}
       onLogout={handleLogout}
     >
       {renderContent()}

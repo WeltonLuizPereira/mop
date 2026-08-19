@@ -93,7 +93,7 @@ async function soltarAltura(page: Page) {
 }
 
 const TELAS = [
-  'Visão geral', 'Colaboradores', 'Organograma', 'Turnover', 'Aniversariantes',
+  'Visão geral', 'Dashboard', 'Colaboradores', 'Organograma', 'Turnover', 'Aniversariantes',
   'Desligados', 'Vencimento de contratos', 'Férias', 'Aviso prévio',
   'Afastados e licenças', 'Clientes', 'Ilhas', 'Usuários', 'Importar dados',
   'Update em massa', 'Histórico', 'Sobre',

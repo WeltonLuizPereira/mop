@@ -5,7 +5,7 @@ import { computeIlhaStats, totaisGerais, type Ordem } from '../lib/ilhaStats';
 import { IlhaTile } from '../components/dashboard/IlhaTile';
 import { ChipSelect } from '../components/ui';
 
-export const DashboardPage: React.FC<{ currentUser: User, onNavigate: (page: string) => void }> = ({ onNavigate }) => {
+export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: string) => void }> = ({ onAbrirIlha }) => {
   const [collabs, setCollabs] = useState<Collaborator[]>([]);
   const [ilhas, setIlhas] = useState<Ilha[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -123,7 +123,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onNavigate: (page: str
       ) : (
         <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(286px, 1fr))' }}>
           {stats.map(ilha => (
-            <IlhaTile key={ilha.id} ilha={ilha} onOpen={() => onNavigate('collaborators')} />
+            <IlhaTile key={ilha.id} ilha={ilha} onOpen={() => onAbrirIlha(ilha.id)} />
           ))}
         </div>
       )}
