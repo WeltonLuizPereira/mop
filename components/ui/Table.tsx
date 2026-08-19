@@ -10,8 +10,16 @@ export interface Ordenacao<C extends string = string> {
   direcao: Direcao;
 }
 
-export const Table = ({ children }: { children: React.ReactNode }) => (
-  <div className="overflow-x-auto">
+/**
+ * A faixa que rola na horizontal. Com `label` ela vira uma região nomeada e
+ * tabulável: sem isso, quem navega por teclado não alcança a rolagem e o
+ * leitor de tela anuncia um trecho sem nome.
+ */
+export const Table = ({ children, label }: { children: React.ReactNode; label?: string }) => (
+  <div
+    className="overflow-x-auto"
+    {...(label ? { role: 'region', 'aria-label': label, tabIndex: 0 } : {})}
+  >
     <table className="w-full border-collapse bg-canvas">{children}</table>
   </div>
 );
@@ -87,7 +95,7 @@ Table.Toolbar = ({
 
         <div className="ml-auto flex items-center gap-2.5">
           {contagem && (
-            <span className="text-[13px] text-ink-mute whitespace-nowrap">
+            <span aria-label="Resumo da lista" className="text-[13px] text-ink-mute whitespace-nowrap">
               <span className="t-data text-ink-2">{contagem.n}</span>{' '}
               {contagem.n === 1 ? contagem.um : contagem.varios}
             </span>
@@ -136,7 +144,7 @@ const TH_BASE = 't-eyebrow text-ink-faint text-left px-3.5 py-2.5 border-b borde
 
 Table.Th = ({ children, className = '', campo, ordenacao, onOrdenar }: ThProps) => {
   if (!campo || !onOrdenar) {
-    return <th className={`${TH_BASE} ${className}`}>{children}</th>;
+    return <th scope="col" className={`${TH_BASE} ${className}`}>{children}</th>;
   }
 
   const ativa = ordenacao?.campo === campo;
@@ -145,6 +153,7 @@ Table.Th = ({ children, className = '', campo, ordenacao, onOrdenar }: ThProps) 
 
   return (
     <th
+      scope="col"
       className={`${TH_BASE} ${className}`}
       aria-sort={ativa ? (direcao === 'asc' ? 'ascending' : 'descending') : 'none'}
     >

@@ -13,6 +13,9 @@ interface ModalProps {
   semCabecalho?: boolean;
   /** Fica preso ao pé do painel: o botão de salvar não rola junto com o formulário. */
   rodape?: React.ReactNode;
+  /** Onde o foco pousa ao abrir. Sem ele o foco fica no painel, e quem usa
+   *  teclado precisa tabular até o primeiro campo. */
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
   children: React.ReactNode;
 }
 
@@ -26,7 +29,8 @@ const FOCAVEIS =
   'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export const Modal = ({
-  open, onClose, title, tamanho = 'md', semCabecalho = false, rodape, children,
+  open, onClose, title, tamanho = 'md', semCabecalho = false, rodape,
+  initialFocusRef, children,
 }: ModalProps) => {
   const painel = useRef<HTMLDivElement>(null);
   const anterior = useRef<HTMLElement | null>(null);
@@ -34,7 +38,7 @@ export const Modal = ({
   useEffect(() => {
     if (!open) return;
     anterior.current = document.activeElement as HTMLElement;
-    painel.current?.focus();
+    (initialFocusRef?.current ?? painel.current)?.focus();
 
     abertos += 1;
     const rolagemOriginal = document.body.style.overflow;
@@ -67,7 +71,7 @@ export const Modal = ({
       if (abertos === 0) document.body.style.overflow = rolagemOriginal;
       anterior.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open, onClose, initialFocusRef]);
 
   if (!open) return null;
 

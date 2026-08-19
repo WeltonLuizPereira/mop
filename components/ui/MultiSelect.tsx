@@ -4,14 +4,19 @@ import { ROTULO } from './Input';
 
 export const MultiSelect = ({ label, options, value, onChange }: {
   label: string,
-  options: {value: string, label: string}[],
+  /** `disabled` marca a opção que existe no cadastro mas não pode ser escolhida. */
+  options: {value: string, label: string, disabled?: boolean}[],
   value: string[],
   onChange: (val: string[]) => void
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [ativa, setAtiva] = useState(-1);
+  const [anuncio, setAnuncio] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const gatilho = useRef<HTMLButtonElement>(null);
   const rotuloId = useId();
+  const listaId = useId();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -24,10 +29,13 @@ export const MultiSelect = ({ label, options, value, onChange }: {
   }, []);
 
   const toggleOption = (val: string) => {
-    const newValue = value.includes(val)
-      ? value.filter(v => v !== val)
-      : [...value, val];
-    onChange(newValue);
+    const opcao = options.find(o => o.value === val);
+    if (opcao?.disabled) return;
+    const marcada = value.includes(val);
+    onChange(marcada ? value.filter(v => v !== val) : [...value, val]);
+    // quem escolhe pelo teclado não vê a marca de seleção: o texto abaixo é
+    // a única confirmação que o leitor de tela tem
+    setAnuncio(`${opcao?.label ?? val} ${marcada ? 'removido' : 'selecionado'}`);
   };
 
   const toggleAll = () => {
@@ -40,6 +48,36 @@ export const MultiSelect = ({ label, options, value, onChange }: {
 
   const clearAll = () => onChange([]);
 
+  const fechar = () => { setIsOpen(false); setAtiva(-1); gatilho.current?.focus(); };
+
+  /**
+   * Setas movem a opção ativa e Espaço marca. O Escape para aqui: dentro de um
+   * diálogo, deixá-lo subir fecharia o diálogo inteiro no primeiro toque, e
+   * quem só queria fechar a lista perderia o formulário preenchido.
+   */
+  const aoTeclar = (e: React.KeyboardEvent) => {
+    // digitar na busca é digitar: espaço é espaço e seta anda no texto
+    if (e.target instanceof HTMLInputElement) {
+      if (e.key === 'Escape') { e.stopPropagation(); fechar(); }
+      return;
+    }
+    if (!isOpen) return;
+
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fechar(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const passo = e.key === 'ArrowDown' ? 1 : -1;
+      const total = filteredOptions.length;
+      if (total === 0) return;
+      setAtiva(i => (i + passo + total) % total);
+      return;
+    }
+    if ((e.key === ' ' || e.key === 'Enter') && ativa >= 0 && filteredOptions[ativa]) {
+      e.preventDefault();
+      toggleOption(filteredOptions[ativa].value);
+    }
+  };
+
   const displayText = value.length === 0
     ? 'Todos'
     : value.length === 1
@@ -50,14 +88,17 @@ export const MultiSelect = ({ label, options, value, onChange }: {
   const todosMarcados = value.length === filteredOptions.length && filteredOptions.length > 0;
 
   return (
-    <div className="relative mb-3" ref={containerRef}>
+    <div className="relative mb-3" ref={containerRef} onKeyDown={aoTeclar}>
       <span id={rotuloId} className={ROTULO}>{label}</span>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        ref={gatilho}
+        onClick={() => { setIsOpen(!isOpen); setAtiva(-1); }}
         aria-labelledby={rotuloId}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-controls={isOpen ? listaId : undefined}
+        aria-activedescendant={isOpen && ativa >= 0 ? `${listaId}-${ativa}` : undefined}
         className={
           'w-full text-left rounded-sm border bg-canvas text-ink text-sm px-3 py-[9px] ' +
           'min-h-9 flex justify-between items-center gap-2 transition-colors duration-100 ' +
@@ -118,17 +159,25 @@ export const MultiSelect = ({ label, options, value, onChange }: {
                    </button>
                </div>
            </div>
-           <div className="max-h-60 overflow-y-auto">
+           <div
+             id={listaId}
+             role="listbox"
+             aria-multiselectable="true"
+             aria-label={label}
+             className="max-h-60 overflow-y-auto"
+           >
               {filteredOptions.length > 0 ? (
-                 filteredOptions.map(opt => {
+                 filteredOptions.map((opt, i) => {
                     const isSelected = value.includes(opt.value);
                     return (
                     <button
                       type="button"
                       key={opt.value}
+                      id={`${listaId}-${i}`}
                       role="option"
                       aria-selected={isSelected}
-                      className={`w-full text-left flex items-center gap-2 px-3 py-2 transition-colors ${isSelected ? 'bg-brand-wash text-ink' : 'hover:bg-canvas-soft text-ink-2'}`}
+                      aria-disabled={opt.disabled || undefined}
+                      className={`w-full text-left flex items-center gap-2 px-3 py-2 transition-colors ${isSelected ? 'bg-brand-wash text-ink' : 'hover:bg-canvas-soft text-ink-2'} ${i === ativa ? 'ring-1 ring-inset ring-brand' : ''} ${opt.disabled ? 'opacity-50' : ''}`}
                       onClick={() => toggleOption(opt.value)}
                     >
                       <span className={`w-4 h-4 rounded-xs border grid place-items-center shrink-0 transition-colors ${isSelected ? 'bg-brand border-brand' : 'border-hairline-2 bg-canvas'}`}>
@@ -141,6 +190,7 @@ export const MultiSelect = ({ label, options, value, onChange }: {
                 <p className="px-3 py-3 text-center text-xs text-ink-faint">Nenhum resultado</p>
               )}
            </div>
+           <span role="status" aria-live="polite" className="sr-only">{anuncio}</span>
         </div>
       )}
     </div>

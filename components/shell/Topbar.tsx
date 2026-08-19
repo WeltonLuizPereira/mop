@@ -3,15 +3,29 @@ import { Menu, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { NotificationCenter } from './NotificationCenter';
 
-export const Topbar = ({ title, onToggleMenu }: { title: string; onToggleMenu?: () => void }) => {
+interface TopbarProps {
+  title: string;
+  onToggleMenu?: () => void;
+  /** Gaveta aberta agora — o botão anuncia o estado, não só a ação. */
+  menuOpen?: boolean;
+  /** Id do elemento que o botão abre, para quem navega por leitor de tela. */
+  menuControls?: string;
+  /** O shell devolve o foco a este botão quando a gaveta fecha. */
+  menuRef?: React.Ref<HTMLButtonElement>;
+}
+
+export const Topbar = ({ title, onToggleMenu, menuOpen = false, menuControls, menuRef }: TopbarProps) => {
   const { theme, toggleTheme } = useTheme();
   return (
     <header className="h-14 shrink-0 flex items-center gap-3 md:gap-4 px-4 md:px-7 border-b border-hairline bg-canvas">
       {onToggleMenu && (
         <button
           type="button"
+          ref={menuRef}
           onClick={onToggleMenu}
-          aria-label="Abrir menu"
+          aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={menuOpen}
+          aria-controls={menuControls}
           className="lg:hidden w-8 h-8 grid place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft shrink-0"
         >
           <Menu size={18} />

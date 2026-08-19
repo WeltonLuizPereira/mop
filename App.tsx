@@ -15,6 +15,7 @@ import { UsersPage } from './pages/UsersPage';
 import { ResetDataPage } from './pages/ResetDataPage';
 import { AboutPage } from './pages/AboutPage';
 import { TurnoverPage } from './pages/TurnoverPage';
+import { SafraPage } from './pages/SafraPage';
 import { OrganogramPage } from './pages/OrganogramPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DistribuicaoPage } from './pages/DistribuicaoPage';
@@ -94,6 +95,7 @@ const App = () => {
       case 'dashboard': return <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} key={dataVersion} />;
       case 'distribuicao': return <DistribuicaoPage key={dataVersion} onAbrirLista={abrirLista} />;
       case 'turnover': return <TurnoverPage key={dataVersion} />;
+      case 'safra': return <SafraPage key={dataVersion} />;
       case 'organogram': return <OrganogramPage key={dataVersion} />;
       case 'collaborators':
         if (selectedCollab) return <CollaboratorDetailsPage key={dataVersion} collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;

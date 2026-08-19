@@ -15,6 +15,9 @@ export const NotificationCenter = () => {
     }>({ birthdays: [], expiring: [], avisoEnding: [], recentHistory: [] });
 
     const containerRef = useRef<HTMLDivElement>(null);
+    const gatilho = useRef<HTMLButtonElement>(null);
+    const [carregando, setCarregando] = useState(true);
+    const [falhou, setFalhou] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -26,8 +29,21 @@ export const NotificationCenter = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Escape fecha o painel e devolve o foco ao sino — quem abriu pelo teclado
+    // precisa voltar para onde estava, não para o começo da barra.
+    useEffect(() => {
+        if (!isOpen) return;
+        const aoTeclar = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') { setIsOpen(false); gatilho.current?.focus(); }
+        };
+        document.addEventListener('keydown', aoTeclar);
+        return () => document.removeEventListener('keydown', aoTeclar);
+    }, [isOpen]);
+
     useEffect(() => {
         const loadNotifications = async () => {
+          try {
+            setFalhou(false);
             const collabs = await db.getCollaborators();
             const today = new Date();
             const todayStr = today.toLocaleDateString('pt-BR');
@@ -65,6 +81,13 @@ export const NotificationCenter = () => {
                 avisoEnding: todaysAvisoEnding,
                 recentHistory: history
             });
+          } catch {
+            // sem isto a falha abria um painel vazio, indistinguível de
+            // "nenhuma pendência hoje" — o pior jeito de errar aqui
+            setFalhou(true);
+          } finally {
+            setCarregando(false);
+          }
         };
 
         loadNotifications();
@@ -77,7 +100,11 @@ export const NotificationCenter = () => {
     return (
         <div className="relative" ref={containerRef}>
             <button
+                ref={gatilho}
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
+                aria-label="Notificações"
+                aria-expanded={isOpen}
                 className="relative p-2 rounded-full text-ink-mute hover:text-brand-text hover:bg-brand-wash transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
                 <Bell size={20} />
@@ -87,13 +114,30 @@ export const NotificationCenter = () => {
             </button>
 
             {isOpen && (
-                <div className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-canvas rounded-xl shadow-3 border border-hairline z-50 overflow-hidden">
+                <div
+                    role="dialog"
+                    aria-label="Central de notificações"
+                    className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-canvas rounded-xl shadow-3 border border-hairline z-50 overflow-hidden"
+                >
                     <div className="p-4 border-b border-hairline bg-canvas-soft flex justify-between items-center">
                         <h3 className="font-bold text-ink text-sm">Central de Notificações</h3>
                         <span className="text-xs bg-brand-wash text-brand-text px-2 py-0.5 rounded-full font-bold">Hoje</span>
                     </div>
 
-                    <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
+                    {carregando && (
+                        <div role="status" aria-label="Carregando notificações" aria-busy="true"
+                             className="p-6 text-center text-xs text-ink-faint">
+                            Carregando…
+                        </div>
+                    )}
+
+                    {falhou && (
+                        <div role="alert" className="p-6 text-center text-xs text-danger">
+                            Não foi possível carregar as notificações.
+                        </div>
+                    )}
+
+                    <div hidden={carregando || falhou} className="max-h-[80vh] overflow-y-auto custom-scrollbar">
                         {(notifications.birthdays.length > 0 || notifications.expiring.length > 0 || notifications.avisoEnding.length > 0) && (
                             <div className="p-2">
                                 <p className="t-eyebrow text-ink-faint px-2 py-1">Atenção Hoje</p>
