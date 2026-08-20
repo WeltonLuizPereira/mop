@@ -1,9 +1,10 @@
 
-import { 
-  User, Coordinator, Supervisor, Client, Operation, Ilha, Collaborator, 
-  UserRole, EntityStatus, HistoryLog, ScheduledTask 
+import {
+  User, Coordinator, Supervisor, Client, Operation, Ilha, Collaborator, Provimento,
+  UserRole, EntityStatus, HistoryLog, ScheduledTask
 } from '../types';
 import { generateId } from '../utils';
+import { provimentoParaAutoCadastro, referenciaDoMes } from '../lib/provimentoStats';
 import { supabase } from './supabase';
 
 /**
@@ -334,17 +335,61 @@ class SupabaseService {
   async findOrCreateIlha(name: string, clientId: string, opId: string, coordIds: string[], supIds: string[]): Promise<Ilha> {
     const { data } = await supabase.from('mop_ilhas').select('*').ilike('nome', name).single();
     if (data) return { ...data, clientId: data.client_id, operationId: data.operation_id, coordinatorIds: data.coordinator_ids || [], supervisorIds: data.supervisor_ids || [] };
-    const newItem: Ilha = { 
-      id: generateId(), 
-      nome: name, 
-      clientId, 
+    const newItem: Ilha = {
+      id: generateId(),
+      nome: name,
+      clientId,
       operationId: opId,
       coordinatorIds: coordIds,
       supervisorIds: supIds,
-      status: EntityStatus.ACTIVE 
+      status: EntityStatus.ACTIVE
     };
     await this.saveIlha(newItem);
     return newItem;
+  }
+
+  // --- Provimento (PA Contratada) ---
+  async getProvimento(referencia: string): Promise<Provimento[]> {
+    const { data } = await supabase.from('mop_provimento').select('*').eq('referencia', referencia);
+    return (data ?? []).map((p: any) => ({
+      id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada,
+    }));
+  }
+
+  private async getProvimentoHistorico(): Promise<Provimento[]> {
+    const { data } = await buscarTudo<any>((de, ate) =>
+      supabase.from('mop_provimento').select('*').range(de, ate));
+    return data.map(p => ({
+      id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada,
+    }));
+  }
+
+  async saveProvimento(item: Provimento) {
+    const payload = {
+      id: item.id, ilha_id: item.ilhaId, referencia: item.referencia, pa_contratada: item.paContratada,
+    };
+    const { data: existing } = await supabase.from('mop_provimento').select('id')
+      .eq('ilha_id', item.ilhaId).eq('referencia', item.referencia).single();
+    if (existing) {
+      const { error } = await supabase.from('mop_provimento').update(payload).eq('id', existing.id);
+      if (error) console.error("Error updating Provimento:", error);
+    } else {
+      const { error } = await supabase.from('mop_provimento').insert(payload);
+      if (error) console.error("Error inserting Provimento:", error);
+    }
+  }
+
+  async ensureProvimentoMesAtual(): Promise<void> {
+    const referenciaAtual = referenciaDoMes(new Date());
+    const [ilhas, historico] = await Promise.all([this.getIlhas(), this.getProvimentoHistorico()]);
+    const ilhasAtivas = ilhas.filter(i => i.status === EntityStatus.ACTIVE);
+    const faltantes = provimentoParaAutoCadastro(ilhasAtivas, historico, referenciaAtual);
+    for (const item of faltantes) {
+      const { error } = await supabase.from('mop_provimento').insert({
+        id: generateId(), ilha_id: item.ilhaId, referencia: referenciaAtual, pa_contratada: item.paContratada,
+      });
+      if (error) console.error("Error auto-cadastrando Provimento:", error);
+    }
   }
 
   // --- Collaborators ---

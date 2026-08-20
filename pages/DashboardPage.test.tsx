@@ -28,6 +28,10 @@ vi.mock('../services/mockDb', () => ({
       { id: 'o2', nome: 'Residencial', clientId: 'c2', status: EntityStatus.ACTIVE },
       { id: 'o3', nome: 'Fibra', clientId: 'c1', status: EntityStatus.ACTIVE },
     ])),
+    getProvimento: vi.fn(async () => ([
+      { id: 'p-i1', ilhaId: 'i1', referencia: '2026-08-01', paContratada: 2 },
+      { id: 'p-i2', ilhaId: 'i2', referencia: '2026-08-01', paContratada: 1 },
+    ])),
   },
 }));
 

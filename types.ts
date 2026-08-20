@@ -125,6 +125,14 @@ export interface HistoryLog {
   details?: string;
 }
 
+export interface Provimento {
+  id: string;
+  ilhaId: string;
+  /** Sempre o dia 1 do mês, "YYYY-MM-01". */
+  referencia: string;
+  paContratada: number;
+}
+
 export interface ScheduledTask {
   id: string;
   matricula: string;

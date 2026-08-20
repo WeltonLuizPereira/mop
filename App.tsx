@@ -27,6 +27,7 @@ import { AvisoPrevioPage } from './pages/AvisoPrevioPage';
 import { VacationManagementPage } from './pages/VacationManagementPage';
 import { AfastadosPage } from './pages/AfastadosPage';
 import { DesligadosPage } from './pages/DesligadosPage';
+import { ProvimentoPage } from './pages/ProvimentoPage';
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -48,6 +49,7 @@ const App = () => {
   useEffect(() => {
       const runChecks = async () => {
           await db.processDueTasks();
+          await db.ensureProvimentoMesAtual();
           await db.checkVacationReturns();
           await db.checkAvisoPrevioEnds();
       };
@@ -111,6 +113,7 @@ const App = () => {
         {key:'coordinatorIds', label:'Coordenadores', type:'multiselect', options: dropdownOptions.coordinators },
         {key:'supervisorIds', label:'Supervisores', type:'multiselect', options: dropdownOptions.supervisors }
       ]} {...commonProps} />;
+      case 'provimento': return <ProvimentoPage key={dataVersion} currentUser={currentUser!} />;
       case 'users': return <UsersPage key={dataVersion} {...commonProps} />;
       case 'history': return <HistoryPage key={dataVersion} />;
       case 'birthdays': return <BirthdaysPage key={dataVersion} onBack={() => setCurrentPage('dashboard')} />;
