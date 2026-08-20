@@ -20,6 +20,7 @@ export interface NavGroup {
 const TODOS = Object.values(UserRole);
 const SEM_VISUALIZADOR = TODOS.filter(r => r !== UserRole.VIEWER);
 const SO_ADMIN = [UserRole.ADMIN] as const;
+const ADMIN_E_GERENTE = [UserRole.ADMIN, UserRole.MANAGER] as const;
 
 export const NAV_GROUPS: NavGroup[] = [
   { group: 'Principal', items: [
@@ -44,7 +45,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { key: 'clients', label: 'Clientes', icon: Building2, roles: SO_ADMIN },
     { key: 'operations', label: 'Operações', icon: Globe, roles: SO_ADMIN },
     { key: 'ilhas', label: 'Ilhas', icon: MapPin, roles: SO_ADMIN },
-    { key: 'provimento', label: 'Provimento', icon: Target, roles: SO_ADMIN },
+    { key: 'provimento', label: 'Provimento', icon: Target, roles: ADMIN_E_GERENTE },
     { key: 'coordinators', label: 'Coordenadores', icon: Briefcase, roles: SO_ADMIN },
     { key: 'supervisors', label: 'Supervisores', icon: UserCog, roles: SO_ADMIN },
   ]},

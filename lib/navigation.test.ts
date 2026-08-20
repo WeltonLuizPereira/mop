@@ -21,9 +21,17 @@ describe('visibleGroups', () => {
     expect(k).not.toContain('vacation');
   });
 
-  it('esconde provimento de quem não é admin', () => {
+  it('esconde provimento de quem não é admin nem gerente', () => {
     expect(chaves(UserRole.VIEWER)).not.toContain('provimento');
     expect(chaves(UserRole.RH)).not.toContain('provimento');
+  });
+
+  it('dá provimento ao gerente também, mas não o resto dos cadastros', () => {
+    const k = chaves(UserRole.MANAGER);
+    expect(k).toContain('provimento');
+    expect(k).not.toContain('clients');
+    expect(k).not.toContain('ilhas');
+    expect(k).not.toContain('coordinators');
   });
 
   it('dá turnover e as telas de RH ao RH, mas não os cadastros', () => {
