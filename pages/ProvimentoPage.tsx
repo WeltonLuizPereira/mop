@@ -98,7 +98,7 @@ export const ProvimentoPage: React.FC<{ currentUser: User }> = ({ currentUser })
           <Table.Head>
             <Table.Th>Ilha</Table.Th>
             <Table.Th>Cliente / Operação</Table.Th>
-            <Table.Th className="text-right">Ativos</Table.Th>
+            <Table.Th className="text-right">Ativos (hoje)</Table.Th>
             <Table.Th className="text-right">PA Contratada</Table.Th>
           </Table.Head>
           <tbody>
@@ -110,19 +110,28 @@ export const ProvimentoPage: React.FC<{ currentUser: User }> = ({ currentUser })
                   <Table.Td className="text-ink-mute">{ilha.cliente} · {ilha.operacao}</Table.Td>
                   <Table.Td className="text-right t-data">{ilha.ativos}</Table.Td>
                   <Table.Td className="text-right">
-                    <input
-                      type="number"
-                      min={0}
-                      defaultValue={ilha.paContratada ?? ''}
-                      aria-label={`PA Contratada de ${ilha.nome}`}
-                      onBlur={e => {
-                        const bruto = ilhas.find(i => i.id === ilha.id)!;
-                        const valor = Number(e.target.value);
-                        if (!Number.isNaN(valor) && valor >= 0) salvar(bruto, valor);
-                      }}
-                      className="w-20 text-right t-data rounded-sm border border-hairline-2 bg-canvas px-2 py-1
-                                 focus:outline-none focus:border-brand focus:shadow-[0_0_0_1px_var(--brand)]"
-                    />
+                    <div className="flex items-center justify-end gap-2">
+                      {semDado && (
+                        <span className="text-[11px] text-brand-text whitespace-nowrap">ilha nova · defina a PA</span>
+                      )}
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={ilha.paContratada ?? ''}
+                        aria-label={`PA Contratada de ${ilha.nome}`}
+                        onBlur={e => {
+                          const texto = e.target.value.trim();
+                          if (texto === '') return; // campo limpo não é edição — não sobrescreve com 0
+                          const valor = Number(texto);
+                          if (Number.isNaN(valor) || valor < 0) return;
+                          if (valor === ilha.paContratada) return; // sem mudança, não salva nem loga
+                          const bruto = ilhas.find(i => i.id === ilha.id)!;
+                          salvar(bruto, valor);
+                        }}
+                        className="w-20 text-right t-data rounded-sm border border-hairline-2 bg-canvas px-2 py-1
+                                   focus:outline-none focus:border-brand focus:shadow-[0_0_0_1px_var(--brand)]"
+                      />
+                    </div>
                   </Table.Td>
                 </tr>
               );

@@ -25,9 +25,7 @@ describe('IlhaTile', () => {
 
   it('não mostra PA Contratada, Ativos nem o detalhamento por status fechado', () => {
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
-    // o conteúdo fica sempre no DOM (é o que anima a altura no hover); o
-    // estado fechado é expresso por aria-expanded, não pela ausência do nó
-    expect(screen.getByRole('button', { name: /Ilha 01 — SAC/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('revela PA Contratada, Ativos e o detalhamento por status no hover', async () => {
@@ -37,7 +35,7 @@ describe('IlhaTile', () => {
 
     await user.hover(card);
 
-    expect(card).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'false');
     expect(screen.getByText('PA contratada')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument(); // PA contratada
     expect(card.textContent).toContain('1');
@@ -50,10 +48,10 @@ describe('IlhaTile', () => {
     const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
 
     await user.hover(card);
-    expect(card).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'false');
 
     await user.unhover(card);
-    expect(card).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('também expande no foco de teclado, não só no mouse', () => {
@@ -61,7 +59,7 @@ describe('IlhaTile', () => {
     const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
 
     fireEvent.focus(card);
-    expect(card).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'false');
   });
 
   it('mostra "—" e "sem PA" quando a ilha não tem PA Contratada no mês', async () => {

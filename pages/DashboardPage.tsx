@@ -115,8 +115,8 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
           aria-label="Ordenar as ilhas"
         >
           <option value="nome">A → Z</option>
-          <option value="asc">em operação ↑</option>
-          <option value="desc">em operação ↓</option>
+          <option value="asc">provimento ↑</option>
+          <option value="desc">provimento ↓</option>
         </ChipSelect>
       </div>
 

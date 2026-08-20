@@ -6,12 +6,13 @@ import type { IlhaStat } from '../../lib/ilhaStats';
 export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void }) => {
   const [aberto, setAberto] = useState(false);
   const semPa = !ilha.paContratada;
+  const pct = Math.round((ilha.provimento ?? 0) * 100);
+  const hot = !semPa && (ilha.provimento ?? 0) < 0.8;
 
   return (
     <article
       tabIndex={0}
       role="button"
-      aria-expanded={aberto}
       onClick={onOpen}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}
       onMouseEnter={() => setAberto(true)}
@@ -37,20 +38,22 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
         <AnelQ
           value={ilha.provimento ?? 0}
           className={`w-[54px] h-[54px] shrink-0 ${semPa ? 'opacity-30' : ''}`}
-          label={semPa ? 'sem PA Contratada cadastrada' : undefined}
+          label={semPa ? 'sem PA Contratada cadastrada' : `${pct}% de provimento`}
         />
         <div>
           <div
             className={`font-display font-bold text-[26px] leading-none tracking-tight tabular-nums
-                        ${semPa ? 'text-ink-faint' : (ilha.provimento ?? 0) < 0.8 ? 'text-brand-hot' : 'text-ink'}`}
+                        ${semPa ? 'text-ink-faint' : hot ? 'text-brand-hot' : 'text-ink'}`}
           >
-            {semPa ? '—' : `${Math.round((ilha.provimento ?? 0) * 100)}%`}
+            {semPa ? '—' : `${pct}%`}
           </div>
           <div className="text-xs text-ink-mute mt-1.5">provimento</div>
         </div>
       </div>
 
       <div
+        data-testid="ilha-expand"
+        aria-hidden={!aberto}
         className={`grid overflow-hidden transition-[grid-template-rows] duration-200 ease-out
                     motion-reduce:transition-none ${aberto ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
       >
