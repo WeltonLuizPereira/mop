@@ -4,6 +4,7 @@ import {
   UserRole, EntityStatus, HistoryLog, ScheduledTask
 } from '../types';
 import { generateId } from '../utils';
+import { provimentoParaAutoCadastro, referenciaDoMes } from '../lib/provimentoStats';
 import { supabase } from './supabase';
 
 /**
@@ -353,6 +354,36 @@ class SupabaseService {
     return (data ?? []).map((p: any) => ({
       id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada,
     }));
+  }
+
+  private async getProvimentoHistorico(): Promise<Provimento[]> {
+    const { data } = await buscarTudo<any>((de, ate) =>
+      supabase.from('mop_provimento').select('*').range(de, ate));
+    return data.map(p => ({
+      id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada,
+    }));
+  }
+
+  async saveProvimento(item: Provimento) {
+    const payload = {
+      id: item.id, ilha_id: item.ilhaId, referencia: item.referencia, pa_contratada: item.paContratada,
+    };
+    const { data: existing } = await supabase.from('mop_provimento').select('id')
+      .eq('ilha_id', item.ilhaId).eq('referencia', item.referencia).single();
+    if (existing) await supabase.from('mop_provimento').update(payload).eq('id', existing.id);
+    else await supabase.from('mop_provimento').insert(payload);
+  }
+
+  async ensureProvimentoMesAtual(): Promise<void> {
+    const referenciaAtual = referenciaDoMes(new Date());
+    const [ilhas, historico] = await Promise.all([this.getIlhas(), this.getProvimentoHistorico()]);
+    const ilhasAtivas = ilhas.filter(i => i.status === EntityStatus.ACTIVE);
+    const faltantes = provimentoParaAutoCadastro(ilhasAtivas, historico, referenciaAtual);
+    for (const item of faltantes) {
+      await supabase.from('mop_provimento').insert({
+        id: generateId(), ilha_id: item.ilhaId, referencia: referenciaAtual, pa_contratada: item.paContratada,
+      });
+    }
   }
 
   // --- Collaborators ---
