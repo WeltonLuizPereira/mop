@@ -27,3 +27,6 @@ playwright-report/
 *.njsproj
 *.sln
 *.sw?
+
+# Scratch workspace for the subagent-driven-development skill — never meant to be committed
+.superpowers/
