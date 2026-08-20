@@ -370,8 +370,13 @@ class SupabaseService {
     };
     const { data: existing } = await supabase.from('mop_provimento').select('id')
       .eq('ilha_id', item.ilhaId).eq('referencia', item.referencia).single();
-    if (existing) await supabase.from('mop_provimento').update(payload).eq('id', existing.id);
-    else await supabase.from('mop_provimento').insert(payload);
+    if (existing) {
+      const { error } = await supabase.from('mop_provimento').update(payload).eq('id', existing.id);
+      if (error) console.error("Error updating Provimento:", error);
+    } else {
+      const { error } = await supabase.from('mop_provimento').insert(payload);
+      if (error) console.error("Error inserting Provimento:", error);
+    }
   }
 
   async ensureProvimentoMesAtual(): Promise<void> {
@@ -380,9 +385,10 @@ class SupabaseService {
     const ilhasAtivas = ilhas.filter(i => i.status === EntityStatus.ACTIVE);
     const faltantes = provimentoParaAutoCadastro(ilhasAtivas, historico, referenciaAtual);
     for (const item of faltantes) {
-      await supabase.from('mop_provimento').insert({
+      const { error } = await supabase.from('mop_provimento').insert({
         id: generateId(), ilha_id: item.ilhaId, referencia: referenciaAtual, pa_contratada: item.paContratada,
       });
+      if (error) console.error("Error auto-cadastrando Provimento:", error);
     }
   }
 
