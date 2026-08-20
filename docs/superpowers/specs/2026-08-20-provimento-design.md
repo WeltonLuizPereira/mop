@@ -1,7 +1,7 @@
 # MOP — Provimento
 
 **Data:** 2026-08-20
-**Status:** Aprovado em conversa (design + mockup navegável); aguardando revisão do documento
+**Status:** Implementado e mesclado em `redesign/leva-1` (ver §7 para a única divergência deliberada do texto original)
 
 ## 1. Contexto
 
@@ -169,14 +169,23 @@ as ilhas do mês selecionado, uma linha por ilha:
 |---|---|
 | Ilha | nome |
 | Cliente / Operação | contexto, somente leitura |
-| Ativos | contagem do mês, somente leitura |
+| Ativos (hoje) | contagem atual de colaboradores, somente leitura — não há um retrato histórico de colaboradores por mês no sistema, então este número é sempre o quadro de hoje, não o do mês selecionado |
 | PA Contratada | campo numérico editável inline |
 
-Edição salva ao perder o foco do campo (`onBlur`), sem modal. Linha cuja PA
-veio do auto-cadastro (§5) mostra uma etiqueta discreta "copiado de
-mês/ano"; linha de ilha sem nenhuma PA cadastrada (ilha nova) fica destacada
-com "ilha nova · defina a PA". Toda edição grava em `mop_history`, no mesmo
-formato que as demais telas de cadastro.
+Edição salva ao perder o foco do campo (`onBlur`), só quando o valor muda —
+sair do campo sem editar não grava nem loga nada, e não sobrescreve um valor
+com `0` por engano. Linha de ilha sem nenhuma PA cadastrada (ilha nova) fica
+destacada com "ilha nova · defina a PA". Toda edição grava em `mop_history`,
+no mesmo formato que as demais telas de cadastro.
+
+**Decisão:** a etiqueta "copiado de mês/ano" nas linhas vindas do
+auto-cadastro (§5), cogitada nesta versão do spec, não foi implementada —
+`mop_provimento` não guarda a origem do valor (auto-cadastro vs. edição
+manual), e criar essa distinção exigiria uma coluna nova e migração de dados
+existentes. Para uma tela interna de admin, esse ganho não paga o custo
+agora; revisitar se algum dia a equipe perceber que confia demais em número
+copiado sem revisar. Se voltar à mesa, o formato natural é uma coluna
+`origem` (`'auto' | 'manual'`), como migração isolada.
 
 ## 8. Testes
 
