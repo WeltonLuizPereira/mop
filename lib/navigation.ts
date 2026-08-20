@@ -1,7 +1,7 @@
 import {
   AlertCircle, AlertTriangle, Briefcase, Building2, Cake, Calendar, Globe,
   History, Info, LayoutDashboard, ListChecks, MapPin, Network, PieChart,
-  ShieldCheck, Sprout, Stethoscope, Sun, TrendingUp, Upload, UserCog, UserMinus,
+  ShieldCheck, Sprout, Stethoscope, Sun, Target, TrendingUp, Upload, UserCog, UserMinus,
   UserX, Users,
 } from 'lucide-react';
 import { UserRole } from '../types';
@@ -44,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { key: 'clients', label: 'Clientes', icon: Building2, roles: SO_ADMIN },
     { key: 'operations', label: 'Operações', icon: Globe, roles: SO_ADMIN },
     { key: 'ilhas', label: 'Ilhas', icon: MapPin, roles: SO_ADMIN },
+    { key: 'provimento', label: 'Provimento', icon: Target, roles: SO_ADMIN },
     { key: 'coordinators', label: 'Coordenadores', icon: Briefcase, roles: SO_ADMIN },
     { key: 'supervisors', label: 'Supervisores', icon: UserCog, roles: SO_ADMIN },
   ]},

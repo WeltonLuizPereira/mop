@@ -6,8 +6,8 @@ const chaves = (role: UserRole) =>
   visibleGroups(role).flatMap(g => g.items.map(i => i.key));
 
 describe('visibleGroups', () => {
-  it('mostra as 24 telas para o administrador', () => {
-    expect(chaves(UserRole.ADMIN)).toHaveLength(24);
+  it('mostra as 25 telas para o administrador', () => {
+    expect(chaves(UserRole.ADMIN)).toHaveLength(25);
   });
 
   it('esconde cadastros, administração e sistema do visualizador', () => {
@@ -19,6 +19,11 @@ describe('visibleGroups', () => {
     expect(k).not.toContain('users');
     expect(k).not.toContain('import');
     expect(k).not.toContain('vacation');
+  });
+
+  it('esconde provimento de quem não é admin', () => {
+    expect(chaves(UserRole.VIEWER)).not.toContain('provimento');
+    expect(chaves(UserRole.RH)).not.toContain('provimento');
   });
 
   it('dá turnover e as telas de RH ao RH, mas não os cadastros', () => {
