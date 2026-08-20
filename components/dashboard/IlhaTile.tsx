@@ -19,12 +19,12 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
       onMouseLeave={() => setAberto(false)}
       onFocus={() => setAberto(true)}
       onBlur={() => setAberto(false)}
-      className="bg-canvas-soft border border-hairline rounded-tile p-[18px] cursor-pointer
+      className="bg-canvas-soft border border-hairline rounded-tile px-4 py-3.5 cursor-pointer
                  transition-[border-color,box-shadow,transform] duration-150
                  hover:border-hairline-2 hover:shadow-2 hover:-translate-y-px
                  motion-reduce:hover:translate-y-0"
     >
-      <header className="pb-[13px] border-b border-hairline">
+      <header className="pb-2 border-b border-hairline">
         {/* 15px é a medida do mockup: o anel e o percentual são o foco do tile,
             o nome só identifica. Nomes de ilha reais são longos e em caixa alta,
             então acima disso eles quebram em duas linhas e roubam a cena. */}
@@ -34,7 +34,7 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
         <p className="text-xs text-ink-mute mt-0.5">{ilha.cliente} · {ilha.operacao}</p>
       </header>
 
-      <div className="flex items-center gap-3.5 py-3.5">
+      <div className="flex items-center gap-3.5 py-2">
         <AnelQ
           value={ilha.provimento ?? 0}
           className={`w-[54px] h-[54px] shrink-0 ${semPa ? 'opacity-30' : ''}`}
@@ -76,10 +76,13 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
           {ilha.total === 0 ? (
             <p className="text-xs text-ink-faint">Nenhum colaborador alocado.</p>
           ) : (
-            <div className="flex flex-wrap gap-x-3.5 gap-y-[7px]">
-              {ilha.porStatus.map(s => (
-                <Badge key={s.status} status={s.status} count={s.count} className="text-xs" />
-              ))}
+            <div className="bg-canvas-sunk border border-hairline rounded-lg px-3.5 py-3">
+              <p className="t-eyebrow text-ink-faint mb-2">Por status</p>
+              <div className="flex flex-col gap-1.5">
+                {ilha.porStatus.map(s => (
+                  <Badge key={s.status} status={s.status} count={s.count} className="text-xs" />
+                ))}
+              </div>
             </div>
           )}
         </div>
