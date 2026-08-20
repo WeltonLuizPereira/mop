@@ -50,9 +50,11 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
         </div>
       </div>
 
-      {/* fechado por padrão: só renderiza o conteúdo quando aberto */}
-      {aberto && (
-        <div className="pt-3.5">
+      <div
+        className={`grid overflow-hidden transition-[grid-template-rows] duration-200 ease-out
+                    motion-reduce:transition-none ${aberto ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+      >
+        <div className="min-h-0 pt-3.5">
           <div className="flex gap-[18px] pb-3.5">
             <div>
               <span className="block font-display font-bold text-[16px] tracking-[-.01em] text-ink">
@@ -78,7 +80,7 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
             </div>
           )}
         </div>
-      )}
+      </div>
     </article>
   );
 };

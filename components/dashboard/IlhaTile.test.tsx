@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus } from '../../types';
@@ -25,19 +25,23 @@ describe('IlhaTile', () => {
 
   it('não mostra PA Contratada, Ativos nem o detalhamento por status fechado', () => {
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
-    expect(screen.queryByText('PA contratada')).not.toBeInTheDocument();
-    expect(screen.queryByText('1 férias')).not.toBeInTheDocument();
+    // o conteúdo fica sempre no DOM (é o que anima a altura no hover); o
+    // estado fechado é expresso por aria-expanded, não pela ausência do nó
+    expect(screen.getByRole('button', { name: /Ilha 01 — SAC/ })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('revela PA Contratada, Ativos e o detalhamento por status no hover', async () => {
     const user = userEvent.setup();
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
+    const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
 
-    await user.hover(screen.getByRole('button', { name: /Ilha 01 — SAC/ }));
+    await user.hover(card);
 
+    expect(card).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('PA contratada')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument(); // PA contratada
-    expect(screen.getByText('1 férias')).toBeInTheDocument();
+    expect(card.textContent).toContain('1');
+    expect(card.textContent).toContain('férias');
   });
 
   it('recolhe de volta quando o mouse sai', async () => {
@@ -46,18 +50,18 @@ describe('IlhaTile', () => {
     const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
 
     await user.hover(card);
-    expect(screen.getByText('PA contratada')).toBeInTheDocument();
+    expect(card).toHaveAttribute('aria-expanded', 'true');
 
     await user.unhover(card);
-    expect(screen.queryByText('PA contratada')).not.toBeInTheDocument();
+    expect(card).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('também expande no foco de teclado, não só no mouse', () => {
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
     const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
 
-    card.focus();
-    expect(screen.getByText('PA contratada')).toBeInTheDocument();
+    fireEvent.focus(card);
+    expect(card).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('mostra "—" e "sem PA" quando a ilha não tem PA Contratada no mês', async () => {
