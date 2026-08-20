@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { EntityStatus, User, type Client, type Collaborator, type Ilha, type Operation } from '../types';
+import { EntityStatus, User, type Client, type Collaborator, type Ilha, type Operation, type Provimento } from '../types';
 import { db } from '../services/mockDb';
 import { computeIlhaStats, totaisGerais, type Ordem } from '../lib/ilhaStats';
 import { IlhaTile } from '../components/dashboard/IlhaTile';
@@ -10,6 +10,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   const [ilhas, setIlhas] = useState<Ilha[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [operations, setOperations] = useState<Operation[]>([]);
+  const [provimentos, setProvimentos] = useState<Provimento[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [cliente, setCliente] = useState('');
   const [operacao, setOperacao] = useState('');
@@ -17,16 +18,18 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
 
   useEffect(() => {
     const load = async () => {
-      const [c, i, cli, op] = await Promise.all([
+      const [c, i, cli, op, prov] = await Promise.all([
         db.getCollaborators(),
         db.getIlhas(),
         db.getClients(),
         db.getOperations(),
+        db.getProvimentos(),
       ]);
       setCollabs(c);
       setIlhas(i);
       setClients(cli);
       setOperations(op);
+      setProvimentos(prov);
       setCarregando(false);
     };
     load();
@@ -43,7 +46,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   // impossível não deve nem aparecer na lista
   const operacoesDoCliente = operations.filter(o => !cliente || o.clientId === cliente);
 
-  const stats = computeIlhaStats(recortadas, collabs, clients, operations, ordem);
+  const stats = computeIlhaStats(recortadas, collabs, clients, operations, provimentos, ordem);
   const totais = totaisGerais(collabs);
 
   if (carregando) {

@@ -1,7 +1,7 @@
 
-import { 
-  User, Coordinator, Supervisor, Client, Operation, Ilha, Collaborator, 
-  UserRole, EntityStatus, HistoryLog, ScheduledTask 
+import {
+  User, Coordinator, Supervisor, Client, Operation, Ilha, Collaborator, Provimento,
+  UserRole, EntityStatus, HistoryLog, ScheduledTask
 } from '../types';
 import { generateId } from '../utils';
 import { supabase } from './supabase';
@@ -334,17 +334,23 @@ class SupabaseService {
   async findOrCreateIlha(name: string, clientId: string, opId: string, coordIds: string[], supIds: string[]): Promise<Ilha> {
     const { data } = await supabase.from('mop_ilhas').select('*').ilike('nome', name).single();
     if (data) return { ...data, clientId: data.client_id, operationId: data.operation_id, coordinatorIds: data.coordinator_ids || [], supervisorIds: data.supervisor_ids || [] };
-    const newItem: Ilha = { 
-      id: generateId(), 
-      nome: name, 
-      clientId, 
+    const newItem: Ilha = {
+      id: generateId(),
+      nome: name,
+      clientId,
       operationId: opId,
       coordinatorIds: coordIds,
       supervisorIds: supIds,
-      status: EntityStatus.ACTIVE 
+      status: EntityStatus.ACTIVE
     };
     await this.saveIlha(newItem);
     return newItem;
+  }
+
+  // --- Provimento (PA Contratada) ---
+  async getProvimentos() {
+    const { data } = await supabase.from('mop_provimento').select('*').order('referencia', { ascending: false });
+    return data?.map(p => ({ id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada })) || [];
   }
 
   // --- Collaborators ---

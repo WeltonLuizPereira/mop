@@ -3,7 +3,9 @@ import { AnelQ } from '../brand/AnelQ';
 import { Badge } from '../ui';
 import type { IlhaStat } from '../../lib/ilhaStats';
 
-export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void }) => (
+export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void }) => {
+  const emOperacao = ilha.total === 0 ? 0 : ilha.ativos / ilha.total;
+  return (
   <article
     tabIndex={0}
     role="button"
@@ -25,10 +27,10 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
     </header>
 
     <div className="flex items-center gap-3.5 py-3.5">
-      <AnelQ value={ilha.emOperacao} className="w-[54px] h-[54px] shrink-0" />
+      <AnelQ value={emOperacao} className="w-[54px] h-[54px] shrink-0" />
       <div>
         <div className="font-display font-bold text-[26px] leading-none tracking-tight tabular-nums text-ink">
-          {Math.round(ilha.emOperacao * 100)}%
+          {Math.round(emOperacao * 100)}%
         </div>
         <div className="text-xs text-ink-mute mt-1.5 whitespace-nowrap">
           em operação · <span className="t-data text-ink-2">{ilha.total}</span> {ilha.total === 1 ? 'pessoa' : 'pessoas'}
@@ -46,4 +48,5 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
         </div>
       )}
   </article>
-);
+  );
+};
