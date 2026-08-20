@@ -348,9 +348,11 @@ class SupabaseService {
   }
 
   // --- Provimento (PA Contratada) ---
-  async getProvimentos() {
-    const { data } = await supabase.from('mop_provimento').select('*').order('referencia', { ascending: false });
-    return data?.map(p => ({ id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada })) || [];
+  async getProvimento(referencia: string): Promise<Provimento[]> {
+    const { data } = await supabase.from('mop_provimento').select('*').eq('referencia', referencia);
+    return (data ?? []).map((p: any) => ({
+      id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada,
+    }));
   }
 
   // --- Collaborators ---

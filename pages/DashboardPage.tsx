@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { EntityStatus, User, type Client, type Collaborator, type Ilha, type Operation, type Provimento } from '../types';
 import { db } from '../services/mockDb';
 import { computeIlhaStats, totaisGerais, type Ordem } from '../lib/ilhaStats';
+import { referenciaDoMes } from '../lib/provimentoStats';
 import { IlhaTile } from '../components/dashboard/IlhaTile';
 import { ChipSelect } from '../components/ui';
 
@@ -23,7 +24,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
         db.getIlhas(),
         db.getClients(),
         db.getOperations(),
-        db.getProvimentos(),
+        db.getProvimento(referenciaDoMes(new Date())),
       ]);
       setCollabs(c);
       setIlhas(i);
