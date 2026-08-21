@@ -70,7 +70,14 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
         setLoading(false); setIsOpen(false); onRefresh();
     };
 
-    const filteredData = listData.filter(d => (d.nome || '').toLowerCase().includes(search.toLowerCase())).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    const filteredData = listData
+      .filter(d => (d.nome || '').toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => {
+          const inativoA = a.status === EntityStatus.INACTIVE ? 1 : 0;
+          const inativoB = b.status === EntityStatus.INACTIVE ? 1 : 0;
+          if (inativoA !== inativoB) return inativoA - inativoB;
+          return (a.nome || '').localeCompare(b.nome || '');
+      });
 
     return (
         <div className="space-y-4 mop-fade-up">
@@ -142,7 +149,12 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                     <form id="form-cadastro" onSubmit={handleSubmit} className="flex flex-col gap-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {schema.map(field => {
-                        const opts = typeof field.options === 'function' ? field.options(currentItem) : field.options;
+                        const todasOpts = typeof field.options === 'function' ? field.options(currentItem) : field.options;
+                        // Só oferece registros ativos como escolha nova — mas sem
+                        // filtrar opções que não carregam `status` (ex.: papel de
+                        // usuário), e sem mexer na tabela, que resolve o nome via
+                        // `schema` diretamente com a lista completa (ver acima).
+                        const opts = todasOpts?.filter((o: any) => o.status == null || o.status === EntityStatus.ACTIVE);
                         return (
                         <div key={field.key} className={field.type === 'multiselect' ? 'col-span-1 md:col-span-2' : ''}>
                           {field.type === 'text' && <Input label={field.label} value={currentItem[field.key] || ''} onChange={(e: any) => setCurrentItem({...currentItem, [field.key]: e.target.value})} required={field.key !== 'logo'} />}

@@ -37,6 +37,21 @@ describe('CrudPage', () => {
     expect(screen.getByRole('button', { name: 'Editar Cliente A' })).toBeVisible();
   });
 
+  it('ordena os ativos em ordem alfabética antes dos inativos, também em ordem alfabética', () => {
+    const zebraAtivo = { id: 'z', nome: 'Zebra Ativa', status: EntityStatus.ACTIVE };
+    const abacateInativo = { id: 'i1', nome: 'Abacate Inativo', status: EntityStatus.INACTIVE };
+    const melanciaInativa = { id: 'i2', nome: 'Melancia Inativa', status: EntityStatus.INACTIVE };
+    render(<CrudPage {...baseProps} data={[melanciaInativa, clienteB, abacateInativo, zebraAtivo, clienteA]} onSave={vi.fn()} onDelete={vi.fn()} currentUser={admin} />);
+    const linhas = screen.getAllByRole('row').slice(1); // pula o cabeçalho
+    expect(linhas.map(l => l.textContent)).toEqual([
+      expect.stringContaining('Cliente A'),
+      expect.stringContaining('Cliente B'),
+      expect.stringContaining('Zebra Ativa'),
+      expect.stringContaining('Abacate Inativo'),
+      expect.stringContaining('Melancia Inativa'),
+    ]);
+  });
+
   it('filtra a lista pela busca', async () => {
     const user = userEvent.setup();
     render(<CrudPage {...baseProps} data={[clienteA, clienteB]} onSave={vi.fn()} onDelete={vi.fn()} currentUser={admin} />);
@@ -108,6 +123,32 @@ describe('CrudPage', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Tag 1' }));
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
     expect(onSave.mock.calls[0][0].tags).toEqual(['t1']);
+  });
+
+  it('não oferece opção inativa para escolher, mas resolve o nome de um vínculo já inativo na tabela', async () => {
+    const user = userEvent.setup();
+    const schemaComInativo = [
+      { key: 'nome', label: 'Nome', type: 'text' as const },
+      {
+        key: 'clientId', label: 'Cliente', type: 'select' as const,
+        options: [
+          { value: 'x1', label: 'Empresa X', status: EntityStatus.ACTIVE },
+          { value: 'x2', label: 'Empresa Inativa', status: EntityStatus.INACTIVE },
+        ],
+      },
+    ];
+    const operacaoLigadaAoInativo = { id: 'op-i', nome: 'Operação Antiga', status: EntityStatus.ACTIVE, clientId: 'x2' };
+    render(<CrudPage title="Operações" singular="operação" schema={schemaComInativo} onRefresh={vi.fn()}
+      data={[operacaoLigadaAoInativo]} onSave={vi.fn()} onDelete={vi.fn()} currentUser={admin} />);
+
+    // a tabela ainda resolve o nome do cliente inativo pro vínculo existente
+    expect(screen.getByText('Empresa Inativa')).toBeInTheDocument();
+
+    // mas o formulário de edição não oferece esse cliente como opção nova
+    await user.click(screen.getByRole('button', { name: 'Editar Operação Antiga' }));
+    const opcoesCliente = screen.getByLabelText('Cliente') as HTMLSelectElement;
+    expect(Array.from(opcoesCliente.options).map(o => o.textContent)).not.toContain('Empresa Inativa');
+    expect(Array.from(opcoesCliente.options).map(o => o.textContent)).toContain('Empresa X');
   });
 
   it('confirma a exclusão em um modal antes de remover', async () => {
