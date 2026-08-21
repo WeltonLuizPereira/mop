@@ -1,6 +1,42 @@
 
 export const generateId = () => Math.random().toString(36).substr(2, 9);
 
+// Nome amigável, em português, para cada tabela que pode aparecer como
+// "on table X" no erro de chave estrangeira do Postgres.
+const NOME_AMIGAVEL_TABELA: Record<string, string> = {
+  mop_collaborators: 'colaboradores',
+  mop_provimento: 'registros de provimento',
+  mop_ilhas: 'ilhas',
+  mop_supervisors: 'supervisores',
+  mop_coordinators: 'coordenadores',
+  mop_operations: 'operações',
+  mop_clients: 'clientes',
+  mop_scheduled_tasks: 'tarefas agendadas',
+  mop_vacation_history: 'histórico de férias',
+  mop_history: 'histórico',
+  mop_users: 'usuários',
+};
+
+/**
+ * Traduz o erro cru do Postgres/Supabase ao excluir um registro em uma
+ * mensagem que faz sentido pra quem está usando o sistema. Violação de
+ * chave estrangeira (código 23503) vira "ainda há X vinculados, resolva
+ * isso antes"; qualquer outro erro cai na mensagem original do banco.
+ */
+export const mensagemErroExclusao = (singular: string, err: any): string => {
+  const msg: string = err?.message || String(err);
+  const isForeignKeyViolation = err?.code === '23503' || /violates foreign key constraint/i.test(msg);
+
+  if (isForeignKeyViolation) {
+    const tabelas = [...msg.matchAll(/on table "([^"]+)"/g)].map(m => m[1]);
+    const tabelaVinculada = tabelas[tabelas.length - 1];
+    const nomeAmigavel = (tabelaVinculada && NOME_AMIGAVEL_TABELA[tabelaVinculada]) || 'outros registros';
+    return `Não é possível excluir este ${singular}: ainda há ${nomeAmigavel} vinculados a ele. Remova ou reatribua esses vínculos antes de excluir.`;
+  }
+
+  return `Erro ao excluir ${singular}: ${msg}`;
+};
+
 export const calculateDaysDiff = (dateStr: string): number => {
   if (!dateStr) return 0;
   // Ajuste para garantir que a string YYYY-MM-DD seja interpretada corretamente no fuso local

@@ -52,8 +52,13 @@ export const ScheduledTasksPage = () => {
 
     const handleCancel = async (id: string) => {
         if(confirm("Deseja cancelar esta tarefa agendada?")) {
-            await db.cancelTask(id);
-            loadTasks();
+            try {
+                await db.cancelTask(id);
+                loadTasks();
+            } catch (err: any) {
+                alert("Erro ao cancelar tarefa: " + err.message);
+                console.error(err);
+            }
         }
     }
 

@@ -52,14 +52,20 @@ class SupabaseService {
   // --- Reset Functionality ---
   async resetDatabase() {
     // Apagar dados em ordem de dependência (Foreign Keys)
-    await supabase.from('mop_scheduled_tasks').delete().neq('id', '0');
-    await supabase.from('mop_history').delete().neq('id', '0');
-    await supabase.from('mop_collaborators').delete().neq('matricula', '0');
-    await supabase.from('mop_ilhas').delete().neq('id', '0');
-    await supabase.from('mop_supervisors').delete().neq('id', '0');
-    await supabase.from('mop_coordinators').delete().neq('id', '0');
-    await supabase.from('mop_operations').delete().neq('id', '0');
-    await supabase.from('mop_clients').delete().neq('id', '0');
+    const steps: [string, () => PromiseLike<{ error: any }>][] = [
+        ['mop_scheduled_tasks', () => supabase.from('mop_scheduled_tasks').delete().neq('id', '0')],
+        ['mop_history', () => supabase.from('mop_history').delete().neq('id', '0')],
+        ['mop_collaborators', () => supabase.from('mop_collaborators').delete().neq('matricula', '0')],
+        ['mop_ilhas', () => supabase.from('mop_ilhas').delete().neq('id', '0')],
+        ['mop_supervisors', () => supabase.from('mop_supervisors').delete().neq('id', '0')],
+        ['mop_coordinators', () => supabase.from('mop_coordinators').delete().neq('id', '0')],
+        ['mop_operations', () => supabase.from('mop_operations').delete().neq('id', '0')],
+        ['mop_clients', () => supabase.from('mop_clients').delete().neq('id', '0')],
+    ];
+    for (const [table, run] of steps) {
+        const { error } = await run();
+        if (error) throw new Error(`Falha ao limpar ${table}: ${error.message}`);
+    }
     
     // Manter admin padrão se não houver usuários
     const { data: users } = await supabase.from('mop_users').select('*');
@@ -218,7 +224,8 @@ class SupabaseService {
   }
 
   private async deleteItem(table: string, id: string) {
-    await supabase.from(table).delete().eq('id', id);
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) throw error;
   }
 
   // --- Coordinators ---
@@ -449,7 +456,8 @@ class SupabaseService {
   }
   
   async deleteCollaborator(matricula: string) {
-    await supabase.from('mop_collaborators').delete().eq('matricula', matricula);
+    const { error } = await supabase.from('mop_collaborators').delete().eq('matricula', matricula);
+    if (error) throw error;
   }
 
   async updateCollaboratorEfetivacao(matricula: string, value: string) {
@@ -553,9 +561,16 @@ class SupabaseService {
      if (fetchError) throw fetchError;
      if (!data || data.length === 0) return;
      
+     const failures: string[] = [];
      for (const task of data) {
          const { error } = await supabase.from('mop_scheduled_tasks').update({ status: 'CANCELLED' }).eq('id', task.id);
-         if (error) console.error("Failed to cancel task", task.id, error);
+         if (error) {
+             console.error("Failed to cancel task", task.id, error);
+             failures.push(task.id);
+         }
+     }
+     if (failures.length > 0) {
+         throw new Error(`Falha ao cancelar ${failures.length} de ${data.length} tarefa(s).`);
      }
   }
 

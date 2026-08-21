@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Edit2, Trash2, User as UserIcon, Briefcase, Clock, MapPin, Key, Sun, History } from 'lucide-react';
 import { Collaborator, User, UserRole, HistoryLog, Ilha, Operation, Client, Coordinator, Supervisor, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
-import { getCollaboratorCalculations, formatDateString, formatTime, addDays, getInitials } from '../utils';
+import { getCollaboratorCalculations, formatDateString, formatTime, addDays, getInitials, mensagemErroExclusao } from '../utils';
 import { Badge, Button, Modal, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 
@@ -176,7 +176,13 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
     const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
 
     const handleDelete = async () => {
-        await db.deleteCollaborator(currentCollab.matricula);
+        try {
+            await db.deleteCollaborator(currentCollab.matricula);
+        } catch (err: any) {
+            setConfirmandoExclusao(false);
+            alert(mensagemErroExclusao('colaborador', err));
+            return;
+        }
         setConfirmandoExclusao(false);
         onRefresh();
         onBack();

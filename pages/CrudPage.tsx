@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { User, UserRole, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
-import { generateId } from '../utils';
+import { generateId, mensagemErroExclusao } from '../utils';
 import {
   Button, Input, Select, Badge, Modal, Table, Carregando, FalhaAoCarregar,
 } from '../components/ui';
@@ -49,7 +49,13 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
     const handleDeleteRequest = (item: T) => { setItemToDelete(item); setIsDeleteOpen(true); };
     const confirmDelete = async () => {
         if (itemToDelete) {
-           await onDelete(itemToDelete.id);
+           try {
+               await onDelete(itemToDelete.id);
+           } catch (err: any) {
+               setIsDeleteOpen(false); setItemToDelete(null);
+               alert(mensagemErroExclusao(singular, err));
+               return;
+           }
            await db.addHistory({ action: `Exclusão de ${singular}`, target: itemToDelete.nome, user: currentUser.nome, date: new Date().toLocaleString('pt-BR'), type: 'delete', details: `Registro removido permanentemente` });
            setIsDeleteOpen(false); setItemToDelete(null); onRefresh();
         }
@@ -199,8 +205,8 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                 </div>
                 <h3 className="t-display-md text-ink mb-2">Excluir {singular}?</h3>
                 <p className="text-ink-mute text-sm mb-6">
-                  <b className="text-ink">{itemToDelete?.nome}</b> sai do cadastro. Quem já está ligado a
-                  este registro continua no histórico.
+                  <b className="text-ink">{itemToDelete?.nome}</b> sai do cadastro. Se ainda houver
+                  colaboradores ou outros registros vinculados a ele, a exclusão será bloqueada.
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button variant="secondary" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button>
