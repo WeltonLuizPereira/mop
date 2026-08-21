@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, Cell
 } from 'recharts';
 import {
-  Collaborator, Client, Operation, Ilha, Supervisor, CollaboratorStatus
+  Collaborator, Client, Operation, Ilha, Supervisor, CollaboratorStatus, EntityStatus
 } from '../types';
 import { db } from '../services/mockDb';
 import * as XLSX from 'xlsx';
@@ -369,23 +369,23 @@ export const TurnoverPage = () => {
                 </ChipSelect>
                 <ChipSelect rotulo="Cliente" value={filterClient} onChange={e => setFilterClient(e.target.value)}>
                     <option value="">todos</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                    {clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </ChipSelect>
                 <ChipSelect rotulo="Operação" value={filterOp} onChange={e => setFilterOp(e.target.value)}>
                     <option value="">todas</option>
                     {operations
-                        .filter(o => !filterClient || o.clientId === filterClient)
+                        .filter(o => o.status === EntityStatus.ACTIVE && (!filterClient || o.clientId === filterClient))
                         .map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
                 </ChipSelect>
                 <ChipSelect rotulo="Ilha" value={filterIlha} onChange={e => setFilterIlha(e.target.value)}>
                     <option value="">todas</option>
                     {ilhas
-                        .filter(i => (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp))
+                        .filter(i => i.status === EntityStatus.ACTIVE && (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp))
                         .map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
                 </ChipSelect>
                 <ChipSelect rotulo="Supervisor" value={filterSup} onChange={e => setFilterSup(e.target.value)}>
                     <option value="">todos</option>
-                    {supervisors.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                    {supervisors.filter(s => s.status === EntityStatus.ACTIVE).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                 </ChipSelect>
 
                 <div className="ml-auto flex items-center gap-2">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FileSpreadsheet, FileText, Plus, Eye } from 'lucide-react';
-import { Collaborator, User, UserRole, Coordinator, Supervisor, Ilha, Operation, Client, CollaboratorStatus } from '../types';
+import { Collaborator, User, UserRole, Coordinator, Supervisor, Ilha, Operation, Client, CollaboratorStatus, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDate, formatDateString } from '../utils';
 import * as XLSX from 'xlsx';
@@ -317,11 +317,11 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
 
-    const clientOptions = clients.map(c => ({value: c.id, label: c.nome}));
-    const opOptions = operations.filter(o => filterClient.length === 0 || filterClient.includes(o.clientId)).map(o => ({value: o.id, label: o.nome}));
-    const ilhaOptions = ilhas.filter(i => (filterClient.length === 0 || filterClient.includes(i.clientId)) && (filterOp.length === 0 || filterOp.includes(i.operationId))).map(i => ({value: i.id, label: i.nome}));
-    const coordOptions = coordinators.map(c => ({value: c.id, label: c.nome}));
-    const supOptions = supervisors.filter(s => filterCoord.length === 0 || s.coordinatorIds?.some(id => filterCoord.includes(id))).map(s => ({value: s.id, label: s.nome}));
+    const clientOptions = clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => ({value: c.id, label: c.nome}));
+    const opOptions = operations.filter(o => o.status === EntityStatus.ACTIVE && (filterClient.length === 0 || filterClient.includes(o.clientId))).map(o => ({value: o.id, label: o.nome}));
+    const ilhaOptions = ilhas.filter(i => i.status === EntityStatus.ACTIVE && (filterClient.length === 0 || filterClient.includes(i.clientId)) && (filterOp.length === 0 || filterOp.includes(i.operationId))).map(i => ({value: i.id, label: i.nome}));
+    const coordOptions = coordinators.filter(c => c.status === EntityStatus.ACTIVE).map(c => ({value: c.id, label: c.nome}));
+    const supOptions = supervisors.filter(s => s.status === EntityStatus.ACTIVE && (filterCoord.length === 0 || s.coordinatorIds?.some(id => filterCoord.includes(id)))).map(s => ({value: s.id, label: s.nome}));
     const statusOptions = Object.values(CollaboratorStatus).map(s => ({value: s, label: s}));
     const filtrosAtivos = filterCoord.length + filterSup.length + filterIlha.length
         + filterOp.length + filterClient.length + filterStatus.length;

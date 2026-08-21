@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  User, Collaborator
+  User, Collaborator, EntityStatus
 } from './types';
 import { db } from './services/mockDb';
 import { AppShell } from './components/shell/AppShell';
@@ -40,10 +40,10 @@ const App = () => {
   const refreshData = () => setDataVersion(v => v + 1);
 
   const [dropdownOptions, setDropdownOptions] = useState({
-      coordinators: [] as {value: string, label: string}[],
-      supervisors: [] as {value: string, label: string}[],
-      clients: [] as {value: string, label: string}[],
-      operations: [] as {value: string, label: string, clientId?: string}[]
+      coordinators: [] as {value: string, label: string, status: EntityStatus}[],
+      supervisors: [] as {value: string, label: string, status: EntityStatus}[],
+      clients: [] as {value: string, label: string, status: EntityStatus}[],
+      operations: [] as {value: string, label: string, clientId?: string, status: EntityStatus}[]
   });
 
   useEffect(() => {
@@ -64,11 +64,17 @@ const App = () => {
               db.getClients(),
               db.getOperations()
           ]);
+          // Mantém os inativos aqui: o CrudPage usa esta mesma lista tanto para
+          // as opções do <select> quanto para resolver o nome exibido na coluna
+          // da tabela — um vínculo com um registro já inativo precisa continuar
+          // aparecendo com o nome certo na tabela, só não pode ser reoferecido
+          // como escolha nova (isso o CrudPage filtra por `status` na hora de
+          // montar o <select>).
           setDropdownOptions({
-              coordinators: c.map(x => ({value: x.id, label: x.nome})),
-              supervisors: s.map(x => ({value: x.id, label: x.nome})),
-              clients: cli.map(x => ({value: x.id, label: x.nome})),
-              operations: op.map(x => ({value: x.id, label: x.nome, clientId: x.clientId}))
+              coordinators: c.map(x => ({value: x.id, label: x.nome, status: x.status})),
+              supervisors: s.map(x => ({value: x.id, label: x.nome, status: x.status})),
+              clients: cli.map(x => ({value: x.id, label: x.nome, status: x.status})),
+              operations: op.map(x => ({value: x.id, label: x.nome, clientId: x.clientId, status: x.status}))
           });
       };
       load();

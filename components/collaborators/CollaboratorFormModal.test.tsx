@@ -54,6 +54,39 @@ describe('CollaboratorFormModal', () => {
     expect(screen.getByLabelText('Supervisor')).toHaveValue('s1');
   });
 
+  it('só oferece Ilha, Coordenador, Supervisor, Cliente e Operação com status ativo', async () => {
+    const { db } = await import('../../services/mockDb');
+    (db.getIlhas as any).mockResolvedValueOnce([
+      { id: 'i1', nome: 'Ilha Ativa', clientId: 'c1', operationId: 'o1', coordinatorIds: ['co1'], supervisorIds: ['s1'], status: EntityStatus.ACTIVE },
+      { id: 'i2', nome: 'Ilha Inativa', clientId: 'c1', operationId: 'o1', coordinatorIds: [], supervisorIds: [], status: EntityStatus.INACTIVE },
+    ]);
+    (db.getCoordinators as any).mockResolvedValueOnce([
+      { id: 'co1', nome: 'Coord Ativo', status: EntityStatus.ACTIVE },
+      { id: 'co2', nome: 'Coord Inativo', status: EntityStatus.INACTIVE },
+    ]);
+    (db.getSupervisors as any).mockResolvedValueOnce([
+      { id: 's1', nome: 'Super Ativo', status: EntityStatus.ACTIVE },
+      { id: 's2', nome: 'Super Inativo', status: EntityStatus.INACTIVE },
+    ]);
+    (db.getClients as any).mockResolvedValueOnce([
+      { id: 'c1', nome: 'Cliente Ativo', status: EntityStatus.ACTIVE },
+      { id: 'c2', nome: 'Cliente Inativo', status: EntityStatus.INACTIVE },
+    ]);
+    (db.getOperations as any).mockResolvedValueOnce([
+      { id: 'o1', nome: 'Operação Ativa', clientId: 'c1', status: EntityStatus.ACTIVE },
+      { id: 'o2', nome: 'Operação Inativa', clientId: 'c1', status: EntityStatus.INACTIVE },
+    ]);
+
+    montar();
+    await screen.findByRole('option', { name: 'Ilha Ativa' });
+
+    expect(screen.queryByRole('option', { name: 'Ilha Inativa' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Coord Inativo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Super Inativo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Cliente Inativo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Operação Inativa' })).not.toBeInTheDocument();
+  });
+
   it('mostra campos de férias apenas quando o status é férias', async () => {
     const user = userEvent.setup();
     montar();

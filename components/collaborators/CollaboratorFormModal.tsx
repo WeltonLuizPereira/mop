@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle, CalendarClock, Stethoscope, Activity } from 'lucide-react';
-import { Collaborator, CollaboratorStatus, Ilha, Coordinator, Supervisor, Client, Operation } from '../../types';
+import { Collaborator, CollaboratorStatus, Ilha, Coordinator, Supervisor, Client, Operation, EntityStatus } from '../../types';
 import { db } from '../../services/mockDb';
 import { Input, Select, Button, Modal } from '../ui';
 
@@ -105,14 +105,14 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                            handleChange('ilhaId', '');
                         }}>
                            <option value="">Selecione...</option>
-                           {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                           {clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                         </Select>
                         <Select label="Operação" value={formData.operationId} onChange={(e:any) => {
                            handleChange('operationId', e.target.value);
                            handleChange('ilhaId', '');
                         }}>
                            <option value="">Selecione...</option>
-                           {operations.filter(o => !formData.clientId || o.clientId === formData.clientId).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                           {operations.filter(o => o.status === EntityStatus.ACTIVE && (!formData.clientId || o.clientId === formData.clientId)).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
                         </Select>
                         <Select label="Ilha" value={formData.ilhaId} onChange={(e:any) => {
                             const ilha = ilhas.find(i => i.id === e.target.value);
@@ -130,18 +130,18 @@ export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule
                             }
                         }}>
                             <option value="">Selecione...</option>
-                            {ilhas.filter(i => (!formData.clientId || i.clientId === formData.clientId) && (!formData.operationId || i.operationId === formData.operationId)).map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                            {ilhas.filter(i => i.status === EntityStatus.ACTIVE && (!formData.clientId || i.clientId === formData.clientId) && (!formData.operationId || i.operationId === formData.operationId)).map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
                         </Select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <Select label="Coordenador" value={formData.coordinatorId} onChange={(e:any) => handleChange('coordinatorId', e.target.value)}>
                             <option value="">Selecione...</option>
-                            {coordinators.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                            {coordinators.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                         </Select>
                         <Select label="Supervisor" value={formData.supervisorId} onChange={(e:any) => handleChange('supervisorId', e.target.value)}>
                             <option value="">Selecione...</option>
-                            {supervisors.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                            {supervisors.filter(s => s.status === EntityStatus.ACTIVE).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                         </Select>
                     </div>
                 </div>

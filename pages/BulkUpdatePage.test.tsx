@@ -104,4 +104,35 @@ describe('BulkUpdatePage — filtros', () => {
     await waitFor(() => expect(screen.getByText('1 colaboradores encontrados')).toBeInTheDocument());
     expect(screen.getByText('Colaborador Um')).toBeInTheDocument();
   });
+
+  it('não oferece Coordenador, Supervisor, Cliente, Operação ou Ilha inativos como opção, mas mantém o vínculo já existente visível na tabela', async () => {
+    const coordenadorInativo = { id: 'co3', nome: 'Carla Inativa', status: EntityStatus.INACTIVE };
+    const clienteInativo = { id: 'c2', nome: 'Cliente Inativo', status: EntityStatus.INACTIVE };
+    const operacaoInativa = { id: 'o2', nome: 'Operação Inativa', clientId: 'c1', status: EntityStatus.INACTIVE };
+    const ilhaInativa = { id: 'i2', nome: 'Ilha Inativa', clientId: 'c1', operationId: 'o1', coordinatorIds: [], supervisorIds: [], status: EntityStatus.INACTIVE };
+    const colaboradorLigadoAoInativo = { ...baseCollab, matricula: '3', nome: 'Colaborador Três', coordinatorId: 'co3', supervisorId: 's1' };
+
+    getCoordinators.mockResolvedValue([...coordinators, coordenadorInativo]);
+    getClients.mockResolvedValue([...clients, clienteInativo]);
+    getOperations.mockResolvedValue([...operations, operacaoInativa]);
+    getIlhas.mockResolvedValue([...ilhas, ilhaInativa]);
+    getCollaborators.mockResolvedValue([...collaborators, colaboradorLigadoAoInativo]);
+
+    const { container } = render(<BulkUpdatePage currentUser={admin} onRefresh={vi.fn()} />);
+    await waitFor(() => expect(screen.getByText('3 colaboradores encontrados')).toBeInTheDocument());
+
+    // painel "Filtros": nenhum inativo aparece como opção selecionável
+    expect(optionLabels(selectByLabel(container, 'Coordenador'))).toEqual(['Todos', 'Ana Coordenadora', 'Bruno Coordenador']);
+    expect(optionLabels(selectByLabel(container, 'Cliente'))).toEqual(['Todos', 'Cliente X']);
+    expect(optionLabels(selectByLabel(container, 'Operação'))).toEqual(['Todas', 'Operação X']);
+    expect(optionLabels(selectByLabel(container, 'Ilha'))).toEqual(['Todas', 'Ilha X']);
+
+    // painel "O que alterar" -> Novo Valor: mesma regra
+    const user = userEvent.setup();
+    await user.selectOptions(selectByLabel(container, 'Campo 1'), 'coordinatorId');
+    expect(optionLabels(selectByLabel(container, 'Novo Valor'))).toEqual(['Selecione...', 'Ana Coordenadora', 'Bruno Coordenador']);
+
+    // mas o colaborador já ligado ao coordenador inativo continua mostrando o nome dele na tabela
+    expect(screen.getByText('Carla Inativa')).toBeInTheDocument();
+  });
 });

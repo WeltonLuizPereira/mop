@@ -133,7 +133,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
           aria-label="Filtrar ilhas por cliente"
         >
           <option value="">todos</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          {clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
         </ChipSelect>
         <ChipSelect
           rotulo="Operação"

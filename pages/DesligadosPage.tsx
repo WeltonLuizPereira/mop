@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, FileSpreadsheet, Eye, UserX } from 'lucide-react';
-import { Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus } from '../types';
+import { Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString, getInitials } from '../utils';
 import * as XLSX from 'xlsx';
@@ -143,31 +143,32 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                     filtros={<>
                         <MultiSelect
                             label="Cliente"
-                            options={clients.map(c => ({ value: c.id, label: c.nome }))}
+                            options={clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => ({ value: c.id, label: c.nome }))}
                             value={filterClient}
                             onChange={setFilterClient}
                         />
                         <MultiSelect
                             label="Operação"
-                            options={operations.filter(o => filterClient.length === 0 || filterClient.includes(o.clientId)).map(o => ({ value: o.id, label: o.nome }))}
+                            options={operations.filter(o => o.status === EntityStatus.ACTIVE && (filterClient.length === 0 || filterClient.includes(o.clientId))).map(o => ({ value: o.id, label: o.nome }))}
                             value={filterOp}
                             onChange={setFilterOp}
                         />
                         <MultiSelect
                             label="Coordenador"
-                            options={coordinators.map(c => ({ value: c.id, label: c.nome }))}
+                            options={coordinators.filter(c => c.status === EntityStatus.ACTIVE).map(c => ({ value: c.id, label: c.nome }))}
                             value={filterCoord}
                             onChange={setFilterCoord}
                         />
                         <MultiSelect
                             label="Supervisor"
-                            options={supervisors.filter(s => filterCoord.length === 0 || s.coordinatorIds?.some(id => filterCoord.includes(id))).map(s => ({ value: s.id, label: s.nome }))}
+                            options={supervisors.filter(s => s.status === EntityStatus.ACTIVE && (filterCoord.length === 0 || s.coordinatorIds?.some(id => filterCoord.includes(id)))).map(s => ({ value: s.id, label: s.nome }))}
                             value={filterSup}
                             onChange={setFilterSup}
                         />
                         <MultiSelect
                             label="Ilha"
                             options={ilhas.filter(i =>
+                                i.status === EntityStatus.ACTIVE &&
                                 (filterOp.length === 0 || filterOp.includes(i.operationId)) &&
                                 (filterClient.length === 0 || filterClient.includes(i.clientId))
                             ).map(i => ({ value: i.id, label: i.nome }))}

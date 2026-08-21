@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Chip } from '../components/ui';
-import type { Client, Collaborator, Ilha, Operation, Supervisor } from '../types';
+import { EntityStatus, type Client, type Collaborator, type Ilha, type Operation, type Supervisor } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
 import { Badge, Button, ChipSelect, MultiSelect, Table } from '../components/ui';
@@ -302,24 +302,25 @@ export const SafraPage = () => {
         filtros={<>
           <MultiSelect
             label="Cliente" value={filterClient} onChange={setFilterClient}
-            options={clients.map(c => ({ value: c.id, label: c.nome }))}
+            options={clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => ({ value: c.id, label: c.nome }))}
           />
           <MultiSelect
             label="Operação" value={filterOp} onChange={setFilterOp}
             options={operations
-              .filter(o => filterClient.length === 0 || filterClient.includes(o.clientId))
+              .filter(o => o.status === EntityStatus.ACTIVE && (filterClient.length === 0 || filterClient.includes(o.clientId)))
               .map(o => ({ value: o.id, label: o.nome }))}
           />
           <MultiSelect
             label="Ilha" value={filterIlha} onChange={setFilterIlha}
             options={ilhas
-              .filter(i => (filterClient.length === 0 || filterClient.includes(i.clientId))
+              .filter(i => i.status === EntityStatus.ACTIVE
+                && (filterClient.length === 0 || filterClient.includes(i.clientId))
                 && (filterOp.length === 0 || filterOp.includes(i.operationId)))
               .map(i => ({ value: i.id, label: i.nome }))}
           />
           <MultiSelect
             label="Supervisor" value={filterSup} onChange={setFilterSup}
-            options={supervisors.map(s => ({ value: s.id, label: s.nome }))}
+            options={supervisors.filter(s => s.status === EntityStatus.ACTIVE).map(s => ({ value: s.id, label: s.nome }))}
           />
         </>}
       />

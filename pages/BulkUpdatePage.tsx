@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, AlertCircle, Info, Filter, AlertTriangle, CalendarClock, Loader2, X, CheckCircle, ListChecks } from 'lucide-react';
-import { User, Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus } from '../types';
+import { User, Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { Button, Modal } from '../components/ui';
 
@@ -324,11 +324,11 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                                 }}
                                             >
                                                 <option value="">Selecione...</option>
-                                                {update.field === 'coordinatorId' && coordinators.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                                                {update.field === 'supervisorId' && supervisors.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-                                                {update.field === 'ilhaId' && ilhas.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
-                                                {update.field === 'operationId' && operations.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                                                {update.field === 'clientId' && clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                                                {update.field === 'coordinatorId' && coordinators.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                                                {update.field === 'supervisorId' && supervisors.filter(s => s.status === EntityStatus.ACTIVE).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                                                {update.field === 'ilhaId' && ilhas.filter(i => i.status === EntityStatus.ACTIVE).map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                                                {update.field === 'operationId' && operations.filter(o => o.status === EntityStatus.ACTIVE).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                                                {update.field === 'clientId' && clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                                                 {update.field === 'status' && Object.values(CollaboratorStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                             {update.field === 'ilhaId' && update.value && (
@@ -401,35 +401,35 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                 <label className="t-eyebrow text-ink-faint">Cliente</label>
                                 <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterClient} onChange={e => setFilterClient(e.target.value)}>
                                     <option value="">Todos</option>
-                                    {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                                    {clients.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="t-eyebrow text-ink-faint">Operação</label>
                                 <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterOp} onChange={e => setFilterOp(e.target.value)}>
                                     <option value="">Todas</option>
-                                    {operations.filter(o => !filterClient || o.clientId === filterClient).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                                    {operations.filter(o => o.status === EntityStatus.ACTIVE && (!filterClient || o.clientId === filterClient)).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="t-eyebrow text-ink-faint">Ilha</label>
                                 <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterIlha} onChange={e => setFilterIlha(e.target.value)}>
                                     <option value="">Todas</option>
-                                    {ilhas.filter(i => (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp)).map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                                    {ilhas.filter(i => i.status === EntityStatus.ACTIVE && (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp)).map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="t-eyebrow text-ink-faint">Coordenador</label>
                                 <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterCoordinator} onChange={e => setFilterCoordinator(e.target.value)}>
                                     <option value="">Todos</option>
-                                    {coordinators.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                                    {coordinators.filter(c => c.status === EntityStatus.ACTIVE).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="t-eyebrow text-ink-faint">Supervisor</label>
                                 <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterSupervisor} onChange={e => setFilterSupervisor(e.target.value)}>
                                     <option value="">Todos</option>
-                                    {supervisors.filter(s => !filterCoordinator || s.coordinatorIds?.includes(filterCoordinator)).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                                    {supervisors.filter(s => s.status === EntityStatus.ACTIVE && (!filterCoordinator || s.coordinatorIds?.includes(filterCoordinator))).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                                 </select>
                             </div>
                         </div>
