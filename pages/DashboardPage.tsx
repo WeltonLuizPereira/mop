@@ -49,15 +49,14 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   const operacoesDoCliente = operations.filter(o => !cliente || o.clientId === cliente);
 
   const stats = computeIlhaStats(recortadas, collabs, clients, operations, provimentos, ordem);
-  const totais = totaisGerais(collabs);
 
-  // O consolidado ignora os chips de recorte de propósito: ele responde pela
-  // operação inteira, como a faixa de totais logo acima, e some junto com ela
-  // do raciocínio se acompanhar o filtro. Quem diz o alcance é a contagem de
-  // ilhas impressa no próprio card.
-  const geral = consolidarIlhas(
-    computeIlhaStats(emOperacao, collabs, clients, operations, provimentos),
-  );
+  // Tudo na tela responde pelo mesmo recorte: a faixa de números, o card
+  // consolidado e os tiles. Números de alcances diferentes lado a lado se
+  // contradizem — o provimento da faixa e o do card são a mesma conta, feita
+  // uma vez só, sobre as ilhas que estão à vista.
+  const geral = consolidarIlhas(stats);
+  const visiveis = new Set(recortadas.map(i => i.id));
+  const totais = totaisGerais(collabs.filter(c => visiveis.has(c.ilhaId)));
 
   const numeros = [
     { rotulo: 'ativos', valor: totais.ativos.toLocaleString('pt-BR'), aceso: false },
@@ -94,7 +93,11 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5 mb-6">
+      <div
+        role="group"
+        aria-label="Resumo do quadro"
+        className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5 mb-6"
+      >
         {numeros.map(({ rotulo, valor, aceso }, i) => (
           <React.Fragment key={rotulo}>
             {i > 0 && <div className="w-px h-4 bg-hairline-2" aria-hidden="true" />}

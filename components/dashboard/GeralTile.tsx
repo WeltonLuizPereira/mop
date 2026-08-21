@@ -35,9 +35,9 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
         <h3 className="font-display font-bold text-[15px] leading-[1.25] tracking-[-.01em] text-ink">
           GERAL QUALITY
         </h3>
-        {/* a contagem de ilhas é o que fixa o alcance do card: com um filtro
-            de cliente ligado, ela deixa claro que este número continua sendo
-            o da operação inteira, e não o do recorte na tela */}
+        {/* a contagem de ilhas fixa o alcance da soma: com um filtro ligado
+            ela cai junto, e o número deixa de poder ser lido como se fosse
+            o da operação inteira */}
         <p className="text-xs text-ink-mute mt-0.5">
           {geral.ilhas} {geral.ilhas === 1 ? 'ilha' : 'ilhas'} em operação
         </p>

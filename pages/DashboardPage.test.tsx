@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus, UserRole } from '../types';
@@ -149,17 +149,38 @@ describe('Visão geral', () => {
     expect(screen.getAllByText('67%')).toHaveLength(2);
   });
 
-  it('mantém o provimento geral no total da operação, mesmo com filtro ligado', async () => {
+  it('recalcula a faixa e o consolidado quando o filtro recorta o mapa', async () => {
     const user = userEvent.setup();
     render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
 
     await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c2');
 
-    // sobrou uma ilha na tela, mas o consolidado continua respondendo pelas duas
+    // sobrou só a Ilha 07: 1 ativo sobre 1 PA contratada
     expect(screen.queryByText('Ilha 01 — SAC')).not.toBeInTheDocument();
-    expect(screen.getByText('2 ilhas em operação')).toBeInTheDocument();
-    expect(screen.getAllByText('67%')).toHaveLength(2);
+    expect(screen.getByText('1 ilha em operação')).toBeInTheDocument();
+    expect(screen.queryByText('67%')).not.toBeInTheDocument();
+    // faixa, consolidado e o tile da própria ilha: com uma ilha só no
+    // recorte, os três dizem necessariamente o mesmo número
+    expect(screen.getAllByText('100%')).toHaveLength(3);
+  });
+
+  it('recorta também a contagem por status da faixa de totais', async () => {
+    const user = userEvent.setup();
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    await screen.findByText('Ilha 01 — SAC');
+
+    // sem filtro: 2 ativos e 1 em férias entre as duas ilhas
+    const faixa = () => within(screen.getByRole('group', { name: 'Resumo do quadro' }));
+    const naFaixa = (rotulo: string) =>
+      faixa().getByText(rotulo).parentElement!.textContent!.replace(rotulo, '');
+    expect(naFaixa('ativos')).toBe('2');
+    expect(naFaixa('em férias')).toBe('1');
+
+    // a Ilha 07 não tem ninguém de férias — a faixa tem que acompanhar
+    await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c2');
+    expect(naFaixa('ativos')).toBe('1');
+    expect(naFaixa('em férias')).toBe('0');
   });
 
   it('não afirma tendência que não calculou', async () => {
