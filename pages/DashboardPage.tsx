@@ -58,11 +58,17 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   const visiveis = new Set(recortadas.map(i => i.id));
   const totais = totaisGerais(collabs.filter(c => visiveis.has(c.ilhaId)));
 
+  // A faixa segue a ordem em que a pergunta é feita: quanto foi contratado,
+  // quanto está de pé, o que isso dá — e só depois onde está o resto do
+  // quadro. Os três primeiros são uma conta só, lida da esquerda para a
+  // direita; os outros três explicam quem não está no numerador.
   const numeros = [
+    {
+      rotulo: 'PA contratada',
+      valor: geral.paContratada === null ? '—' : geral.paContratada.toLocaleString('pt-BR'),
+      aceso: false,
+    },
     { rotulo: 'ativos', valor: totais.ativos.toLocaleString('pt-BR'), aceso: false },
-    { rotulo: 'em férias', valor: totais.ferias.toLocaleString('pt-BR'), aceso: false },
-    { rotulo: 'em aviso prévio', valor: totais.aviso.toLocaleString('pt-BR'), aceso: false },
-    { rotulo: 'afastados', valor: totais.afastados.toLocaleString('pt-BR'), aceso: false },
     {
       rotulo: 'provimento geral',
       valor: geral.provimento === null ? '—' : `${Math.round(geral.provimento * 100)}%`,
@@ -70,6 +76,9 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
       // mesmo quente que o anel dos cards usa para dizer a mesma coisa
       aceso: geral.provimento !== null && geral.provimento < 0.8,
     },
+    { rotulo: 'em férias', valor: totais.ferias.toLocaleString('pt-BR'), aceso: false },
+    { rotulo: 'em aviso prévio', valor: totais.aviso.toLocaleString('pt-BR'), aceso: false },
+    { rotulo: 'afastados', valor: totais.afastados.toLocaleString('pt-BR'), aceso: false },
   ];
 
   if (carregando) {

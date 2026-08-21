@@ -135,15 +135,14 @@ describe('Visão geral', () => {
     expect(abrir).toHaveBeenCalledWith('i1');
   });
 
-  it('fecha a faixa de totais com o provimento geral, depois dos afastados', async () => {
+  it('abre a faixa pela conta do provimento e fecha com o resto do quadro', async () => {
     render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
     await screen.findByText('Ilha 01 — SAC');
 
-    // 2 ativos sobre 3 PA contratada nas duas ilhas do mock
-    const afastados = screen.getByText('afastados');
-    const provimento = screen.getAllByText('provimento geral')[0];
-    expect(afastados.compareDocumentPosition(provimento) & Node.DOCUMENT_POSITION_FOLLOWING)
-      .toBeTruthy();
+    // 2 ativos sobre 3 PA contratada nas duas ilhas do mock; a ordem é o que
+    // este teste guarda — contratado, de pé, o resultado, depois os ausentes
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' }).textContent)
+      .toBe('3PA contratada2ativos67%provimento geral1em férias0em aviso prévio0afastados');
 
     // o mesmo número na faixa e no card: são a mesma conta, feita uma vez só
     expect(screen.getAllByText('67%')).toHaveLength(2);
