@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus, UserRole } from '../types';
@@ -96,15 +96,16 @@ describe('Visão geral', () => {
     const nomes = () => screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent);
     const chip = screen.getByLabelText('Ordenar as ilhas') as HTMLSelectElement;
 
-    // a tela abre em A → Z; a ordem alfabética em si está provada em ilhaStats
+    // a tela abre em A → Z; a ordem alfabética em si está provada em ilhaStats.
+    // o consolidado abre a lista em qualquer ordenação — ele não entra no sort
     expect(chip.value).toBe('nome');
-    expect(nomes()).toEqual(['Ilha 01 — SAC', 'Ilha 07 — Cobrança']);
+    expect(nomes()).toEqual(['GERAL QUALITY', 'Ilha 01 — SAC', 'Ilha 07 — Cobrança']);
 
     await user.selectOptions(chip, 'desc');
-    expect(nomes()).toEqual(['Ilha 07 — Cobrança', 'Ilha 01 — SAC']);
+    expect(nomes()).toEqual(['GERAL QUALITY', 'Ilha 07 — Cobrança', 'Ilha 01 — SAC']);
 
     await user.selectOptions(chip, 'nome');
-    expect(nomes()).toEqual(['Ilha 01 — SAC', 'Ilha 07 — Cobrança']);
+    expect(nomes()).toEqual(['GERAL QUALITY', 'Ilha 01 — SAC', 'Ilha 07 — Cobrança']);
   });
 
   it('o tile leva para a lista recortada pela ilha clicada', async () => {
@@ -125,10 +126,40 @@ describe('Visão geral', () => {
     render(<DashboardPage currentUser={usuario} onAbrirIlha={abrir} />);
     await screen.findByText('Ilha 01 — SAC');
 
-    screen.getByRole('button', { name: /Ilha 01 — SAC/ }).focus();
+    // o foco real precisa entrar no act: focar o tile expande ele, e um
+    // setState solto fora do act polui a saída do teste com aviso do React
+    const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
+    await act(async () => { card.focus(); });
     await user.keyboard('{Enter}');
 
     expect(abrir).toHaveBeenCalledWith('i1');
+  });
+
+  it('fecha a faixa de totais com o provimento geral, depois dos afastados', async () => {
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    await screen.findByText('Ilha 01 — SAC');
+
+    // 2 ativos sobre 3 PA contratada nas duas ilhas do mock
+    const afastados = screen.getByText('afastados');
+    const provimento = screen.getAllByText('provimento geral')[0];
+    expect(afastados.compareDocumentPosition(provimento) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+
+    // o mesmo número na faixa e no card: são a mesma conta, feita uma vez só
+    expect(screen.getAllByText('67%')).toHaveLength(2);
+  });
+
+  it('mantém o provimento geral no total da operação, mesmo com filtro ligado', async () => {
+    const user = userEvent.setup();
+    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    await screen.findByText('Ilha 01 — SAC');
+
+    await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c2');
+
+    // sobrou uma ilha na tela, mas o consolidado continua respondendo pelas duas
+    expect(screen.queryByText('Ilha 01 — SAC')).not.toBeInTheDocument();
+    expect(screen.getByText('2 ilhas em operação')).toBeInTheDocument();
+    expect(screen.getAllByText('67%')).toHaveLength(2);
   });
 
   it('não afirma tendência que não calculou', async () => {

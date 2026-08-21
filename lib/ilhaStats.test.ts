@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CollaboratorStatus, EntityStatus, type Provimento } from '../types';
-import { computeIlhaStats, totaisGerais } from './ilhaStats';
+import { computeIlhaStats, consolidarIlhas, totaisGerais, type IlhaStat } from './ilhaStats';
 
 const clients = [{ id: 'c1', nome: 'Vivo', status: EntityStatus.ACTIVE }];
 const operations = [{ id: 'o1', nome: 'Móvel', clientId: 'c1', status: EntityStatus.ACTIVE }];
@@ -147,5 +147,81 @@ describe('totaisGerais', () => {
       colab('6', 'i1', CollaboratorStatus.DESLIGADO),
     ]);
     expect(t).toEqual({ ativos: 2, ferias: 1, aviso: 1, afastados: 1 });
+  });
+});
+
+const stat = (o: Partial<IlhaStat> = {}): IlhaStat => ({
+  id: 'i1', nome: 'Ilha', cliente: 'Vivo', operacao: 'Móvel',
+  total: 0, ativos: 0, paContratada: null, provimento: null, porStatus: [],
+  ...o,
+});
+
+describe('consolidarIlhas', () => {
+  it('soma quadro, ativos e PA contratada das ilhas', () => {
+    const c = consolidarIlhas([
+      stat({ total: 10, ativos: 8, paContratada: 10 }),
+      stat({ total: 5, ativos: 4, paContratada: 6 }),
+    ]);
+    expect(c.ilhas).toBe(2);
+    expect(c.total).toBe(15);
+    expect(c.ativos).toBe(12);
+    expect(c.paContratada).toBe(16);
+  });
+
+  it('divide os totais em vez de tirar a média dos percentuais', () => {
+    // 40/40 e 0/10: a média simples diria 50%, mas a ilha de 40 posições
+    // não pesa igual à de 10 no que a operação contratou
+    const c = consolidarIlhas([
+      stat({ total: 40, ativos: 40, paContratada: 40 }),
+      stat({ total: 10, ativos: 0, paContratada: 10 }),
+    ]);
+    expect(c.provimento).toBeCloseTo(0.8);
+    expect(c.provimento).not.toBeCloseTo(0.5);
+  });
+
+  it('conta as ilhas que ainda não têm PA definida', () => {
+    const c = consolidarIlhas([
+      stat({ total: 10, ativos: 8, paContratada: 10 }),
+      stat({ total: 5, ativos: 5, paContratada: null }),
+      stat({ total: 3, ativos: 3, paContratada: null }),
+    ]);
+    expect(c.semPa).toBe(2);
+    // os ativos delas contam; a meta que não existe não entra no divisor
+    expect(c.ativos).toBe(16);
+    expect(c.paContratada).toBe(10);
+  });
+
+  it('devolve provimento nulo quando nenhuma ilha tem PA', () => {
+    const c = consolidarIlhas([
+      stat({ total: 5, ativos: 5 }),
+      stat({ total: 3, ativos: 2 }),
+    ]);
+    expect(c.paContratada).toBeNull();
+    expect(c.provimento).toBeNull();
+    expect(Number.isNaN(c.provimento as any)).toBe(false);
+  });
+
+  it('aguenta a lista vazia sem dividir por zero', () => {
+    const c = consolidarIlhas([]);
+    expect(c).toMatchObject({ ilhas: 0, semPa: 0, total: 0, ativos: 0, paContratada: null, provimento: null });
+    expect(c.porStatus).toEqual([]);
+  });
+
+  it('soma a composição por status, na ordem fixa e sem os zerados', () => {
+    const c = consolidarIlhas([
+      stat({ porStatus: [
+        { status: CollaboratorStatus.ATIVO, count: 8 },
+        { status: CollaboratorStatus.FERIAS, count: 1 },
+      ] }),
+      stat({ porStatus: [
+        { status: CollaboratorStatus.ATIVO, count: 4 },
+        { status: CollaboratorStatus.AFASTADO, count: 2 },
+      ] }),
+    ]);
+    expect(c.porStatus).toEqual([
+      { status: CollaboratorStatus.ATIVO, count: 12 },
+      { status: CollaboratorStatus.FERIAS, count: 1 },
+      { status: CollaboratorStatus.AFASTADO, count: 2 },
+    ]);
   });
 });

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { EntityStatus, User, type Client, type Collaborator, type Ilha, type Operation, type Provimento } from '../types';
 import { db } from '../services/mockDb';
-import { computeIlhaStats, totaisGerais, type Ordem } from '../lib/ilhaStats';
+import { computeIlhaStats, consolidarIlhas, totaisGerais, type Ordem } from '../lib/ilhaStats';
 import { referenciaDoMes } from '../lib/provimentoStats';
 import { IlhaTile } from '../components/dashboard/IlhaTile';
+import { GeralTile } from '../components/dashboard/GeralTile';
 import { ChipSelect } from '../components/ui';
 
 export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: string) => void }> = ({ onAbrirIlha }) => {
@@ -50,6 +51,28 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   const stats = computeIlhaStats(recortadas, collabs, clients, operations, provimentos, ordem);
   const totais = totaisGerais(collabs);
 
+  // O consolidado ignora os chips de recorte de propósito: ele responde pela
+  // operação inteira, como a faixa de totais logo acima, e some junto com ela
+  // do raciocínio se acompanhar o filtro. Quem diz o alcance é a contagem de
+  // ilhas impressa no próprio card.
+  const geral = consolidarIlhas(
+    computeIlhaStats(emOperacao, collabs, clients, operations, provimentos),
+  );
+
+  const numeros = [
+    { rotulo: 'ativos', valor: totais.ativos.toLocaleString('pt-BR'), aceso: false },
+    { rotulo: 'em férias', valor: totais.ferias.toLocaleString('pt-BR'), aceso: false },
+    { rotulo: 'em aviso prévio', valor: totais.aviso.toLocaleString('pt-BR'), aceso: false },
+    { rotulo: 'afastados', valor: totais.afastados.toLocaleString('pt-BR'), aceso: false },
+    {
+      rotulo: 'provimento geral',
+      valor: geral.provimento === null ? '—' : `${Math.round(geral.provimento * 100)}%`,
+      // é o único número da faixa que tem limiar: abaixo de 80% ele acende no
+      // mesmo quente que o anel dos cards usa para dizer a mesma coisa
+      aceso: geral.provimento !== null && geral.provimento < 0.8,
+    },
+  ];
+
   if (carregando) {
     return <p className="text-sm text-ink-mute py-20 text-center">Carregando o mapa…</p>;
   }
@@ -72,14 +95,15 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   return (
     <div>
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5 mb-6">
-        {([['ativos', totais.ativos], ['em férias', totais.ferias],
-           ['em aviso prévio', totais.aviso], ['afastados', totais.afastados]] as const)
-          .map(([rotulo, n], i) => (
+        {numeros.map(({ rotulo, valor, aceso }, i) => (
           <React.Fragment key={rotulo}>
             {i > 0 && <div className="w-px h-4 bg-hairline-2" aria-hidden="true" />}
             <div className="flex items-baseline gap-1.5">
-              <span className="font-display font-bold text-[21px] tracking-tight tabular-nums text-ink">
-                {n.toLocaleString('pt-BR')}
+              <span
+                className={`font-display font-bold text-[21px] tracking-tight tabular-nums
+                            ${aceso ? 'text-brand-hot' : 'text-ink'}`}
+              >
+                {valor}
               </span>
               <span className="text-[13px] text-ink-mute">{rotulo}</span>
             </div>
@@ -126,6 +150,9 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
         </p>
       ) : (
         <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(286px, 1fr))' }}>
+          {/* fora do sort de propósito: o consolidado abre o mapa em qualquer
+              ordenação, porque é o número que enquadra todos os outros */}
+          <GeralTile geral={geral} />
           {stats.map(ilha => (
             <IlhaTile key={ilha.id} ilha={ilha} onOpen={() => onAbrirIlha(ilha.id)} />
           ))}
