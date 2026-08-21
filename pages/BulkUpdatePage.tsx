@@ -29,6 +29,8 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
     const [filterOp, setFilterOp] = useState('');
     const [filterIlha, setFilterIlha] = useState('');
     const [filterStatus, setFilterStatus] = useState(CollaboratorStatus.ATIVO);
+    const [filterCoordinator, setFilterCoordinator] = useState('');
+    const [filterSupervisor, setFilterSupervisor] = useState('');
     
     // Update Actions
     const [updates, setUpdates] = useState<{ field: string, value: string }[]>([{ field: '', value: '' }]);
@@ -68,9 +70,11 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
             if (filterOp && c.operationId !== filterOp) return false;
             if (filterIlha && c.ilhaId !== filterIlha) return false;
             if (filterStatus && c.status !== filterStatus) return false;
+            if (filterCoordinator && c.coordinatorId !== filterCoordinator) return false;
+            if (filterSupervisor && c.supervisorId !== filterSupervisor) return false;
             return true;
         });
-    }, [collabs, filterClient, filterOp, filterIlha, filterStatus]);
+    }, [collabs, filterClient, filterOp, filterIlha, filterStatus, filterCoordinator, filterSupervisor]);
 
     const handleSelectAll = () => {
         if (selectedIds.size === filtered.length) {
@@ -412,6 +416,20 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                 <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterIlha} onChange={e => setFilterIlha(e.target.value)}>
                                     <option value="">Todas</option>
                                     {ilhas.filter(i => (!filterClient || i.clientId === filterClient) && (!filterOp || i.operationId === filterOp)).map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="t-eyebrow text-ink-faint">Coordenador</label>
+                                <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterCoordinator} onChange={e => setFilterCoordinator(e.target.value)}>
+                                    <option value="">Todos</option>
+                                    {coordinators.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="t-eyebrow text-ink-faint">Supervisor</label>
+                                <select className="w-full p-2 bg-canvas-soft border border-hairline rounded-lg text-xs" value={filterSupervisor} onChange={e => setFilterSupervisor(e.target.value)}>
+                                    <option value="">Todos</option>
+                                    {supervisors.filter(s => !filterCoordinator || s.coordinatorIds?.includes(filterCoordinator)).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                                 </select>
                             </div>
                         </div>
