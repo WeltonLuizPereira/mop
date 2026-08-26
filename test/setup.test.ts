@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { FIXTURES } from './supabaseFixtures';
 
-const URL_PRODUCAO_SUPABASE = 'https://rolbbkazwcgwjtjadrsn.supabase.co/rest/v1/mop_users?select=*';
+const URL_PRODUCAO_SUPABASE = 'https://vaqdyvatllansjxnweht.supabase.co/rest/v1/mop_users?select=*';
 
 // vi.mock é hoisted pelo Vitest para o topo do arquivo — precisa vir antes
 // do import de '../services/mockDb' abaixo para valer nesse import.
@@ -18,7 +18,7 @@ describe('barreira de rede em test/setup.ts', () => {
 
   it('a mensagem de erro cita a URL bloqueada e como resolver', async () => {
     await expect(fetch(URL_PRODUCAO_SUPABASE)).rejects.toThrow(
-      /Teste tentou alcançar a rede: https:\/\/rolbbkazwcgwjtjadrsn\.supabase\.co.*vi\.mock.*supabaseFixtures/s,
+      /Teste tentou alcançar a rede: https:\/\/vaqdyvatllansjxnweht\.supabase\.co.*vi\.mock.*supabaseFixtures/s,
     );
   });
 
