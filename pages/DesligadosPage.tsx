@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, FileSpreadsheet, Eye, UserX } from 'lucide-react';
 import { Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
-import { formatDateString, getInitials } from '../utils';
+import { formatDateString, getInitials, getCollaboratorCalculations } from '../utils';
 import * as XLSX from 'xlsx';
 import { Button, Chip, ChipSelect, MultiSelect, Table } from '../components/ui';
 
@@ -79,24 +79,116 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const years = Array.from({length: 6}, (_, i) => (today.getFullYear() + 1) - i);
 
+    const prepareExportData = (isExcel = false) => {
+        const referencia = viewAll
+            ? 'Todo o período'
+            : `01/${String(selectedMonth + 1).padStart(2, '0')}/${selectedYear}`;
+            
+        return filtered.map(c => {
+            const calc = getCollaboratorCalculations(c.dtEntradaProduto);
+            const sup = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';
+            const ilha = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
+            const coord = coordinators.find(co => co.id === c.coordinatorId)?.nome || '-';
+            const op = operations.find(o => o.id === c.operationId)?.nome || '-';
+            const cli = clients.find(cl => cl.id === c.clientId)?.nome || '-';
+
+            const toExcelDate = (dateStr: string | undefined) => {
+                if (!dateStr || dateStr === '-') return null;
+                let day, month, year;
+                if (dateStr.includes('/')) {
+                   const parts = dateStr.split('/');
+                   if(parts.length !== 3) return null;
+                   day = Number(parts[0]);
+                   month = Number(parts[1]) - 1;
+                   year = Number(parts[2]);
+                } else {
+                   const parts = dateStr.split('-');
+                   if(parts.length !== 3) return null;
+                   year = Number(parts[0]);
+                   month = Number(parts[1]) - 1;
+                   day = Number(parts[2]);
+                }
+                return new Date(year, month, day, 12, 0, 0);
+            };
+
+            const formatTimeForExport = (t: string | undefined) => {
+                if(!t) return isExcel ? null : '00:00:00';
+                if (isExcel) {
+                    const parts = t.split(':');
+                    if (parts.length >= 2) {
+                        const h = parseInt(parts[0], 10) || 0;
+                        const m = parseInt(parts[1], 10) || 0;
+                        const s = parts.length >= 3 ? parseInt(parts[2], 10) || 0 : 0;
+                        return (h * 3600 + m * 60 + s) / 86400;
+                    }
+                    return null;
+                }
+                if(t.length === 5) return `${t}:00`;
+                return t;
+            }
+
+            return {
+                'MATRICULA': parseInt(c.matricula) || c.matricula,
+                'EMAIL': c.email,
+                'NOME': c.nome,
+                'SUPERVISOR': sup,
+                'ILHA': ilha,
+                'STATUS': c.status,
+                'DT ENTRADA PRODUTO': toExcelDate(c.dtEntradaProduto),
+                'DATA FIM': toExcelDate(c.dataFim),
+                'HORÁRIO DE ENTRADA': formatTimeForExport(c.horarioEntrada),
+                'HORÁRIO DE SÁIDA': formatTimeForExport(c.horarioSaida),
+                'EXPERIENCIA': calc.experiencia,
+                'TEMPO DE CASA': calc.tempoDeCasa,
+                'VENCE': calc.vence !== '-' ? toExcelDate(calc.vence) : '-',
+                'DT_NASC': toExcelDate(c.dtNasc),
+                'REFERENCIA': referencia,
+                'COORDENADOR': coord,
+                'OPERAÇÃO': op,
+                'CLIENTE': cli,
+                'EMAIL VR': c.email_vr || '',
+                'SENHA': c.senha || ''
+            };
+        });
+    };
+
     const handleExportExcel = () => {
         if (filtered.length === 0) {
             alert("Sem dados para exportar.");
             return;
         }
 
-        const dataToExport = filtered.map(c => ({
-            "Matrícula": c.matricula,
-            "Nome": c.nome,
-            "Data de Admissão": c.dtEntradaProduto ? formatDateString(c.dtEntradaProduto) : '-',
-            "Data de Desligamento": c.dataFim ? formatDateString(c.dataFim) : '-',
-            "Ilha": ilhas.find(i => i.id === c.ilhaId)?.nome || '-',
-            "Supervisor": supervisors.find(s => s.id === c.supervisorId)?.nome || '-',
-            "EMAIL VR": c.email_vr || '-',
-            "SENHA": c.senha || '-'
-        }));
-
+        const dataToExport = prepareExportData(true);
         const ws = XLSX.utils.json_to_sheet(dataToExport);
+        
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+        let entradaCol = -1;
+        let saidaCol = -1;
+        
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+            const cell = ws[cellAddress];
+            if (cell && cell.v === 'HORÁRIO DE ENTRADA') entradaCol = C;
+            if (cell && cell.v === 'HORÁRIO DE SÁIDA') saidaCol = C;
+        }
+
+        for (let R = 1; R <= range.e.r; ++R) {
+            if (entradaCol !== -1) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: entradaCol });
+                const cell = ws[cellAddress];
+                if (cell && cell.t === 'n') {
+                    cell.z = 'hh:mm:ss';
+                }
+            }
+            if (saidaCol !== -1) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: saidaCol });
+                const cell = ws[cellAddress];
+                if (cell && cell.t === 'n') {
+                    cell.z = 'hh:mm:ss';
+                }
+            }
+        }
+
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Desligados");
         XLSX.writeFile(wb, "MOP_Colaboradores_Desligados.xlsx");
