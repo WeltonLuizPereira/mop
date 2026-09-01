@@ -27,7 +27,7 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
     const today = new Date();
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
-    const [viewAll, setViewAll] = useState(false);
+    const [viewAll, setViewAll] = useState(true);
 
     useEffect(() => {
         const load = async () => {
