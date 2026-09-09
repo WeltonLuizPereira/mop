@@ -27,7 +27,13 @@ export function createResourceCache<T>(
   let generation = 0;
   const listeners = new Set<() => void>();
 
-  const notify = () => listeners.forEach(listener => listener());
+  const notify = () => listeners.forEach(listener => {
+    try {
+      listener();
+    } catch {
+      // A falha de um consumidor não pode interromper a atualização do recurso.
+    }
+  });
 
   const startLoad = (): Promise<T> => {
     const requestGeneration = generation;
@@ -73,12 +79,12 @@ export function createResourceCache<T>(
   };
 
   const refresh = (options?: { force?: boolean }): Promise<T> => {
-    if (!options?.force && snapshot.data !== undefined && Date.now() - snapshot.updatedAt < staleTime) {
-      return Promise.resolve(snapshot.data);
-    }
-
     if (!options?.force && pending) {
       return pending;
+    }
+
+    if (!options?.force && snapshot.data !== undefined && Date.now() - snapshot.updatedAt < staleTime) {
+      return Promise.resolve(snapshot.data);
     }
 
     if (options?.force) generation += 1;
