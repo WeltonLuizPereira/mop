@@ -21,23 +21,35 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
     const isAdmin = currentUser.role === UserRole.ADMIN;
 
     useEffect(() => {
-        const load = async () => {
-            const allLogs = await db.getHistory();
-            setHistoryLogs(allLogs.filter(h => h.target === currentCollab.nome || h.details?.includes(currentCollab.matricula)));
-            const vacHistory = await db.getVacationHistory(currentCollab.matricula);
-            setVacationHistory(vacHistory);
-            const ilhas = await db.getIlhas();
+        let active = true;
+
+        // Históricos podem ser tabelas grandes. Eles não devem bloquear os
+        // dados de alocação que formam a parte principal desta tela.
+        void db.getHistory().then(allLogs => {
+            if (active) setHistoryLogs(allLogs.filter(h => h.target === currentCollab.nome || h.details?.includes(currentCollab.matricula)));
+        });
+        void db.getVacationHistory(currentCollab.matricula).then(vacHistory => {
+            if (active) setVacationHistory(vacHistory);
+        });
+
+        // As cinco consultas eram encadeadas e somavam suas latências. Iniciá-las
+        // juntas reduz a espera para a duração de apenas uma ida ao Supabase.
+        void Promise.all([
+            db.getIlhas(),
+            db.getOperations(),
+            db.getClients(),
+            db.getCoordinators(),
+            db.getSupervisors(),
+        ]).then(([ilhas, ops, clients, coords, sups]) => {
+            if (!active) return;
             setIlha(ilhas.find(i => i.id === currentCollab.ilhaId));
-            const ops = await db.getOperations();
             setOp(ops.find(o => o.id === currentCollab.operationId));
-            const clients = await db.getClients();
             setClient(clients.find(c => c.id === currentCollab.clientId));
-            const coords = await db.getCoordinators();
             setCoord(coords.find(c => c.id === currentCollab.coordinatorId));
-            const sups = await db.getSupervisors();
             setSup(sups.find(s => s.id === currentCollab.supervisorId));
-        };
-        load();
+        });
+
+        return () => { active = false; };
     }, [currentCollab]);
 
     const calc = useMemo(() => getCollaboratorCalculations(currentCollab.dtEntradaProduto), [currentCollab]);

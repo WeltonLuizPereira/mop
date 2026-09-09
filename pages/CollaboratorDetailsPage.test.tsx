@@ -85,6 +85,16 @@ beforeEach(() => {
 });
 
 describe('Detalhe do colaborador', () => {
+  it('mostra a alocação sem esperar o carregamento do histórico terminar', async () => {
+    getHistory.mockReturnValue(new Promise(() => {}));
+
+    montar();
+
+    expect(await screen.findByText('Vivo')).toBeInTheDocument();
+    expect(screen.getByText('Móvel')).toBeInTheDocument();
+    expect(screen.getByText('Ilha 01 — SAC')).toBeInTheDocument();
+  });
+
   it('organiza o conteúdo nas sete seções de definição', async () => {
     montar();
     for (const name of ['Dados pessoais', 'Contrato', 'Alocação', 'Jornada', 'Dados de acesso', 'Férias', 'Histórico de alterações']) {
