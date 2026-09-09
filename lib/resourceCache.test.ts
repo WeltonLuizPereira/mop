@@ -1,6 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createResourceCache } from './resourceCache';
 
+it('mantÃ©m o snapshot estÃ¡vel atÃ© uma alteraÃ§Ã£o', () => {
+  const cache = createResourceCache(() => ['remoto'], { staleTime: 60_000 });
+
+  const beforeUpdate = cache.read();
+  expect(cache.read()).toBe(beforeUpdate);
+
+  cache.apply(() => ['local']);
+  expect(cache.read()).not.toBe(beforeUpdate);
+});
+
 describe('createResourceCache', () => {
   it('compartilha uma leitura concorrente e reutiliza o resultado válido', async () => {
     let resolve!: (value: string[]) => void;

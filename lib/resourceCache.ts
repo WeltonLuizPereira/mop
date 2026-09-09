@@ -92,7 +92,7 @@ export function createResourceCache<T>(
   };
 
   return {
-    read: () => ({ ...snapshot }),
+    read: () => snapshot,
     refresh,
     invalidate: () => {
       generation += 1;
