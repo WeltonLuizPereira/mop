@@ -1,31 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, AlertTriangle, CalendarClock, Stethoscope, Activity } from 'lucide-react';
 import { Collaborator, CollaboratorStatus, Ilha, Coordinator, Supervisor, Client, Operation, EntityStatus } from '../../types';
-import { db } from '../../services/mockDb';
 import { Input, Select, Button, Modal } from '../ui';
+import { useResource } from '../../contexts/DataContext';
 
 export const CollaboratorFormModal = ({ onClose, onSave, initialData, onSchedule, initialScheduleDate }: any) => {
     const [formData, setFormData] = useState<Partial<Collaborator>>(initialData || {
         status: CollaboratorStatus.ATIVO
     });
-    const [ilhas, setIlhas] = useState<Ilha[]>([]);
-    const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
-    const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-    const [clients, setClients] = useState<Client[]>([]);
-    const [operations, setOperations] = useState<Operation[]>([]);
+    const ilhas = useResource('ilhas').data ?? [];
+    const coordinators = useResource('coordinators').data ?? [];
+    const supervisors = useResource('supervisors').data ?? [];
+    const clients = useResource('clients').data ?? [];
+    const operations = useResource('operations').data ?? [];
     const [scheduleDate, setScheduleDate] = useState(initialScheduleDate || '');
     const [isScheduling, setIsScheduling] = useState(!!initialScheduleDate);
-
-    useEffect(() => {
-        const load = async () => {
-            setIlhas(await db.getIlhas());
-            setCoordinators(await db.getCoordinators());
-            setSupervisors(await db.getSupervisors());
-            setClients(await db.getClients());
-            setOperations(await db.getOperations());
-        }
-        load();
-    }, []);
 
     const handleChange = (k: keyof Collaborator, v: any) => setFormData(p => ({ ...p, [k]: v }));
 

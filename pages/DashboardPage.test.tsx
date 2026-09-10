@@ -1,8 +1,12 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus, UserRole } from '../types';
 import { DashboardPage } from './DashboardPage';
+import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
+import { DataProvider } from '../contexts/DataContext';
+import { createAppData } from '../data/appData';
+import { db } from '../services/mockDb';
 
 vi.mock('../services/mockDb', () => ({
   db: {
@@ -28,6 +32,8 @@ vi.mock('../services/mockDb', () => ({
       { id: 'o2', nome: 'Residencial', clientId: 'c2', status: EntityStatus.ACTIVE },
       { id: 'o3', nome: 'Fibra', clientId: 'c1', status: EntityStatus.ACTIVE },
     ])),
+    getCoordinators: vi.fn(async () => ([{ id: 'co1', nome: 'Coord 1', status: EntityStatus.ACTIVE }])),
+    getSupervisors: vi.fn(async () => ([{ id: 's1', nome: 'Super 1', coordinatorIds: ['co1'], status: EntityStatus.ACTIVE }])),
     getProvimento: vi.fn(async () => ([
       { id: 'p-i1', ilhaId: 'i1', referencia: '2026-08-01', paContratada: 2 },
       { id: 'p-i2', ilhaId: 'i2', referencia: '2026-08-01', paContratada: 1 },
@@ -38,22 +44,30 @@ vi.mock('../services/mockDb', () => ({
 const usuario = { id: '1', matricula: '3924', nome: 'Welton', email: 'w@q.com',
   role: UserRole.ADMIN, status: EntityStatus.ACTIVE };
 
+const montar = (onAbrirIlha = vi.fn()) => render(
+  <DataProvider store={createAppData(db)}>
+    <DashboardPage currentUser={usuario} onAbrirIlha={onAbrirIlha} />
+  </DataProvider>,
+);
+
+beforeEach(() => vi.clearAllMocks());
+
 describe('Visão geral', () => {
   it('mostra cada ilha como um tile com o percentual em operação', async () => {
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     expect(await screen.findByText('Ilha 01 — SAC')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
   });
 
   it('deixa a ilha inativa fora do mapa', async () => {
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
     expect(screen.queryByText('Ilha 02 — Desativada')).not.toBeInTheDocument();
   });
 
   it('recorta o mapa pela operação escolhida no chip', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
 
     await user.selectOptions(screen.getByLabelText('Filtrar ilhas por operação'), 'o2');
@@ -64,7 +78,7 @@ describe('Visão geral', () => {
 
   it('só oferece as operações do cliente escolhido e zera a anterior', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
 
     const operacao = screen.getByLabelText('Filtrar ilhas por operação') as HTMLSelectElement;
@@ -79,7 +93,7 @@ describe('Visão geral', () => {
 
   it('recorta o mapa pelo cliente escolhido no chip', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
 
     await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c2');
@@ -90,7 +104,7 @@ describe('Visão geral', () => {
 
   it('abre em ordem alfabética e troca de ordem pelo chip', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
 
     const nomes = () => screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent);
@@ -111,7 +125,7 @@ describe('Visão geral', () => {
   it('o tile leva para a lista recortada pela ilha clicada', async () => {
     const user = userEvent.setup();
     const abrir = vi.fn();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={abrir} />);
+    montar(abrir);
     await screen.findByText('Ilha 07 — Cobrança');
 
     await user.click(screen.getByRole('button', { name: /Ilha 07 — Cobrança/ }));
@@ -123,7 +137,7 @@ describe('Visão geral', () => {
   it('o tile responde ao teclado, não só ao clique', async () => {
     const user = userEvent.setup();
     const abrir = vi.fn();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={abrir} />);
+    montar(abrir);
     await screen.findByText('Ilha 01 — SAC');
 
     // o foco real precisa entrar no act: focar o tile expande ele, e um
@@ -136,7 +150,7 @@ describe('Visão geral', () => {
   });
 
   it('abre a faixa pela conta do provimento e fecha com o resto do quadro', async () => {
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
 
     // 2 ativos sobre 3 PA contratada nas duas ilhas do mock; a ordem é o que
@@ -150,7 +164,7 @@ describe('Visão geral', () => {
 
   it('recalcula a faixa e o consolidado quando o filtro recorta o mapa', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
 
     await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c2');
@@ -166,7 +180,7 @@ describe('Visão geral', () => {
 
   it('recorta também a contagem por status da faixa de totais', async () => {
     const user = userEvent.setup();
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
 
     // sem filtro: 2 ativos e 1 em férias entre as duas ilhas
@@ -183,10 +197,26 @@ describe('Visão geral', () => {
   });
 
   it('não afirma tendência que não calculou', async () => {
-    render(<DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} />);
+    montar();
     await screen.findByText('Ilha 01 — SAC');
     expect(screen.queryByText(/vs mês anterior/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\+4%/)).not.toBeInTheDocument();
     expect(screen.queryByText(/turnover mensal/i)).not.toBeInTheDocument();
+  });
+  it('reutiliza os cadastros do Dashboard ao abrir o formulÃ¡rio', async () => {
+    const store = createAppData(db);
+    const { rerender } = render(
+      <DataProvider store={store}><DashboardPage currentUser={usuario} onAbrirIlha={vi.fn()} /></DataProvider>,
+    );
+    await screen.findByText(/Ilha 01/);
+
+    rerender(
+      <DataProvider store={store}><CollaboratorFormModal onClose={vi.fn()} onSave={vi.fn()} /></DataProvider>,
+    );
+    expect(await screen.findByRole('option', { name: /Ilha 01/ })).toBeInTheDocument();
+
+    for (const method of ['getClients', 'getOperations', 'getIlhas'] as const) {
+      expect(db[method]).toHaveBeenCalledTimes(1);
+    }
   });
 });

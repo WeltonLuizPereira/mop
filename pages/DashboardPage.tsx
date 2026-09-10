@@ -6,33 +6,28 @@ import { referenciaDoMes } from '../lib/provimentoStats';
 import { IlhaTile } from '../components/dashboard/IlhaTile';
 import { GeralTile } from '../components/dashboard/GeralTile';
 import { ChipSelect } from '../components/ui';
+import { useResource } from '../contexts/DataContext';
 
 export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: string) => void }> = ({ onAbrirIlha }) => {
-  const [collabs, setCollabs] = useState<Collaborator[]>([]);
-  const [ilhas, setIlhas] = useState<Ilha[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [operations, setOperations] = useState<Operation[]>([]);
+  const collaboratorsResource = useResource('collaborators');
+  const ilhasResource = useResource('ilhas');
+  const clientsResource = useResource('clients');
+  const operationsResource = useResource('operations');
+  const collabs = collaboratorsResource.data ?? [];
+  const ilhas = ilhasResource.data ?? [];
+  const clients = clientsResource.data ?? [];
+  const operations = operationsResource.data ?? [];
   const [provimentos, setProvimentos] = useState<Provimento[]>([]);
-  const [carregando, setCarregando] = useState(true);
+  const [carregandoProvimento, setCarregandoProvimento] = useState(true);
   const [cliente, setCliente] = useState('');
   const [operacao, setOperacao] = useState('');
   const [ordem, setOrdem] = useState<Ordem>('nome');
 
   useEffect(() => {
     const load = async () => {
-      const [c, i, cli, op, prov] = await Promise.all([
-        db.getCollaborators(),
-        db.getIlhas(),
-        db.getClients(),
-        db.getOperations(),
-        db.getProvimento(referenciaDoMes(new Date())),
-      ]);
-      setCollabs(c);
-      setIlhas(i);
-      setClients(cli);
-      setOperations(op);
+      const prov = await db.getProvimento(referenciaDoMes(new Date()));
       setProvimentos(prov);
-      setCarregando(false);
+      setCarregandoProvimento(false);
     };
     load();
   }, []);
@@ -80,6 +75,9 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
     { rotulo: 'em aviso prévio', valor: totais.aviso.toLocaleString('pt-BR'), aceso: false },
     { rotulo: 'afastados', valor: totais.afastados.toLocaleString('pt-BR'), aceso: false },
   ];
+
+  const carregando = carregandoProvimento || [collaboratorsResource, ilhasResource, clientsResource, operationsResource]
+    .some(resource => resource.loading && !resource.data);
 
   if (carregando) {
     return <p className="text-sm text-ink-mute py-20 text-center">Carregando o mapa…</p>;
