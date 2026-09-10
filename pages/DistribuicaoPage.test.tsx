@@ -1,8 +1,13 @@
-import { render, screen, within } from '@testing-library/react';
+import { render as rtlRender, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus } from '../types';
 import { DistribuicaoPage } from './DistribuicaoPage';
+import { DataProvider } from '../contexts/DataContext';
+import { createAppData } from '../data/appData';
+import { db } from '../services/mockDb';
+
+const render = (ui: any) => rtlRender(<DataProvider store={createAppData(db as any)}>{ui}</DataProvider>);
 
 vi.mock('../services/mockDb', () => ({
   db: {

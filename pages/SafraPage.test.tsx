@@ -1,8 +1,13 @@
-import { render, screen, within } from '@testing-library/react';
+import { render as rtlRender, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus } from '../types';
 import { SafraPage } from './SafraPage';
+import { DataProvider } from '../contexts/DataContext';
+import { createAppData } from '../data/appData';
+import { db } from '../services/mockDb';
+
+const render = (ui: any) => rtlRender(<DataProvider store={createAppData(db as any)}>{ui}</DataProvider>);
 
 const pessoa = (
   matricula: string, nome: string, entrada: string,

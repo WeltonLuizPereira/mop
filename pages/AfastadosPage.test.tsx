@@ -1,7 +1,12 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus } from '../types';
 import { AfastadosPage } from './AfastadosPage';
+import { DataProvider } from '../contexts/DataContext';
+import { createAppData } from '../data/appData';
+import { db } from '../services/mockDb';
+
+const render = (ui: any) => rtlRender(<DataProvider store={createAppData(db as any)}>{ui}</DataProvider>);
 
 const mocks = vi.hoisted(() => ({
   getCollaborators: vi.fn(),

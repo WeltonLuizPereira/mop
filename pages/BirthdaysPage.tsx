@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Collaborator, Ilha } from '../types';
 import { db } from '../services/mockDb';
@@ -6,29 +6,22 @@ import { formatDateString } from '../utils';
 import {
   Button, ChipSelect, Table, Carregando, FalhaAoCarregar, ListaVazia,
 } from '../components/ui';
+import { useAppData, useResource } from '../contexts/DataContext';
 
 export const BirthdaysPage = ({ onBack }: any) => {
-  const [collabs, setCollabs] = useState<Collaborator[]>([]);
-  const [ilhas, setIlhas] = useState<Ilha[]>([]);
+  const store = useAppData();
+  const collabResource = useResource('collaborators');
+  const ilhaResource = useResource('ilhas');
+  const collabs = collabResource.data ?? [];
+  const ilhas = ilhaResource.data ?? [];
   const [month, setMonth] = useState(new Date().getMonth());
 
-  const [carregando, setCarregando] = useState(true);
-  const [falhou, setFalhou] = useState(false);
+  const carregando = [collabResource, ilhaResource].some(r => r.loading && !r.data);
+  const falhou = [collabResource, ilhaResource].some(r => r.error && !r.data);
 
   const carregar = useCallback(async () => {
-      setCarregando(true);
-      setFalhou(false);
-      try {
-          const [cs, is] = await Promise.all([db.getCollaborators(), db.getIlhas()]);
-          setCollabs(cs); setIlhas(is);
-      } catch {
-          setFalhou(true);
-      } finally {
-          setCarregando(false);
-      }
-  }, []);
-
-  useEffect(() => { carregar(); }, [carregar]);
+      await Promise.all([store.collaborators.invalidate(), store.ilhas.invalidate()]);
+  }, [store]);
 
   const filtered = collabs.filter(c => {
       if(!c.dtNasc) return false;

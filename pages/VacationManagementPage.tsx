@@ -4,11 +4,12 @@ import { Collaborator, Ilha, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString, addDays, getInitials } from '../utils';
 import { Button, ChipSelect, Table } from '../components/ui';
+import { useResource } from '../contexts/DataContext';
 
 export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: any) => {
     // ... same as original ...
-    const [collabs, setCollabs] = useState<Collaborator[]>([]);
-    const [ilhas, setIlhas] = useState<Ilha[]>([]);
+    const collabs = useResource('collaborators').data ?? [];
+    const ilhas = useResource('ilhas').data ?? [];
         const [activeTab, setActiveTab] = useState<'mapa' | 'historico'>('mapa');
     const [historyData, setHistoryData] = useState<any[]>([]);
     const [historyYear, setHistoryYear] = useState('');
@@ -19,8 +20,6 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
     
     useEffect(() => { 
         const load = async () => {
-            setCollabs(await db.getCollaborators());
-            setIlhas(await db.getIlhas());
             setHistoryData(await db.getVacationHistory());
         };
         load();

@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, FileSpreadsheet, Eye, UserX } from 'lucide-react';
 import { Collaborator, Coordinator, Supervisor, Client, Operation, Ilha, CollaboratorStatus, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { formatDateString, getInitials, getCollaboratorCalculations } from '../utils';
 import * as XLSX from 'xlsx';
 import { Button, Chip, ChipSelect, MultiSelect, Table } from '../components/ui';
+import { useResource } from '../contexts/DataContext';
 
 export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
-    const [collabs, setCollabs] = useState<Collaborator[]>([]);
-    const [ilhas, setIlhas] = useState<Ilha[]>([]);
-    const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-    const [clients, setClients] = useState<Client[]>([]);
-    const [operations, setOperations] = useState<Operation[]>([]);
-    const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+    const collabs = useResource('collaborators').data ?? [];
+    const porNome = <T extends { nome?: string }>(a: T, b: T) => (a.nome || '').localeCompare(b.nome || '');
+    const ilhas = [...(useResource('ilhas').data ?? [])].sort(porNome);
+    const supervisors = [...(useResource('supervisors').data ?? [])].sort(porNome);
+    const clients = [...(useResource('clients').data ?? [])].sort(porNome);
+    const operations = [...(useResource('operations').data ?? [])].sort(porNome);
+    const coordinators = [...(useResource('coordinators').data ?? [])].sort(porNome);
     
     const [search, setSearch] = useState('');
     
@@ -28,18 +30,6 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
     const [viewAll, setViewAll] = useState(true);
-
-    useEffect(() => {
-        const load = async () => {
-            setCollabs(await db.getCollaborators());
-            setIlhas((await db.getIlhas()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-            setSupervisors((await db.getSupervisors()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-            setClients((await db.getClients()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-            setOperations((await db.getOperations()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-            setCoordinators((await db.getCoordinators()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-        }
-        load();
-    }, []);
 
     const filtered = collabs.filter(c => {
         const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) || c.matricula.includes(search);

@@ -6,6 +6,7 @@ import { db } from '../services/mockDb';
 import { formatDateString } from '../utils';
 import { Badge, Button, ChipSelect, MultiSelect, Table } from '../components/ui';
 import { SafraGrafico } from '../components/dashboard/SafraGrafico';
+import { useResource } from '../contexts/DataContext';
 import {
   computeSafras, IDADE_JOVEM, saidasSemData, serieMensal,
   type Safra, type Turma,
@@ -225,12 +226,18 @@ const Detalhe = ({ safra, onVoltar }: { safra: Safra; onVoltar: () => void }) =>
 
 export const SafraPage = () => {
   const hoje = new Date();
-  const [colabs, setColabs] = useState<Collaborator[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [operations, setOperations] = useState<Operation[]>([]);
-  const [ilhas, setIlhas] = useState<Ilha[]>([]);
-  const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-  const [carregando, setCarregando] = useState(true);
+  const porNome = <T extends { nome?: string }>(a: T, b: T) => (a.nome || '').localeCompare(b.nome || '');
+  const collabResource = useResource('collaborators');
+  const clientResource = useResource('clients');
+  const operationResource = useResource('operations');
+  const ilhaResource = useResource('ilhas');
+  const supervisorResource = useResource('supervisors');
+  const colabs = collabResource.data ?? [];
+  const clients = [...(clientResource.data ?? [])].sort(porNome);
+  const operations = [...(operationResource.data ?? [])].sort(porNome);
+  const ilhas = [...(ilhaResource.data ?? [])].sort(porNome);
+  const supervisors = [...(supervisorResource.data ?? [])].sort(porNome);
+  const carregando = [collabResource, clientResource, operationResource, ilhaResource, supervisorResource].some(r => r.loading && !r.data);
 
   const [ano, setAno] = useState(hoje.getFullYear());
   const [filterClient, setFilterClient] = useState<string[]>([]);
@@ -238,22 +245,6 @@ export const SafraPage = () => {
   const [filterIlha, setFilterIlha] = useState<string[]>([]);
   const [filterSup, setFilterSup] = useState<string[]>([]);
   const [aberta, setAberta] = useState<number | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      const [c, cli, op, il, sup] = await Promise.all([
-        db.getCollaborators(), db.getClients(), db.getOperations(),
-        db.getIlhas(), db.getSupervisors(),
-      ]);
-      setColabs(c);
-      setClients(cli.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-      setOperations(op.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-      setIlhas(il.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-      setSupervisors(sup.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-      setCarregando(false);
-    };
-    load();
-  }, []);
 
   const recortados = colabs.filter(c =>
     (filterClient.length === 0 || filterClient.includes(c.clientId)) &&
