@@ -29,6 +29,10 @@ vi.mock('../services/mockDb', () => ({
     getCoordinators: vi.fn(async () => ([])),
     getHistory: vi.fn(async () => ([])),
     getVacationHistory: vi.fn(async () => ([])),
+    saveCollaborator: vi.fn(async () => undefined),
+    addVacationHistory: vi.fn(async () => undefined),
+    addHistory: vi.fn(async () => undefined),
+    scheduleTask: vi.fn(async () => undefined),
   },
 }));
 
@@ -94,5 +98,19 @@ describe('Colaboradores', () => {
     for (const method of ['getClients', 'getOperations', 'getIlhas', 'getCoordinators', 'getSupervisors'] as const) {
       expect(db[method]).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it('mantÃ©m o formulÃ¡rio aberto e informa quando o salvamento falha', async () => {
+    vi.mocked(db.saveCollaborator).mockRejectedValueOnce(new Error('sem conexÃ£o'));
+    const alerta = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+    montar();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /novo colaborador/i }));
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Novo colaborador' })).toBeVisible();
+    expect(alerta).toHaveBeenCalledWith(expect.stringMatching(/sem conexÃ£o/i));
+    expect(db.getCollaborators).toHaveBeenCalledTimes(1);
   });
 });

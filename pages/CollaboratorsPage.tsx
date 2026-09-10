@@ -134,6 +134,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     });
 
     const handleSave = async (data: Collaborator) => {
+      try {
         await db.saveCollaborator(data);
         if (data.feriasInicio && data.feriasFim) {
             await db.addVacationHistory(data.matricula, data.feriasInicio, data.feriasFim);
@@ -148,6 +149,10 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
         });
         setIsCreateOpen(false);
         await store.collaborators.invalidate();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        alert(`NÃ£o foi possÃ­vel salvar o colaborador: ${message}`);
+      }
     };
 
     const handleScheduleCreate = async (data: Collaborator, date: string) => {

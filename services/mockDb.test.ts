@@ -9,6 +9,7 @@ const TETO = 1000;
 
 /** Linhas servidas pelo banco falso, por tabela. */
 const tabelas: Record<string, any[]> = {};
+const errosEscrita: Record<string, Error | undefined> = {};
 
 /**
  * Construtor que imita o encadeamento do supabase-js: leitura paginada e
@@ -34,12 +35,15 @@ function construtor(tabela: string) {
     },
     single: () => Promise.resolve({ data: filtradas()[0] ?? null, error: null }),
     insert: (payload: any) => {
+      if (errosEscrita[tabela]) return Promise.resolve({ error: errosEscrita[tabela] });
       if (!tabelas[tabela]) tabelas[tabela] = [];
       tabelas[tabela].push(...(Array.isArray(payload) ? payload : [payload]));
       return Promise.resolve({ error: null });
     },
+    upsert: (payload: any) => alvo.insert(payload),
     update: (payload: any) => ({
       eq: (coluna: string, valor: any) => {
+        if (errosEscrita[tabela]) return Promise.resolve({ error: errosEscrita[tabela] });
         const idx = linhas().findIndex(row => row[coluna] === valor);
         if (idx >= 0) linhas()[idx] = { ...linhas()[idx], ...payload };
         return Promise.resolve({ error: null });
@@ -60,6 +64,27 @@ const { referenciaDoMes } = await import('../lib/provimentoStats');
 
 beforeEach(() => {
   for (const k of Object.keys(tabelas)) delete tabelas[k];
+  for (const k of Object.keys(errosEscrita)) delete errosEscrita[k];
+});
+
+describe('falhas de escrita', () => {
+  const falhar = (tabela: string, mensagem: string) => {
+    errosEscrita[tabela] = new Error(mensagem);
+  };
+
+  it.each([
+    ['salvar colaborador', 'mop_collaborators', () => db.saveCollaborator({ matricula: '1', nome: 'Ana', status: 'ATIVO' } as any)],
+    ['salvar histÃ³rico', 'mop_history', () => db.addHistory({ action: 'Teste', target: 'Ana', user: 'Welton', date: 'agora', type: 'update' } as any)],
+    ['salvar fÃ©rias', 'mop_vacation_history', () => db.addVacationHistory('1', '2026-09-01', '2026-09-10')],
+    ['CRUD genÃ©rico', 'mop_coordinators', () => db.saveCoordinator({ id: 'co1', nome: 'Coord', status: 'ATIVO' } as any)],
+    ['salvar supervisor', 'mop_supervisors', () => db.saveSupervisor({ id: 's1', nome: 'Super', status: 'ATIVO', coordinatorIds: [] } as any)],
+    ['salvar operaÃ§Ã£o', 'mop_operations', () => db.saveOperation({ id: 'o1', nome: 'OperaÃ§Ã£o', status: 'ATIVO', clientId: 'c1' } as any)],
+    ['salvar ilha', 'mop_ilhas', () => db.saveIlha({ id: 'i1', nome: 'Ilha', status: 'ATIVO', coordinatorIds: [], supervisorIds: [] } as any)],
+    ['salvar provimento', 'mop_provimento', () => db.saveProvimento({ id: 'p1', ilhaId: 'i1', referencia: '2026-09-01', paContratada: 10 })],
+  ])('rejeita falha ao %s', async (_nome, tabela, executar) => {
+    falhar(tabela, `${tabela} indisponÃ­vel`);
+    await expect(executar()).rejects.toThrow(`${tabela} indisponÃ­vel`);
+  });
 });
 
 describe('leitura de tabela grande', () => {
