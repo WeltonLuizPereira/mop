@@ -5,6 +5,7 @@ import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDateString, formatTime, addDays, getInitials, mensagemErroExclusao } from '../utils';
 import { Badge, Button, Modal, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
+import { useAppData, useResource } from '../contexts/DataContext';
 
 export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: () => void, currentUser: User, onRefresh: () => void }> = ({ collab, onBack, currentUser, onRefresh }) => {
     // ... same as original ...
@@ -12,11 +13,17 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
     const [currentCollab, setCurrentCollab] = useState(collab);
     const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
     const [vacationHistory, setVacationHistory] = useState<any[]>([]);
-    const [ilha, setIlha] = useState<Ilha | undefined>(undefined);
-    const [op, setOp] = useState<Operation | undefined>(undefined);
-    const [client, setClient] = useState<Client | undefined>(undefined);
-    const [coord, setCoord] = useState<Coordinator | undefined>(undefined);
-    const [sup, setSup] = useState<Supervisor | undefined>(undefined);
+    const store = useAppData();
+    const ilhas = useResource('ilhas').data ?? [];
+    const operations = useResource('operations').data ?? [];
+    const clients = useResource('clients').data ?? [];
+    const coordinators = useResource('coordinators').data ?? [];
+    const supervisors = useResource('supervisors').data ?? [];
+    const ilha = ilhas.find(i => i.id === currentCollab.ilhaId);
+    const op = operations.find(o => o.id === currentCollab.operationId);
+    const client = clients.find(c => c.id === currentCollab.clientId);
+    const coord = coordinators.find(c => c.id === currentCollab.coordinatorId);
+    const sup = supervisors.find(s => s.id === currentCollab.supervisorId);
     
     const isAdmin = currentUser.role === UserRole.ADMIN;
 
@@ -34,34 +41,17 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
 
         // As cinco consultas eram encadeadas e somavam suas latências. Iniciá-las
         // juntas reduz a espera para a duração de apenas uma ida ao Supabase.
-        void Promise.all([
-            db.getIlhas(),
-            db.getOperations(),
-            db.getClients(),
-            db.getCoordinators(),
-            db.getSupervisors(),
-        ]).then(([ilhas, ops, clients, coords, sups]) => {
-            if (!active) return;
-            setIlha(ilhas.find(i => i.id === currentCollab.ilhaId));
-            setOp(ops.find(o => o.id === currentCollab.operationId));
-            setClient(clients.find(c => c.id === currentCollab.clientId));
-            setCoord(coords.find(c => c.id === currentCollab.coordinatorId));
-            setSup(sups.find(s => s.id === currentCollab.supervisorId));
-        });
-
         return () => { active = false; };
     }, [currentCollab]);
 
     const calc = useMemo(() => getCollaboratorCalculations(currentCollab.dtEntradaProduto), [currentCollab]);
     
     const handleUpdate = async (data: Collaborator) => {
-        const [ilhasList, supsList, coordsList, opsList, clientsList] = await Promise.all([
-            db.getIlhas(),
-            db.getSupervisors(),
-            db.getCoordinators(),
-            db.getOperations(),
-            db.getClients()
-        ]);
+        const ilhasList = ilhas;
+        const supsList = supervisors;
+        const coordsList = coordinators;
+        const opsList = operations;
+        const clientsList = clients;
 
         const changes: string[] = [];
 
@@ -124,7 +114,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
         });
         setCurrentCollab(data);
         setIsEditOpen(false);
-        onRefresh(); 
+        await store.collaborators.invalidate();
     };
 
     const handleScheduleUpdate = async (data: Collaborator, date: string) => {
@@ -196,7 +186,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
             return;
         }
         setConfirmandoExclusao(false);
-        onRefresh();
+        await store.collaborators.invalidate();
         onBack();
     };
 

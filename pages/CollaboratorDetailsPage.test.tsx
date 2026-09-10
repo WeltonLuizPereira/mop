@@ -3,8 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Collaborator, CollaboratorStatus, EntityStatus, User, UserRole } from '../types';
 import { CollaboratorDetailsPage } from './CollaboratorDetailsPage';
+import { DataProvider } from '../contexts/DataContext';
+import { createAppData } from '../data/appData';
+import { db } from '../services/mockDb';
 
 const getHistory = vi.fn();
+const getCollaborators = vi.fn();
 const getVacationHistory = vi.fn();
 const getIlhas = vi.fn();
 const getOperations = vi.fn();
@@ -19,6 +23,7 @@ const scheduleTask = vi.fn();
 
 vi.mock('../services/mockDb', () => ({
   db: {
+    getCollaborators: (...args: unknown[]) => getCollaborators(...args),
     getHistory: (...args: unknown[]) => getHistory(...args),
     getVacationHistory: (...args: unknown[]) => getVacationHistory(...args),
     getIlhas: (...args: unknown[]) => getIlhas(...args),
@@ -58,16 +63,19 @@ const visualizador: User = { ...admin, id: '3', role: UserRole.VIEWER };
 
 const montar = (overrides: Partial<{ collab: Collaborator; onBack: () => void; currentUser: User; onRefresh: () => void }> = {}) =>
   render(
-    <CollaboratorDetailsPage
-      collab={overrides.collab ?? collab}
-      onBack={overrides.onBack ?? vi.fn()}
-      currentUser={overrides.currentUser ?? admin}
-      onRefresh={overrides.onRefresh ?? vi.fn()}
-    />,
+    <DataProvider store={createAppData(db)}>
+      <CollaboratorDetailsPage
+        collab={overrides.collab ?? collab}
+        onBack={overrides.onBack ?? vi.fn()}
+        currentUser={overrides.currentUser ?? admin}
+        onRefresh={overrides.onRefresh ?? vi.fn()}
+      />
+    </DataProvider>,
   );
 
 beforeEach(() => {
   vi.clearAllMocks();
+  getCollaborators.mockResolvedValue([collab]);
   getHistory.mockResolvedValue([]);
   getVacationHistory.mockResolvedValue([]);
   getIlhas.mockResolvedValue([
@@ -170,7 +178,8 @@ describe('Detalhe do colaborador', () => {
     await user.click(await screen.findByRole('button', { name: 'Salvar' }));
     expect(saveCollaborator).toHaveBeenCalledWith(expect.objectContaining({ matricula: collab.matricula }));
     expect(addHistory).toHaveBeenCalledWith(expect.objectContaining({ action: 'Atualização Colaborador', target: collab.nome }));
-    expect(onRefresh).toHaveBeenCalled();
+    expect(onRefresh).not.toHaveBeenCalled();
+    expect(getCollaborators).toHaveBeenCalledTimes(1);
   });
 
   it('só exclui depois de confirmar no modal, e cancelar não exclui', async () => {
@@ -188,7 +197,8 @@ describe('Detalhe do colaborador', () => {
     const confirmDialog = await screen.findByRole('dialog');
     await user.click(within(confirmDialog).getByRole('button', { name: 'Excluir' }));
     expect(deleteCollaborator).toHaveBeenCalledWith(collab.matricula);
-    expect(onRefresh).toHaveBeenCalled();
+    expect(onRefresh).not.toHaveBeenCalled();
+    expect(getCollaborators).toHaveBeenCalledTimes(1);
     expect(onBack).toHaveBeenCalled();
   });
 

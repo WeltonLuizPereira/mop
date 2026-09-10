@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
-import { CollaboratorStatus, EntityStatus, UserRole } from '../types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Collaborator, CollaboratorStatus, EntityStatus, UserRole } from '../types';
+import { DataProvider } from '../contexts/DataContext';
+import { createAppData } from '../data/appData';
+import { db } from '../services/mockDb';
+import { CollaboratorDetailsPage } from './CollaboratorDetailsPage';
 import { CollaboratorsPage } from './CollaboratorsPage';
 
 vi.mock('../services/mockDb', () => ({
@@ -22,13 +27,21 @@ vi.mock('../services/mockDb', () => ({
     getSupervisors: vi.fn(async () => ([{ id: 's1', nome: 'Juliana Prado', coordinatorIds: [], status: EntityStatus.ACTIVE }])),
     getOperations: vi.fn(async () => ([{ id: 'o1', nome: 'Móvel', clientId: 'c1', status: EntityStatus.ACTIVE }])),
     getCoordinators: vi.fn(async () => ([])),
+    getHistory: vi.fn(async () => ([])),
+    getVacationHistory: vi.fn(async () => ([])),
   },
 }));
 
 const usuario = { id: '1', matricula: '3924', nome: 'Welton', email: 'w@q.com',
   role: UserRole.ADMIN, status: EntityStatus.ACTIVE };
 const montar = () =>
-  render(<CollaboratorsPage currentUser={usuario} onViewDetails={vi.fn()} onRefresh={vi.fn()} />);
+  render(
+    <DataProvider store={createAppData(db)}>
+      <CollaboratorsPage currentUser={usuario} onViewDetails={vi.fn()} onRefresh={vi.fn()} />
+    </DataProvider>,
+  );
+
+beforeEach(() => vi.clearAllMocks());
 
 describe('Colaboradores', () => {
   it('tem exatamente as cinco colunas definidas', async () => {
@@ -62,5 +75,24 @@ describe('Colaboradores', () => {
     montar();
     const linha = (await screen.findByText('Adriana Lopes Ferreira')).closest('tr')!;
     expect(within(linha).getByText('V')).toBeInTheDocument();
+  });
+  it('reutiliza os cadastros auxiliares ao navegar da lista para o detalhe', async () => {
+    const store = createAppData(db);
+    const Harness = () => {
+      const [selecionado, setSelecionado] = useState<Collaborator>();
+      return selecionado
+        ? <CollaboratorDetailsPage collab={selecionado} currentUser={usuario} onBack={() => setSelecionado(undefined)} onRefresh={vi.fn()} />
+        : <CollaboratorsPage currentUser={usuario} onViewDetails={setSelecionado} onRefresh={vi.fn()} />;
+    };
+
+    render(<DataProvider store={store}><Harness /></DataProvider>);
+    const user = userEvent.setup();
+    const linha = (await screen.findByText('Adriana Lopes Ferreira')).closest('tr')!;
+    await user.click(linha);
+    expect(await screen.findByRole('heading', { name: 'Dados pessoais' })).toBeVisible();
+
+    for (const method of ['getClients', 'getOperations', 'getIlhas', 'getCoordinators', 'getSupervisors'] as const) {
+      expect(db[method]).toHaveBeenCalledTimes(1);
+    }
   });
 });
