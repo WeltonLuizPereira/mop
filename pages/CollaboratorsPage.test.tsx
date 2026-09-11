@@ -28,6 +28,7 @@ vi.mock('../services/mockDb', () => ({
     getOperations: vi.fn(async () => ([{ id: 'o1', nome: 'Móvel', clientId: 'c1', status: EntityStatus.ACTIVE }])),
     getCoordinators: vi.fn(async () => ([])),
     getHistory: vi.fn(async () => ([])),
+    getCollaboratorHistory: vi.fn(async () => ([])),
     getVacationHistory: vi.fn(async () => ([])),
     saveCollaborator: vi.fn(async () => undefined),
     addVacationHistory: vi.fn(async () => undefined),
