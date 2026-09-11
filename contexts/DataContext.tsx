@@ -5,7 +5,9 @@ import {
   type ResourceData,
   type ResourceName,
 } from '../data/appData';
+import { startRealtimeSync } from '../data/realtimeSync';
 import type { ResourceCache, ResourceSnapshot } from '../lib/resourceCache';
+import { supabase } from '../services/supabase';
 
 const DataContext = createContext<AppDataStore | undefined>(undefined);
 
@@ -13,6 +15,8 @@ export function DataProvider({ children, store = appData }: {
   children: ReactNode;
   store?: AppDataStore;
 }) {
+  useEffect(() => startRealtimeSync(supabase, store), [store]);
+
   return <DataContext.Provider value={store}>{children}</DataContext.Provider>;
 }
 
