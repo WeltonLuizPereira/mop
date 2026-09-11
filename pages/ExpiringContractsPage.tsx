@@ -56,33 +56,33 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
 
     const canEdit = [UserRole.ADMIN, UserRole.MANAGER, UserRole.COORDINATOR, UserRole.SUPPORT].includes(currentUser.role);
 
-    const filtered = collabs
-    .filter(c => c.status === CollaboratorStatus.ATIVO)
-    .filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()))
-    .map(c => {
-        const calc = getCollaboratorCalculations(c.dtEntradaProduto);
-        
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        
-        let daysRemaining45 = 999;
-        if(calc.vence45 !== '-') {
-            const parts45 = calc.vence45.split('/'); // DD/MM/YYYY
-            const vDate45 = new Date(Number(parts45[2]), Number(parts45[1]) - 1, Number(parts45[0]));
-            daysRemaining45 = Math.ceil((vDate45.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        }
+    const filtered = useMemo(() => collabs
+        .filter(c => c.status === CollaboratorStatus.ATIVO)
+        .filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+        .map(c => {
+            const calc = getCollaboratorCalculations(c.dtEntradaProduto);
 
-        let daysRemaining90 = 999;
-        if(calc.vence90 !== '-') {
-            const parts90 = calc.vence90.split('/'); // DD/MM/YYYY
-            const vDate90 = new Date(Number(parts90[2]), Number(parts90[1]) - 1, Number(parts90[0]));
-            daysRemaining90 = Math.ceil((vDate90.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        }
+            const today = new Date();
+            today.setHours(0,0,0,0);
 
-        return { ...c, calc, daysRemaining45, daysRemaining90 };
-    })
-    .filter(c => c.calc.experiencia === "SIM")
-    .sort(porProximoMarco);
+            let daysRemaining45 = 999;
+            if(calc.vence45 !== '-') {
+                const parts45 = calc.vence45.split('/'); // DD/MM/YYYY
+                const vDate45 = new Date(Number(parts45[2]), Number(parts45[1]) - 1, Number(parts45[0]));
+                daysRemaining45 = Math.ceil((vDate45.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            }
+
+            let daysRemaining90 = 999;
+            if(calc.vence90 !== '-') {
+                const parts90 = calc.vence90.split('/'); // DD/MM/YYYY
+                const vDate90 = new Date(Number(parts90[2]), Number(parts90[1]) - 1, Number(parts90[0]));
+                daysRemaining90 = Math.ceil((vDate90.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            }
+
+            return { ...c, calc, daysRemaining45, daysRemaining90 };
+        })
+        .filter(c => c.calc.experiencia === "SIM")
+        .sort(porProximoMarco), [collabs, searchTerm]);
 
     const ganttDates = useMemo(() => {
         if (filtered.length === 0) return [];

@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus } from '../../types';
 import { CollaboratorFormModal } from './CollaboratorFormModal';
+import { DataProvider } from '../../contexts/DataContext';
+import { createAppData } from '../../data/appData';
+import { db } from '../../services/mockDb';
 
 vi.mock('../../services/mockDb', () => ({
   db: {
@@ -17,18 +20,24 @@ vi.mock('../../services/mockDb', () => ({
 }));
 
 const montar = (props: Record<string, any> = {}) =>
-  render(<CollaboratorFormModal onClose={vi.fn()} onSave={vi.fn()} {...props} />);
+  render(
+    <DataProvider store={createAppData(db as any)}>
+      <CollaboratorFormModal onClose={vi.fn()} onSave={vi.fn()} {...props} />
+    </DataProvider>,
+  );
 
 describe('CollaboratorFormModal', () => {
-  it('abre como "Novo colaborador" para um cadastro novo', () => {
+  it('abre como "Novo colaborador" para um cadastro novo', async () => {
     montar();
     expect(screen.getByRole('dialog', { name: 'Novo colaborador' })).toBeVisible();
+    await screen.findByRole('option', { name: 'Ilha 01' });
   });
 
-  it('abre como "Editar colaborador" quando recebe dados existentes e trava a matrícula', () => {
+  it('abre como "Editar colaborador" quando recebe dados existentes e trava a matrícula', async () => {
     montar({ initialData: { matricula: '1', nome: 'Ana', status: CollaboratorStatus.ATIVO } });
     expect(screen.getByRole('dialog', { name: 'Editar colaborador' })).toBeVisible();
     expect(screen.getByLabelText('Matrícula')).toBeDisabled();
+    await screen.findByRole('option', { name: 'Ilha 01' });
   });
 
   it('carrega os cinco catálogos ao montar', async () => {

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import type { Collaborator, Ilha, Operation, Supervisor } from '../types';
 import { db } from '../services/mockDb';
 import { distribuir, doQuadro } from '../lib/distribuicaoStats';
 import { DistribuicaoCard } from '../components/dashboard/DistribuicaoCard';
+import { useResource } from '../contexts/DataContext';
 
 /** Por qual cadastro a lista de colaboradores será recortada no clique. */
 export type CampoLista = 'operacao' | 'ilha' | 'supervisor';
@@ -12,28 +13,15 @@ interface DistribuicaoPageProps {
 }
 
 export const DistribuicaoPage: React.FC<DistribuicaoPageProps> = ({ onAbrirLista }) => {
-  const [collabs, setCollabs] = useState<Collaborator[]>([]);
-  const [operations, setOperations] = useState<Operation[]>([]);
-  const [ilhas, setIlhas] = useState<Ilha[]>([]);
-  const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      const [c, op, i, s] = await Promise.all([
-        db.getCollaborators(),
-        db.getOperations(),
-        db.getIlhas(),
-        db.getSupervisors(),
-      ]);
-      setCollabs(c);
-      setOperations(op);
-      setIlhas(i);
-      setSupervisors(s);
-      setCarregando(false);
-    };
-    load();
-  }, []);
+  const collabResource = useResource('collaborators');
+  const operationResource = useResource('operations');
+  const ilhaResource = useResource('ilhas');
+  const supervisorResource = useResource('supervisors');
+  const collabs = collabResource.data ?? [];
+  const operations = operationResource.data ?? [];
+  const ilhas = ilhaResource.data ?? [];
+  const supervisors = supervisorResource.data ?? [];
+  const carregando = [collabResource, operationResource, ilhaResource, supervisorResource].some(r => r.loading && !r.data);
 
   if (carregando) {
     return <p className="text-sm text-ink-mute py-20 text-center">Carregando a distribuição…</p>;

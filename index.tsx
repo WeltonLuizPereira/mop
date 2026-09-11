@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { DataProvider } from './contexts/DataContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 class ErrorBoundary extends React.Component<any, any> {
@@ -19,7 +20,9 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
-        <App />
+        <DataProvider>
+          <App />
+        </DataProvider>
       </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>

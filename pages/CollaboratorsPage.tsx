@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { FileSpreadsheet, FileText, Plus, Eye } from 'lucide-react';
 import { Collaborator, User, UserRole, Coordinator, Supervisor, Ilha, Operation, Client, CollaboratorStatus, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
@@ -13,6 +13,7 @@ type Campo = 'cliente' | 'nome' | 'status' | 'supervisor' | 'ilha';
 import { ClientLogo } from '../components/collaborators/ClientLogo';
 import { resolveClient } from '../lib/clientLogo';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
+import { useAppData, useResource } from '../contexts/DataContext';
 
 /** Recorte que a tela já abre aplicado — é assim que o clique numa fatia do
  *  Dashboard entrega a lista das pessoas daquele item. */
@@ -23,10 +24,18 @@ export interface FiltroInicial {
 
 export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c: Collaborator) => void, onRefresh: () => void, filtroInicial?: FiltroInicial | null }> = ({ currentUser, onViewDetails, onRefresh, filtroInicial }) => {
     // ... same as original ...
-    const [collabs, setCollabs] = useState<Collaborator[]>([]);
+    const store = useAppData();
+    const collaboratorsResource = useResource('collaborators');
+    const coordinatorsResource = useResource('coordinators');
+    const supervisorsResource = useResource('supervisors');
+    const ilhasResource = useResource('ilhas');
+    const operationsResource = useResource('operations');
+    const clientsResource = useResource('clients');
+    const collabs = collaboratorsResource.data ?? [];
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [falhouCarga, setFalhouCarga] = useState(false);
+    const falhouCarga = [collaboratorsResource, coordinatorsResource, supervisorsResource, ilhasResource, operationsResource, clientsResource]
+        .some(resource => resource.error && !resource.data);
     const [ordenacao, setOrdenacao] = useState<Ordenacao<Campo>>({ campo: 'nome', direcao: 'asc' });
 
     // clicar na coluna ativa inverte o sentido; em outra coluna, recomeça em A → Z
@@ -59,38 +68,16 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth()); // 0-11
 
-    const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
-    const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-    const [ilhas, setIlhas] = useState<Ilha[]>([]);
-    const [operations, setOperations] = useState<Operation[]>([]);
-    const [clients, setClients] = useState<Client[]>([]);
+    const porNome = <T extends { nome?: string }>(a: T, b: T) =>
+        (a.nome || '').localeCompare(b.nome || '');
+    const coordinators = [...(coordinatorsResource.data ?? [])].sort(porNome);
+    const supervisors = [...(supervisorsResource.data ?? [])].sort(porNome);
+    const ilhas = [...(ilhasResource.data ?? [])].sort(porNome);
+    const operations = [...(operationsResource.data ?? [])].sort(porNome);
+    const clients = [...(clientsResource.data ?? [])].sort(porNome);
 
     const isAdmin = currentUser.role === UserRole.ADMIN;
     
-    const load = useCallback(async () => {
-        const porNome = <T extends { nome?: string }>(a: T, b: T) =>
-            (a.nome || '').localeCompare(b.nome || '');
-        try {
-            setFalhouCarga(false);
-            const [colabs, coords, supers, ilhasList, ops, cli] = await Promise.all([
-                db.getCollaborators(), db.getCoordinators(), db.getSupervisors(),
-                db.getIlhas(), db.getOperations(), db.getClients(),
-            ]);
-            setCollabs(colabs);
-            setCoordinators([...coords].sort(porNome));
-            setSupervisors([...supers].sort(porNome));
-            setIlhas([...ilhasList].sort(porNome));
-            setOperations([...ops].sort(porNome));
-            setClients([...cli].sort(porNome));
-        } catch {
-            // sem isso a tela ficava para sempre vazia, indistinguivel de
-            // "nenhum colaborador cadastrado"
-            setFalhouCarga(true);
-        }
-    }, []);
-
-    useEffect(() => { load(); }, [load]);
-
     const filtered = collabs.filter(c => {
         const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) || c.matricula.includes(search);
         
@@ -147,6 +134,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
     });
 
     const handleSave = async (data: Collaborator) => {
+      try {
         await db.saveCollaborator(data);
         if (data.feriasInicio && data.feriasFim) {
             await db.addVacationHistory(data.matricula, data.feriasInicio, data.feriasFim);
@@ -160,8 +148,11 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
             details: `Registro criado com matrícula ${data.matricula}`
         });
         setIsCreateOpen(false);
-        setCollabs(await db.getCollaborators());
-        onRefresh(); 
+        await store.collaborators.invalidate();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        alert(`NÃ£o foi possÃ­vel salvar o colaborador: ${message}`);
+      }
     };
 
     const handleScheduleCreate = async (data: Collaborator, date: string) => {

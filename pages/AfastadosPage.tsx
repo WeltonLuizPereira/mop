@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { ArrowLeft, Activity, User as UserIcon } from 'lucide-react';
 import { Collaborator, Supervisor, Ilha, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
@@ -6,30 +6,22 @@ import { formatDateString } from '../utils';
 import {
   Button, Badge, Table, Carregando, FalhaAoCarregar, ListaVazia, linhaAtivavel,
 } from '../components/ui';
+import { useAppData, useResource } from '../contexts/DataContext';
 
 export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
-    const [collabs, setCollabs] = useState<Collaborator[]>([]);
-    const [ilhas, setIlhas] = useState<Ilha[]>([]);
-    const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-    const [carregando, setCarregando] = useState(true);
-    const [falhou, setFalhou] = useState(false);
+    const store = useAppData();
+    const collabResource = useResource('collaborators');
+    const ilhaResource = useResource('ilhas');
+    const supervisorResource = useResource('supervisors');
+    const collabs = collabResource.data ?? [];
+    const ilhas = ilhaResource.data ?? [];
+    const supervisors = supervisorResource.data ?? [];
+    const carregando = [collabResource, ilhaResource, supervisorResource].some(r => r.loading && !r.data);
+    const falhou = [collabResource, ilhaResource, supervisorResource].some(r => r.error && !r.data);
 
     const carregar = useCallback(async () => {
-        setCarregando(true);
-        setFalhou(false);
-        try {
-            const [cs, is, ss] = await Promise.all([
-                db.getCollaborators(), db.getIlhas(), db.getSupervisors(),
-            ]);
-            setCollabs(cs); setIlhas(is); setSupervisors(ss);
-        } catch {
-            setFalhou(true);
-        } finally {
-            setCarregando(false);
-        }
-    }, []);
-
-    useEffect(() => { carregar(); }, [carregar]);
+        await Promise.all([store.collaborators.invalidate(), store.ilhas.invalidate(), store.supervisors.invalidate()]);
+    }, [store]);
 
     const filtered = collabs.filter(c =>
         c.status === CollaboratorStatus.AFASTADO ||

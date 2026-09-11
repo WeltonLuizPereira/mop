@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AlertCircle, FileSpreadsheet, FileDown, CalendarDays } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, Cell
@@ -13,6 +13,7 @@ import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import { Button, ChipSelect, Table } from '../components/ui';
 import { useChartTokens } from '../lib/tokens';
+import { useResource } from '../contexts/DataContext';
 
 export const TurnoverPage = () => {
     // o gráfico recebe cor como valor; os tokens vêm do tema em vigor
@@ -30,22 +31,12 @@ export const TurnoverPage = () => {
     const [filterIlha, setFilterIlha] = useState('');
     const [filterSup, setFilterSup] = useState('');
 
-    const [collabs, setCollabs] = useState<Collaborator[]>([]);
-    const [clients, setClients] = useState<Client[]>([]);
-    const [operations, setOperations] = useState<Operation[]>([]);
-    const [ilhas, setIlhas] = useState<Ilha[]>([]);
-    const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-
-    useEffect(() => {
-        const loadData = async () => {
-            setCollabs(await db.getCollaborators());
-            setClients((await db.getClients()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-            setOperations((await db.getOperations()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-            setIlhas((await db.getIlhas()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-            setSupervisors((await db.getSupervisors()).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
-        };
-        loadData();
-    }, []);
+    const porNome = <T extends { nome?: string }>(a: T, b: T) => (a.nome || '').localeCompare(b.nome || '');
+    const collabs = useResource('collaborators').data ?? [];
+    const clients = [...(useResource('clients').data ?? [])].sort(porNome);
+    const operations = [...(useResource('operations').data ?? [])].sort(porNome);
+    const ilhas = [...(useResource('ilhas').data ?? [])].sort(porNome);
+    const supervisors = [...(useResource('supervisors').data ?? [])].sort(porNome);
 
     const safeDate = (dateStr: string) => {
         if(!dateStr) return null;

@@ -155,6 +155,26 @@ class SupabaseService {
 
     return sorted; 
   }
+
+  async getRecentHistory(limit: number): Promise<HistoryLog[]> {
+    const { data, error } = await supabase.from('mop_history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async getCollaboratorHistory(matricula: string, nome: string): Promise<HistoryLog[]> {
+    const matriculaSegura = encodeURIComponent(matricula);
+    const nomeSeguro = encodeURIComponent(nome);
+    const { data, error } = await supabase.from('mop_history')
+      .select('*')
+      .or(`collaborator_matricula.eq.${matriculaSegura},target.eq.${nomeSeguro}`)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
   
   async getVacationHistory(matricula?: string): Promise<any[]> {
     const { data, error } = await buscarTudo<any>((de, ate) => {
@@ -178,7 +198,7 @@ class SupabaseService {
         end_date: endDate
     });
     if (error) {
-        console.error('Erro ao adicionar histórico de férias:', error);
+        throw error;
     }
   }
 
@@ -198,28 +218,29 @@ class SupabaseService {
     const newLog = { ...log, id: generateId() };
     const { error } = await supabase.from('mop_history').insert(newLog);
     if (error) {
-      console.error('Erro CRÍTICO ao salvar histórico:', error);
-      // Log adicional para debug se necessário
-      console.log('Tentativa de log falha:', newLog);
+      throw error;
     }
   }
 
   // --- Helpers Genéricos de CRUD ---
   private async getAll<T>(table: string): Promise<T[]> {
-    const { data } = await buscarTudo<T>((de, ate) => {
+    const { data, error } = await buscarTudo<T>((de, ate) => {
       let query = supabase.from(table).select('*');
       if (table !== 'mop_users') query = query.order('nome');
       return query.range(de, ate);
     });
+    if (error) throw error;
     return data;
   }
 
   private async saveItem<T extends { id: string }>(table: string, item: T) {
     const { data } = await supabase.from(table).select('id').eq('id', item.id).single();
     if (data) {
-      await supabase.from(table).update(item).eq('id', item.id);
+      const { error } = await supabase.from(table).update(item).eq('id', item.id);
+      if (error) throw error;
     } else {
-      await supabase.from(table).insert(item);
+      const { error } = await supabase.from(table).insert(item);
+      if (error) throw error;
     }
   }
 
@@ -259,8 +280,10 @@ class SupabaseService {
         coordinator_ids: data.coordinatorIds || []
     };
     const { data: existing } = await supabase.from('mop_supervisors').select('id').eq('id', data.id).single();
-    if(existing) await supabase.from('mop_supervisors').update(payload).eq('id', data.id);
-    else await supabase.from('mop_supervisors').insert(payload);
+    const { error } = existing
+      ? await supabase.from('mop_supervisors').update(payload).eq('id', data.id)
+      : await supabase.from('mop_supervisors').insert(payload);
+    if (error) throw error;
   }
 
   async deleteSupervisor(id: string) { await this.deleteItem('mop_supervisors', id); }
@@ -294,8 +317,10 @@ class SupabaseService {
   async saveOperation(data: Operation) { 
     const payload = { id: data.id, nome: data.nome, status: data.status, client_id: data.clientId || null };
     const { data: existing } = await supabase.from('mop_operations').select('id').eq('id', data.id).single();
-    if(existing) await supabase.from('mop_operations').update(payload).eq('id', data.id);
-    else await supabase.from('mop_operations').insert(payload);
+    const { error } = existing
+      ? await supabase.from('mop_operations').update(payload).eq('id', data.id)
+      : await supabase.from('mop_operations').insert(payload);
+    if (error) throw error;
   }
   async deleteOperation(id: string) { await this.deleteItem('mop_operations', id); }
 
@@ -331,10 +356,10 @@ class SupabaseService {
     const { data: existing } = await supabase.from('mop_ilhas').select('id').eq('id', data.id).single();
     if(existing) {
         const { error } = await supabase.from('mop_ilhas').update(payload).eq('id', data.id);
-        if (error) console.error("Error updating Ilha:", error);
+        if (error) throw error;
     } else {
         const { error } = await supabase.from('mop_ilhas').insert(payload);
-        if (error) console.error("Error inserting Ilha:", error);
+        if (error) throw error;
     }
   }
   async deleteIlha(id: string) { await this.deleteItem('mop_ilhas', id); }
@@ -379,10 +404,10 @@ class SupabaseService {
       .eq('ilha_id', item.ilhaId).eq('referencia', item.referencia).single();
     if (existing) {
       const { error } = await supabase.from('mop_provimento').update(payload).eq('id', existing.id);
-      if (error) console.error("Error updating Provimento:", error);
+      if (error) throw error;
     } else {
       const { error } = await supabase.from('mop_provimento').insert(payload);
-      if (error) console.error("Error inserting Provimento:", error);
+      if (error) throw error;
     }
   }
 
@@ -452,7 +477,7 @@ class SupabaseService {
     
     // Check if exists to determine update vs insert (or upsert)
     const { error } = await supabase.from('mop_collaborators').upsert(payload, { onConflict: 'matricula' });
-    if(error) console.error("Error saving collaborator", error);
+    if (error) throw error;
   }
   
   async deleteCollaborator(matricula: string) {

@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  User, Collaborator, EntityStatus
-} from './types';
+import { User, Collaborator } from './types';
 import { db } from './services/mockDb';
 import { AppShell } from './components/shell/AppShell';
 import { LoginPage } from './pages/LoginPage';
@@ -28,6 +26,8 @@ import { VacationManagementPage } from './pages/VacationManagementPage';
 import { AfastadosPage } from './pages/AfastadosPage';
 import { DesligadosPage } from './pages/DesligadosPage';
 import { ProvimentoPage } from './pages/ProvimentoPage';
+import { useAppData, useResource } from './contexts/DataContext';
+import type { ResourceName } from './data/appData';
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -36,15 +36,18 @@ const App = () => {
   // Recorte que o Dashboard entrega junto com a navegação. Vive aqui porque
   // quem o produz e quem o consome são duas telas irmãs.
   const [filtroLista, setFiltroLista] = useState<FiltroInicial | null>(null);
-  const [dataVersion, setDataVersion] = useState(0);
-  const refreshData = () => setDataVersion(v => v + 1);
-
-  const [dropdownOptions, setDropdownOptions] = useState({
-      coordinators: [] as {value: string, label: string, status: EntityStatus}[],
-      supervisors: [] as {value: string, label: string, status: EntityStatus}[],
-      clients: [] as {value: string, label: string, status: EntityStatus}[],
-      operations: [] as {value: string, label: string, clientId?: string, status: EntityStatus}[]
-  });
+  const store = useAppData();
+  const refreshData = (resources: ResourceName[]) => Promise.all(resources.map(name => store[name].invalidate()));
+  const coordinators = useResource('coordinators').data ?? [];
+  const supervisors = useResource('supervisors').data ?? [];
+  const clients = useResource('clients').data ?? [];
+  const operations = useResource('operations').data ?? [];
+  const dropdownOptions = {
+      coordinators: coordinators.map(x => ({value: x.id, label: x.nome, status: x.status})),
+      supervisors: supervisors.map(x => ({value: x.id, label: x.nome, status: x.status})),
+      clients: clients.map(x => ({value: x.id, label: x.nome, status: x.status})),
+      operations: operations.map(x => ({value: x.id, label: x.nome, clientId: x.clientId, status: x.status})),
+  };
 
   useEffect(() => {
       const runChecks = async () => {
@@ -55,30 +58,6 @@ const App = () => {
       };
       runChecks();
   }, []);
-
-  useEffect(() => {
-      const load = async () => {
-          const [c, s, cli, op] = await Promise.all([
-              db.getCoordinators(),
-              db.getSupervisors(),
-              db.getClients(),
-              db.getOperations()
-          ]);
-          // Mantém os inativos aqui: o CrudPage usa esta mesma lista tanto para
-          // as opções do <select> quanto para resolver o nome exibido na coluna
-          // da tabela — um vínculo com um registro já inativo precisa continuar
-          // aparecendo com o nome certo na tabela, só não pode ser reoferecido
-          // como escolha nova (isso o CrudPage filtra por `status` na hora de
-          // montar o <select>).
-          setDropdownOptions({
-              coordinators: c.map(x => ({value: x.id, label: x.nome, status: x.status})),
-              supervisors: s.map(x => ({value: x.id, label: x.nome, status: x.status})),
-              clients: cli.map(x => ({value: x.id, label: x.nome, status: x.status})),
-              operations: op.map(x => ({value: x.id, label: x.nome, clientId: x.clientId, status: x.status}))
-          });
-      };
-      load();
-  }, [dataVersion]);
 
   const handleLogin = (u: User) => {
     setCurrentUser(u);
@@ -97,51 +76,51 @@ const App = () => {
   };
 
   const renderContent = () => {
-    const commonProps = { onRefresh: refreshData, currentUser: currentUser! };
+    const commonProps = { onRefresh: () => refreshData(['collaborators']), currentUser: currentUser! };
 
     switch (currentPage) {
-      case 'dashboard': return <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} key={dataVersion} />;
-      case 'distribuicao': return <DistribuicaoPage key={dataVersion} onAbrirLista={abrirLista} />;
-      case 'turnover': return <TurnoverPage key={dataVersion} />;
-      case 'safra': return <SafraPage key={dataVersion} />;
-      case 'organogram': return <OrganogramPage key={dataVersion} />;
+      case 'dashboard': return <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} />;
+      case 'distribuicao': return <DistribuicaoPage onAbrirLista={abrirLista} />;
+      case 'turnover': return <TurnoverPage />;
+      case 'safra': return <SafraPage />;
+      case 'organogram': return <OrganogramPage />;
       case 'collaborators':
-        if (selectedCollab) return <CollaboratorDetailsPage key={dataVersion} collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
-        return <CollaboratorsPage key={dataVersion} onViewDetails={setSelectedCollab} filtroInicial={filtroLista} {...commonProps} />;
-      case 'coordinators': return <CrudPage key={dataVersion} title="Coordenadores" singular="coordenador" data={db.getCoordinators()} onSave={db.saveCoordinator.bind(db)} onDelete={db.deleteCoordinator.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}]} {...commonProps} />;
-      case 'supervisors': return <CrudPage key={dataVersion} title="Supervisores" singular="supervisor" data={db.getSupervisors()} onSave={db.saveSupervisor.bind(db)} onDelete={db.deleteSupervisor.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'coordinatorIds', label:'Coordenadores', type:'multiselect', options: dropdownOptions.coordinators }]} {...commonProps} />;
-      case 'clients': return <CrudPage key={dataVersion} title="Clientes" singular="cliente" data={db.getClients()} onSave={db.saveClient.bind(db)} onDelete={db.deleteClient.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'logo', label:'URL da logo', type:'text'}]} {...commonProps} />;
-      case 'operations': return <CrudPage key={dataVersion} title="Operações" singular="operação" data={db.getOperations()} onSave={db.saveOperation.bind(db)} onDelete={db.deleteOperation.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'clientId', label:'Cliente', type:'select', options: dropdownOptions.clients }]} {...commonProps} />;
-      case 'ilhas': return <CrudPage key={dataVersion} title="Ilhas" singular="ilha" data={db.getIlhas()} onSave={db.saveIlha.bind(db)} onDelete={db.deleteIlha.bind(db)} schema={[
+        if (selectedCollab) return <CollaboratorDetailsPage collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
+        return <CollaboratorsPage onViewDetails={setSelectedCollab} filtroInicial={filtroLista} {...commonProps} />;
+      case 'coordinators': return <CrudPage title="Coordenadores" singular="coordenador" data={coordinators} onSave={db.saveCoordinator.bind(db)} onDelete={db.deleteCoordinator.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}]} currentUser={currentUser!} onRefresh={() => refreshData(['coordinators'])} />;
+      case 'supervisors': return <CrudPage title="Supervisores" singular="supervisor" data={supervisors} onSave={db.saveSupervisor.bind(db)} onDelete={db.deleteSupervisor.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'coordinatorIds', label:'Coordenadores', type:'multiselect', options: dropdownOptions.coordinators }]} currentUser={currentUser!} onRefresh={() => refreshData(['supervisors'])} />;
+      case 'clients': return <CrudPage title="Clientes" singular="cliente" data={clients} onSave={db.saveClient.bind(db)} onDelete={db.deleteClient.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'logo', label:'URL da logo', type:'text'}]} currentUser={currentUser!} onRefresh={() => refreshData(['clients'])} />;
+      case 'operations': return <CrudPage title="Operações" singular="operação" data={operations} onSave={db.saveOperation.bind(db)} onDelete={db.deleteOperation.bind(db)} schema={[{key:'nome', label:'Nome', type:'text'}, {key:'clientId', label:'Cliente', type:'select', options: dropdownOptions.clients }]} currentUser={currentUser!} onRefresh={() => refreshData(['operations'])} />;
+      case 'ilhas': return <CrudPage title="Ilhas" singular="ilha" data={db.getIlhas()} onSave={db.saveIlha.bind(db)} onDelete={db.deleteIlha.bind(db)} schema={[
         {key:'nome', label:'Nome', type:'text'},
         {key:'clientId', label:'Cliente', type:'select', options: dropdownOptions.clients },
         {key:'operationId', label:'Operação', type:'select', options: (currentItem: any) => currentItem.clientId ? dropdownOptions.operations.filter(o => o.clientId === currentItem.clientId) : dropdownOptions.operations },
         {key:'coordinatorIds', label:'Coordenadores', type:'multiselect', options: dropdownOptions.coordinators },
         {key:'supervisorIds', label:'Supervisores', type:'multiselect', options: dropdownOptions.supervisors }
-      ]} {...commonProps} />;
-      case 'provimento': return <ProvimentoPage key={dataVersion} currentUser={currentUser!} />;
-      case 'users': return <UsersPage key={dataVersion} {...commonProps} />;
-      case 'history': return <HistoryPage key={dataVersion} />;
-      case 'birthdays': return <BirthdaysPage key={dataVersion} onBack={() => setCurrentPage('dashboard')} />;
+      ]} currentUser={currentUser!} onRefresh={() => refreshData(['ilhas'])} />;
+      case 'provimento': return <ProvimentoPage currentUser={currentUser!} />;
+      case 'users': return <UsersPage {...commonProps} />;
+      case 'history': return <HistoryPage />;
+      case 'birthdays': return <BirthdaysPage onBack={() => setCurrentPage('dashboard')} />;
       case 'desligados':
-        if (selectedCollab) return <CollaboratorDetailsPage key={dataVersion} collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
-        return <DesligadosPage key={dataVersion} onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
-      case 'expiring': return <ExpiringContractsPage key={dataVersion} onBack={() => setCurrentPage('dashboard')} currentUser={currentUser!} />;
+        if (selectedCollab) return <CollaboratorDetailsPage collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
+        return <DesligadosPage onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
+      case 'expiring': return <ExpiringContractsPage onBack={() => setCurrentPage('dashboard')} currentUser={currentUser!} />;
       case 'aviso_previo':
-        if (selectedCollab) return <CollaboratorDetailsPage key={dataVersion} collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
-        return <AvisoPrevioPage key={dataVersion} onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
+        if (selectedCollab) return <CollaboratorDetailsPage collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
+        return <AvisoPrevioPage onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
       case 'vacation':
-        if (selectedCollab) return <CollaboratorDetailsPage key={dataVersion} collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
-        return <VacationManagementPage currentUser={currentUser!} key={dataVersion} onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
+        if (selectedCollab) return <CollaboratorDetailsPage collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
+        return <VacationManagementPage currentUser={currentUser!} onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
       case 'afastados':
-        if (selectedCollab) return <CollaboratorDetailsPage key={dataVersion} collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
-        return <AfastadosPage key={dataVersion} onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
-      case 'scheduled_tasks': return <ScheduledTasksPage key={dataVersion} />;
-      case 'import': return <ImportPage key={dataVersion} {...commonProps} />;
-      case 'bulk_update': return <BulkUpdatePage key={dataVersion} {...commonProps} />;
-      case 'reset': return <ResetDataPage key={dataVersion} />;
-      case 'about': return <AboutPage key={dataVersion} />;
-      default: return <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} key={dataVersion} />;
+        if (selectedCollab) return <CollaboratorDetailsPage collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;
+        return <AfastadosPage onBack={() => setCurrentPage('dashboard')} onViewDetails={setSelectedCollab} />;
+      case 'scheduled_tasks': return <ScheduledTasksPage />;
+      case 'import': return <ImportPage {...commonProps} />;
+      case 'bulk_update': return <BulkUpdatePage {...commonProps} />;
+      case 'reset': return <ResetDataPage />;
+      case 'about': return <AboutPage />;
+      default: return <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} />;
     }
   };
 

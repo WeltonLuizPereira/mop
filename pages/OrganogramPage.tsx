@@ -3,6 +3,7 @@ import { Plus, ChevronDown, Loader2, Maximize, MousePointer2, Hand } from 'lucid
 import { Coordinator, Supervisor, CollaboratorStatus, EntityStatus } from '../types';
 import { db } from '../services/mockDb';
 import { Badge, ChipSelect } from '../components/ui';
+import { useResource } from '../contexts/DataContext';
 
 export const OrganogramPage = () => {
     // ... same as original ...
@@ -22,15 +23,18 @@ export const OrganogramPage = () => {
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
     const [tool, setTool] = useState<'hand' | 'mouse'>('hand');
+    const coordinatorsResource = useResource('coordinators');
+    const supervisorsResource = useResource('supervisors');
+    const ilhasResource = useResource('ilhas');
+    const collaboratorsResource = useResource('collaborators');
 
     useEffect(() => {
-        const buildHierarchy = async () => {
-            const [coords, sups, ilhas, collabs] = await Promise.all([
-                db.getCoordinators(),
-                db.getSupervisors(),
-                db.getIlhas(),
-                db.getCollaborators()
-            ]);
+        const buildHierarchy = () => {
+            const coords = coordinatorsResource.data ?? [];
+            const sups = supervisorsResource.data ?? [];
+            const ilhas = ilhasResource.data ?? [];
+            const collabs = collaboratorsResource.data ?? [];
+            if ([coordinatorsResource, supervisorsResource, ilhasResource, collaboratorsResource].some(r => !r.data)) return;
 
             setCoordinatorsList(coords);
             setSupervisorsList(sups);
@@ -137,7 +141,7 @@ export const OrganogramPage = () => {
             setLoading(false);
         };
         buildHierarchy();
-    }, [filterCoord, filterSup]);
+    }, [filterCoord, filterSup, coordinatorsResource, supervisorsResource, ilhasResource, collaboratorsResource]);
 
     // ... Pan & Zoom ...
     const handleWheel = (e: React.WheelEvent) => {

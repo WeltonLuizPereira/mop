@@ -3,8 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Collaborator, CollaboratorStatus, EntityStatus, User, UserRole } from '../types';
 import { CollaboratorDetailsPage } from './CollaboratorDetailsPage';
+import { DataProvider } from '../contexts/DataContext';
+import { createAppData } from '../data/appData';
+import { db } from '../services/mockDb';
 
-const getHistory = vi.fn();
+const getCollaboratorHistory = vi.fn();
+const getCollaborators = vi.fn();
 const getVacationHistory = vi.fn();
 const getIlhas = vi.fn();
 const getOperations = vi.fn();
@@ -19,7 +23,8 @@ const scheduleTask = vi.fn();
 
 vi.mock('../services/mockDb', () => ({
   db: {
-    getHistory: (...args: unknown[]) => getHistory(...args),
+    getCollaborators: (...args: unknown[]) => getCollaborators(...args),
+    getCollaboratorHistory: (...args: unknown[]) => getCollaboratorHistory(...args),
     getVacationHistory: (...args: unknown[]) => getVacationHistory(...args),
     getIlhas: (...args: unknown[]) => getIlhas(...args),
     getOperations: (...args: unknown[]) => getOperations(...args),
@@ -58,17 +63,20 @@ const visualizador: User = { ...admin, id: '3', role: UserRole.VIEWER };
 
 const montar = (overrides: Partial<{ collab: Collaborator; onBack: () => void; currentUser: User; onRefresh: () => void }> = {}) =>
   render(
-    <CollaboratorDetailsPage
-      collab={overrides.collab ?? collab}
-      onBack={overrides.onBack ?? vi.fn()}
-      currentUser={overrides.currentUser ?? admin}
-      onRefresh={overrides.onRefresh ?? vi.fn()}
-    />,
+    <DataProvider store={createAppData(db)}>
+      <CollaboratorDetailsPage
+        collab={overrides.collab ?? collab}
+        onBack={overrides.onBack ?? vi.fn()}
+        currentUser={overrides.currentUser ?? admin}
+        onRefresh={overrides.onRefresh ?? vi.fn()}
+      />
+    </DataProvider>,
   );
 
 beforeEach(() => {
   vi.clearAllMocks();
-  getHistory.mockResolvedValue([]);
+  getCollaborators.mockResolvedValue([collab]);
+  getCollaboratorHistory.mockResolvedValue([]);
   getVacationHistory.mockResolvedValue([]);
   getIlhas.mockResolvedValue([
     { id: 'i1', nome: 'Ilha 01 — SAC', clientId: 'c1', operationId: 'o1', coordinatorIds: ['co1'], supervisorIds: ['s1'], status: EntityStatus.ACTIVE },
@@ -86,7 +94,7 @@ beforeEach(() => {
 
 describe('Detalhe do colaborador', () => {
   it('mostra a alocação sem esperar o carregamento do histórico terminar', async () => {
-    getHistory.mockReturnValue(new Promise(() => {}));
+    getCollaboratorHistory.mockReturnValue(new Promise(() => {}));
 
     montar();
 
@@ -143,12 +151,12 @@ describe('Detalhe do colaborador', () => {
   });
 
   it('filtra o histórico por nome ou matrícula do colaborador', async () => {
-    getHistory.mockResolvedValue([
+    getCollaboratorHistory.mockResolvedValue([
       { id: 'h1', action: 'Atualização do cadastro', target: collab.nome, user: 'Welton', date: '01/01/2026 10:00:00', type: 'update', details: 'Email: alterado' },
       { id: 'h2', action: 'Agendamento de tarefa futura', target: 'Outra Pessoa', user: 'Welton', date: '02/01/2026 10:00:00', type: 'create', details: `Alteração agendada para a matrícula ${collab.matricula}` },
-      { id: 'h3', action: 'Ação de outra pessoa', target: 'Outra Pessoa', user: 'Welton', date: '03/01/2026 10:00:00', type: 'update', details: 'nada a ver com este colaborador' },
     ]);
     montar();
+    expect(getCollaboratorHistory).toHaveBeenCalledWith(collab.matricula, collab.nome);
     expect(await screen.findByText('Atualização do cadastro')).toBeInTheDocument();
     expect(screen.getByText('Agendamento de tarefa futura')).toBeInTheDocument();
     expect(screen.queryByText('Ação de outra pessoa')).not.toBeInTheDocument();
@@ -170,7 +178,8 @@ describe('Detalhe do colaborador', () => {
     await user.click(await screen.findByRole('button', { name: 'Salvar' }));
     expect(saveCollaborator).toHaveBeenCalledWith(expect.objectContaining({ matricula: collab.matricula }));
     expect(addHistory).toHaveBeenCalledWith(expect.objectContaining({ action: 'Atualização Colaborador', target: collab.nome }));
-    expect(onRefresh).toHaveBeenCalled();
+    expect(onRefresh).not.toHaveBeenCalled();
+    expect(getCollaborators).toHaveBeenCalledTimes(1);
   });
 
   it('só exclui depois de confirmar no modal, e cancelar não exclui', async () => {
@@ -188,7 +197,8 @@ describe('Detalhe do colaborador', () => {
     const confirmDialog = await screen.findByRole('dialog');
     await user.click(within(confirmDialog).getByRole('button', { name: 'Excluir' }));
     expect(deleteCollaborator).toHaveBeenCalledWith(collab.matricula);
-    expect(onRefresh).toHaveBeenCalled();
+    expect(onRefresh).not.toHaveBeenCalled();
+    expect(getCollaborators).toHaveBeenCalledTimes(1);
     expect(onBack).toHaveBeenCalled();
   });
 

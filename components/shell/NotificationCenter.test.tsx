@@ -5,7 +5,7 @@ import { NotificationCenter } from './NotificationCenter';
 
 const mocks = vi.hoisted(() => ({
   getCollaborators: vi.fn(),
-  getHistory: vi.fn(),
+  getRecentHistory: vi.fn(),
 }));
 
 vi.mock('../../services/mockDb', () => ({ db: mocks }));
@@ -13,7 +13,7 @@ vi.mock('../../services/mockDb', () => ({ db: mocks }));
 describe('NotificationCenter', () => {
   beforeEach(() => {
     mocks.getCollaborators.mockReset().mockResolvedValue([]);
-    mocks.getHistory.mockReset().mockResolvedValue([]);
+    mocks.getRecentHistory.mockReset().mockResolvedValue([]);
   });
 
   it('nomeia o botão e o painel e apresenta o estado vazio', async () => {
@@ -66,7 +66,7 @@ describe('NotificationCenter', () => {
       expect(mocks.getCollaborators).toHaveBeenCalledTimes(1);
       await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
       expect(mocks.getCollaborators).toHaveBeenCalledTimes(2);
-      expect(mocks.getHistory).toHaveBeenCalledTimes(2);
+      expect(mocks.getRecentHistory).toHaveBeenCalledTimes(2);
     } finally {
       vi.useRealTimers();
     }
