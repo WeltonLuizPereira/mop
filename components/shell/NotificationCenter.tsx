@@ -72,8 +72,7 @@ export const NotificationCenter = () => {
                 return formatDateString(c.dataFim) === todayStr;
             });
 
-            const fullHistory = await db.getHistory();
-            const history = fullHistory.slice(0, 5);
+            const history = await db.getRecentHistory(5);
 
             setNotifications({
                 birthdays: todaysBirthdays,

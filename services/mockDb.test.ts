@@ -19,14 +19,24 @@ function construtor(tabela: string) {
   let de = 0;
   let ate = TETO - 1;
   const filtros: Record<string, any> = {};
+  let alternativas: Array<[string, string]> = [];
 
   const linhas = () => tabelas[tabela] ?? [];
   const filtradas = () => linhas().filter(row =>
-    Object.entries(filtros).every(([coluna, valor]) => row[coluna] === valor));
+    Object.entries(filtros).every(([coluna, valor]) => row[coluna] === valor) &&
+    (alternativas.length === 0 || alternativas.some(([coluna, valor]) => row[coluna] === valor)));
 
   const alvo: any = {
     select: () => alvo,
     order: () => alvo,
+    limit: (quantidade: number) => { ate = de + quantidade - 1; return alvo; },
+    or: (expressao: string) => {
+      alternativas = expressao.split(',').map(parte => {
+        const [coluna, _operador, ...valor] = parte.split('.');
+        return [coluna, decodeURIComponent(valor.join('.'))];
+      });
+      return alvo;
+    },
     eq: (coluna: string, valor: any) => { filtros[coluna] = valor; return alvo; },
     range: (inicio: number, fim: number) => {
       de = inicio;
@@ -128,6 +138,23 @@ describe('leitura de tabela grande', () => {
   it('devolve lista vazia sem entrar em laço quando a tabela está vazia', async () => {
     tabelas['mop_collaborators'] = [];
     expect(await db.getCollaborators()).toEqual([]);
+  });
+});
+
+describe('consultas especializadas de histÃ³rico', () => {
+  it('limita o histÃ³rico recente', async () => {
+    tabelas['mop_history'] = Array.from({ length: 8 }, (_, i) => ({ id: String(i), target: 'Ana', created_at: `2026-09-0${i + 1}` }));
+    expect(await db.getRecentHistory(5)).toHaveLength(5);
+  });
+
+  it('filtra o histÃ³rico por matrÃ­cula ou nome legado exato', async () => {
+    tabelas['mop_history'] = [
+      { id: '1', collaborator_matricula: '10', target: 'Nome antigo' },
+      { id: '2', collaborator_matricula: null, target: 'Ana' },
+      { id: '3', collaborator_matricula: '20', target: 'Outra' },
+    ];
+    const logs = await db.getCollaboratorHistory('10', 'Ana');
+    expect(logs.map((log: any) => log.id)).toEqual(['1', '2']);
   });
 });
 

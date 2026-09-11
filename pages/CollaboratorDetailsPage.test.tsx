@@ -7,7 +7,7 @@ import { DataProvider } from '../contexts/DataContext';
 import { createAppData } from '../data/appData';
 import { db } from '../services/mockDb';
 
-const getHistory = vi.fn();
+const getCollaboratorHistory = vi.fn();
 const getCollaborators = vi.fn();
 const getVacationHistory = vi.fn();
 const getIlhas = vi.fn();
@@ -24,7 +24,7 @@ const scheduleTask = vi.fn();
 vi.mock('../services/mockDb', () => ({
   db: {
     getCollaborators: (...args: unknown[]) => getCollaborators(...args),
-    getHistory: (...args: unknown[]) => getHistory(...args),
+    getCollaboratorHistory: (...args: unknown[]) => getCollaboratorHistory(...args),
     getVacationHistory: (...args: unknown[]) => getVacationHistory(...args),
     getIlhas: (...args: unknown[]) => getIlhas(...args),
     getOperations: (...args: unknown[]) => getOperations(...args),
@@ -76,7 +76,7 @@ const montar = (overrides: Partial<{ collab: Collaborator; onBack: () => void; c
 beforeEach(() => {
   vi.clearAllMocks();
   getCollaborators.mockResolvedValue([collab]);
-  getHistory.mockResolvedValue([]);
+  getCollaboratorHistory.mockResolvedValue([]);
   getVacationHistory.mockResolvedValue([]);
   getIlhas.mockResolvedValue([
     { id: 'i1', nome: 'Ilha 01 — SAC', clientId: 'c1', operationId: 'o1', coordinatorIds: ['co1'], supervisorIds: ['s1'], status: EntityStatus.ACTIVE },
@@ -94,7 +94,7 @@ beforeEach(() => {
 
 describe('Detalhe do colaborador', () => {
   it('mostra a alocação sem esperar o carregamento do histórico terminar', async () => {
-    getHistory.mockReturnValue(new Promise(() => {}));
+    getCollaboratorHistory.mockReturnValue(new Promise(() => {}));
 
     montar();
 
@@ -151,12 +151,12 @@ describe('Detalhe do colaborador', () => {
   });
 
   it('filtra o histórico por nome ou matrícula do colaborador', async () => {
-    getHistory.mockResolvedValue([
+    getCollaboratorHistory.mockResolvedValue([
       { id: 'h1', action: 'Atualização do cadastro', target: collab.nome, user: 'Welton', date: '01/01/2026 10:00:00', type: 'update', details: 'Email: alterado' },
       { id: 'h2', action: 'Agendamento de tarefa futura', target: 'Outra Pessoa', user: 'Welton', date: '02/01/2026 10:00:00', type: 'create', details: `Alteração agendada para a matrícula ${collab.matricula}` },
-      { id: 'h3', action: 'Ação de outra pessoa', target: 'Outra Pessoa', user: 'Welton', date: '03/01/2026 10:00:00', type: 'update', details: 'nada a ver com este colaborador' },
     ]);
     montar();
+    expect(getCollaboratorHistory).toHaveBeenCalledWith(collab.matricula, collab.nome);
     expect(await screen.findByText('Atualização do cadastro')).toBeInTheDocument();
     expect(screen.getByText('Agendamento de tarefa futura')).toBeInTheDocument();
     expect(screen.queryByText('Ação de outra pessoa')).not.toBeInTheDocument();

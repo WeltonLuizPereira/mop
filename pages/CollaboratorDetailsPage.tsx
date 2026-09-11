@@ -32,8 +32,8 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
 
         // Históricos podem ser tabelas grandes. Eles não devem bloquear os
         // dados de alocação que formam a parte principal desta tela.
-        void db.getHistory().then(allLogs => {
-            if (active) setHistoryLogs(allLogs.filter(h => h.target === currentCollab.nome || h.details?.includes(currentCollab.matricula)));
+        void db.getCollaboratorHistory(currentCollab.matricula, currentCollab.nome).then(allLogs => {
+            if (active) setHistoryLogs(allLogs);
         });
         void db.getVacationHistory(currentCollab.matricula).then(vacHistory => {
             if (active) setVacationHistory(vacHistory);

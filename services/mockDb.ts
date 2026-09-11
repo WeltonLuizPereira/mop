@@ -155,6 +155,26 @@ class SupabaseService {
 
     return sorted; 
   }
+
+  async getRecentHistory(limit: number): Promise<HistoryLog[]> {
+    const { data, error } = await supabase.from('mop_history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async getCollaboratorHistory(matricula: string, nome: string): Promise<HistoryLog[]> {
+    const matriculaSegura = encodeURIComponent(matricula);
+    const nomeSeguro = encodeURIComponent(nome);
+    const { data, error } = await supabase.from('mop_history')
+      .select('*')
+      .or(`collaborator_matricula.eq.${matriculaSegura},target.eq.${nomeSeguro}`)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
   
   async getVacationHistory(matricula?: string): Promise<any[]> {
     const { data, error } = await buscarTudo<any>((de, ate) => {
