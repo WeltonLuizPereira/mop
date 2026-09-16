@@ -17,7 +17,7 @@ interface TopbarProps {
 export const Topbar = ({ title, onToggleMenu, menuOpen = false, menuControls, menuRef }: TopbarProps) => {
   const { theme, toggleTheme } = useTheme();
   return (
-    <header className="h-14 shrink-0 flex items-center gap-3 md:gap-4 px-4 md:px-7 border-b border-hairline bg-canvas">
+    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-hairline bg-canvas px-5 md:gap-4 md:px-8">
       {onToggleMenu && (
         <button
           type="button"
@@ -26,18 +26,18 @@ export const Topbar = ({ title, onToggleMenu, menuOpen = false, menuControls, me
           aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
           aria-expanded={menuOpen}
           aria-controls={menuControls}
-          className="lg:hidden w-8 h-8 grid place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft shrink-0"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft lg:hidden"
         >
           <Menu size={18} />
         </button>
       )}
-      <h1 className="font-display font-bold text-base tracking-tight text-ink truncate">{title}</h1>
+      <h1 className="truncate font-display text-lg font-bold tracking-tight text-ink">{title}</h1>
       <div className="flex-1" />
       <button
         type="button"
         onClick={toggleTheme}
         aria-label={theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}
-        className="w-8 h-8 grid place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft hover:text-ink"
+        className="grid h-8 w-8 place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft hover:text-ink"
       >
         {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
       </button>

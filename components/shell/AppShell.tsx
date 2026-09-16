@@ -35,7 +35,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
   }, [menuAberto]);
 
   return (
-    <div className="flex h-screen bg-canvas text-ink">
+    <div className="min-h-dvh bg-canvas-sunk text-ink lg:p-5">
       {/* Primeiro tabulável da página: pula a navegação inteira para quem
           chega pelo teclado. Fica invisível até receber foco. */}
       <a
@@ -47,6 +47,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
         Pular para o conteúdo
       </a>
 
+      <div className="mx-auto grid min-h-dvh max-w-[1600px] overflow-hidden bg-canvas shadow-3 lg:min-h-[calc(100dvh-2.5rem)] lg:grid-cols-[248px_minmax(0,1fr)] lg:rounded-[24px]">
       <div className="hidden lg:flex">
         <Sidebar {...{ currentUser, currentPage, onNavigate, onLogout }} />
       </div>
@@ -63,7 +64,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
           className="lg:hidden fixed inset-0 z-40 flex"
         >
           <div className="absolute inset-0 bg-black/50" onClick={() => setMenuAberto(false)} />
-          <div className="relative z-10">
+          <div className="relative z-10 h-full">
             <Sidebar
               {...{ currentUser, currentPage, onLogout }}
               onNavigate={p => { onNavigate(p); setMenuAberto(false); }}
@@ -74,7 +75,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
 
       {/* Com a gaveta aberta o fundo sai do alcance do teclado e do leitor de
           tela: senão o Tab sai da sobreposição e vai parar na tela coberta. */}
-      <main id={CONTEUDO_ID} inert={menuAberto} className="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <div inert={menuAberto} className="min-w-0 flex min-h-0 flex-col overflow-hidden">
         <Topbar
           title={pageTitle(currentPage)}
           onToggleMenu={() => setMenuAberto(a => !a)}
@@ -82,10 +83,11 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
           menuControls={MENU_ID}
           menuRef={gatilho}
         />
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4 md:p-7 max-w-[1440px] w-full mx-auto">{children}</div>
-        </div>
-      </main>
+        <main id={CONTEUDO_ID} inert={menuAberto} className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1440px] p-4 md:p-7 lg:p-8">{children}</div>
+        </main>
+      </div>
+      </div>
     </div>
   );
 };

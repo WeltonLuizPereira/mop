@@ -3,6 +3,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { EntityStatus, UserRole, type User } from '../../types';
 import { Sidebar } from './Sidebar';
 
+describe('Sidebar accessibility', () => {
+  it('identifies the primary navigation for assistive technology', () => {
+    render(
+      <Sidebar
+        currentUser={{
+          id: '1', matricula: '3924', nome: 'Welton Pereira', email: 'w@q.com',
+          role: UserRole.ADMIN, status: EntityStatus.ACTIVE,
+        }}
+        currentPage="dashboard"
+        onNavigate={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('navigation', { name: /principal/i })).toBeInTheDocument();
+  });
+});
+
 const usuario = (role: UserRole): User => ({
   id: '1', matricula: '3924', nome: 'Welton Pereira',
   email: 'w@q.com', role, status: EntityStatus.ACTIVE,

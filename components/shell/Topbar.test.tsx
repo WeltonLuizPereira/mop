@@ -5,6 +5,18 @@ import { Topbar } from './Topbar';
 
 vi.mock('./NotificationCenter', () => ({ NotificationCenter: () => null }));
 
+describe('Topbar accessibility', () => {
+  it('offers the theme control', () => {
+    render(
+      <ThemeProvider>
+        <Topbar title="Colaboradores" />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByRole('button', { name: /tema/i })).toBeInTheDocument();
+  });
+});
+
 describe('Topbar', () => {
   it('expõe estado e alvo da gaveta no botão de menu', () => {
     render(

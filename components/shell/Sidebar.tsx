@@ -14,19 +14,19 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout }: SidebarProps) => (
-  <aside className="w-[260px] shrink-0 bg-canvas-soft border-r border-hairline flex flex-col h-full">
-    <div className="h-14 flex items-center gap-2.5 px-[18px] border-b border-hairline">
+  <aside className="flex h-full w-[248px] shrink-0 flex-col border-r border-hairline bg-canvas-soft">
+    <div className="flex h-20 items-center gap-3 border-b border-hairline px-5">
       <Logo variant="mark" className="w-6 h-6 shrink-0" />
       <div className="min-w-0">
-        <div className="font-display font-bold text-[15px] tracking-tight text-ink leading-tight">MOP</div>
-        <div className="text-[10px] text-ink-faint truncate">Quality Contact Center</div>
+        <div className="font-display text-[15px] font-bold leading-tight tracking-tight text-ink">MOP</div>
+        <div className="truncate text-[10px] text-ink-faint">Quality Contact Center</div>
       </div>
     </div>
 
-    <nav className="flex-1 overflow-y-auto p-3">
+    <nav aria-label="Navega\u00e7\u00e3o principal" className="flex-1 overflow-y-auto px-4 py-5">
       {visibleGroups(currentUser.role).map(grupo => (
-        <div key={grupo.group} className="mb-5 last:mb-0">
-          <span className="t-eyebrow text-ink-faint block px-2.5 mb-2">{grupo.group}</span>
+        <div key={grupo.group} className="mb-6 last:mb-0">
+          <span className="t-eyebrow mb-2 block px-3 text-ink-faint">{grupo.group}</span>
           <div className="space-y-0.5">
             {grupo.items.map(item => (
               <NavItem
@@ -42,7 +42,7 @@ export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout }: Side
       ))}
     </nav>
 
-    <div className="border-t border-hairline p-3.5 flex items-center gap-2.5">
+    <div className="flex items-center gap-2.5 border-t border-hairline p-4">
       <div className="w-[30px] h-[30px] rounded-full bg-brand text-on-brand grid place-items-center font-display font-bold text-xs shrink-0">
         {getInitials(currentUser.nome)}
       </div>
