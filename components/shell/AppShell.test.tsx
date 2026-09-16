@@ -21,6 +21,16 @@ const montar = () => render(
 );
 
 describe('AppShell', () => {
+  it('moves focus into the mobile drawer and makes the skip link inert', async () => {
+    montar();
+    const skipLink = screen.getByRole('link', { name: /Pular para/i });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
+
+    expect(screen.getByRole('dialog', { name: 'Menu principal' })).toHaveFocus();
+    expect(skipLink).toHaveAttribute('inert');
+  });
+
   it('oferece atalho direto para o conteúdo principal', () => {
     montar();
     expect(screen.getByRole('link', { name: 'Pular para o conteúdo' }))

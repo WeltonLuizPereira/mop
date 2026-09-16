@@ -18,6 +18,7 @@ const CONTEUDO_ID = 'conteudo-principal';
 export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, children }: AppShellProps) => {
   const [menuAberto, setMenuAberto] = useState(false);
   const gatilho = useRef<HTMLButtonElement>(null);
+  const gaveta = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!menuAberto) return;
@@ -34,12 +35,17 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
     if (!menuAberto) gatilho.current?.focus();
   }, [menuAberto]);
 
+  useEffect(() => {
+    if (menuAberto) gaveta.current?.focus();
+  }, [menuAberto]);
+
   return (
     <div className="min-h-dvh bg-canvas-sunk text-ink lg:p-5">
       {/* Primeiro tabulável da página: pula a navegação inteira para quem
           chega pelo teclado. Fica invisível até receber foco. */}
       <a
         href={`#${CONTEUDO_ID}`}
+        inert={menuAberto}
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50
                    focus:bg-canvas focus:text-ink focus:border focus:border-brand
                    focus:rounded-sm focus:px-3 focus:py-2 focus:shadow-1"
@@ -61,6 +67,8 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
           role="dialog"
           aria-modal="true"
           aria-label="Menu principal"
+          ref={gaveta}
+          tabIndex={-1}
           className="lg:hidden fixed inset-0 z-40 flex"
         >
           <div className="absolute inset-0 bg-black/50" onClick={() => setMenuAberto(false)} />
