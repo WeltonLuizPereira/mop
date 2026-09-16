@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { contrastRatio } from './contrast';
 
 const T = {
-  brand: '#F27405', onBrand: '#191310', brandText: '#D04200',
+  brandClaro: '#F27405', onBrandClaro: '#191310', brandTextClaro: '#D04200',
   canvasClaro: '#FFFFFF', inkClaro: '#191310', inkMuteClaro: '#6B615C',
-  canvasEscuro: '#121110', inkEscuro: '#F5F1EF', inkMuteEscuro: '#948B86',
+  brandEscuro: '#FF5B35', onBrandEscuro: '#061625', brandTextEscuro: '#FF8A70',
+  canvasEscuro: '#061625', inkEscuro: '#EAF2F7', inkMuteEscuro: '#91A5B5',
 };
 
 describe('contrastRatio', () => {
@@ -17,17 +18,21 @@ describe('contrastRatio', () => {
 });
 
 describe('tokens da marca', () => {
-  it('texto quase-preto sobre o laranja passa AA', () => {
-    expect(contrastRatio(T.onBrand, T.brand)).toBeGreaterThanOrEqual(4.5);
+  it('texto quase-preto sobre o preenchimento claro passa AA', () => {
+    expect(contrastRatio(T.onBrandClaro, T.brandClaro)).toBeGreaterThanOrEqual(4.5);
   });
-  it('texto branco sobre o laranja REPROVA — é por isso que on-brand é escuro', () => {
-    expect(contrastRatio('#FFFFFF', T.brand)).toBeLessThan(4.5);
+  it('texto azul-marinho sobre o preenchimento escuro passa AA', () => {
+    expect(contrastRatio(T.onBrandEscuro, T.brandEscuro)).toBeGreaterThanOrEqual(4.5);
   });
-  it('o laranja de texto do modo claro passa AA sobre branco', () => {
-    expect(contrastRatio(T.brandText, T.canvasClaro)).toBeGreaterThanOrEqual(4.5);
+  it('texto branco sobre o preenchimento claro REPROVA', () => {
+    expect(contrastRatio('#FFFFFF', T.brandClaro)).toBeLessThan(4.5);
   });
-  it('o laranja de preenchimento passa AA sobre o canvas escuro', () => {
-    expect(contrastRatio(T.brand, T.canvasEscuro)).toBeGreaterThanOrEqual(4.5);
+  it.each([
+    ['claro', T.brandTextClaro, T.canvasClaro],
+    ['escuro', T.brandTextEscuro, T.canvasEscuro],
+    ['escuro', T.brandEscuro, T.canvasEscuro],
+  ])('a marca do modo %s passa AA sobre seu canvas', (_modo, marca, canvas) => {
+    expect(contrastRatio(marca, canvas)).toBeGreaterThanOrEqual(4.5);
   });
 });
 
