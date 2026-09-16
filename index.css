@@ -46,11 +46,14 @@
 }
 
 :root {
-  --canvas: #FFFFFF; --canvas-soft: #FAFAFA; --canvas-sunk: #F2F2F1;
-  --hairline: #E4E4E4; --hairline-2: #CFCFCF;
-  --ink: #191310; --ink-2: #453C38; --ink-mute: #6B615C; --ink-faint: #9A918C;
-  --brand: #F27405; --brand-hot: #F54E00; --brand-press: #D04200;
-  --brand-text: #D04200; --brand-wash: #FFF4EC; --on-brand: #191310;
+  --canvas:#fff; --canvas-soft:#f6f6f4; --canvas-sunk:#efefed;
+  --hairline:#e4e4e4; --hairline-2:#cbc7c3;
+  --ink:#191310; --ink-2:#453c38; --ink-mute:#6b615c; --ink-faint:#9a918c;
+  --brand:#f27405; --brand-hot:#f54e00; --brand-press:#d04200;
+  --brand-text:#d04200; --brand-wash:#fff1e8; --on-brand:#191310;
+  --shadow-1: 0 1px 3px rgb(25 19 16 / .06);
+  --shadow-2: 0 8px 24px rgb(25 19 16 / .08);
+  --shadow-3: 0 16px 48px rgb(25 19 16 / .12);
   --st-ativo: #12794F; --st-ferias: #1264A3; --st-afastado: #6544C0;
   --st-maternidade: #B4008C; --st-aviso: #FF4D6D; --st-realocado: #00786F;
   --st-desligado: #C2304C;
@@ -62,19 +65,20 @@
 }
 
 .dark {
-  --canvas: #121110; --canvas-soft: #1A1817; --canvas-sunk: #0C0B0A;
-  --hairline: #2E2A28; --hairline-2: #423D3A;
-  --ink: #F5F1EF; --ink-2: #C4BCB7; --ink-mute: #948B86; --ink-faint: #6E6560;
-  --brand: #F27405; --brand-hot: #FF6A1A; --brand-press: #C93E00;
-  --brand-text: #F27405; --brand-wash: rgb(242 116 5 / .14); --on-brand: #191310;
+  color-scheme:dark;
+  --canvas:#061625; --canvas-soft:#0a2032; --canvas-sunk:#04111d;
+  --hairline:#17364d; --hairline-2:#28506b;
+  --ink:#eaf2f7; --ink-2:#bfd0dc; --ink-mute:#91a5b5; --ink-faint:#718899;
+  --brand:#ff5b35; --brand-hot:#ff4d2e; --brand-press:#d93c22;
+  --brand-text:#ff8a70; --brand-wash:rgb(255 77 46 / .12); --on-brand:#061625;
   --st-ativo: #3FBE84; --st-ferias: #5AA9E6; --st-afastado: #9B8CFF;
   --st-maternidade: #E86FD8; --st-aviso: #FF4D6D; --st-realocado: #38B5A8;
   --st-desligado: #C2304C;
   --danger: #FF4D6D; --ok: #3FBE84;
 
-  --shadow-1: 0 1px 3px rgb(0 0 0 / .4);
-  --shadow-2: 0 8px 24px rgb(0 0 0 / .5);
-  --shadow-3: 0 16px 48px rgb(0 0 0 / .6);
+  --shadow-1: 0 1px 3px rgb(0 9 18 / .42);
+  --shadow-2: 0 8px 24px rgb(0 9 18 / .52);
+  --shadow-3: 0 16px 48px rgb(0 9 18 / .62);
 }
 
 html, body {

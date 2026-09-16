@@ -35,6 +35,15 @@ describe('ThemeProvider', () => {
     expect(document.documentElement).toHaveClass('dark');
   });
 
+  it('alterna entre as duas atmosferas sem mudar o contrato do tema', async () => {
+    const user = userEvent.setup();
+    montar();
+    expect(document.documentElement).not.toHaveClass('dark');
+    await user.click(screen.getByRole('button', { name: 'tema: light' }));
+    expect(document.documentElement).toHaveClass('dark');
+    expect(localStorage.getItem('mop-theme')).toBe('dark');
+  });
+
   it('ignora valor inválido no armazenamento', () => {
     localStorage.setItem('mop-theme', 'roxo');
     montar();
