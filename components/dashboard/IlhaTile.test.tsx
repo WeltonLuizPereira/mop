@@ -31,40 +31,84 @@ describe('IlhaTile', () => {
   it('revela PA Contratada, Ativos e o detalhamento por status no hover', async () => {
     const user = userEvent.setup();
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
-    const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
+    const card = screen.getByText('Ilha 01 — SAC').closest('article');
 
-    await user.hover(card);
+    await user.hover(card!);
 
     expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'false');
     expect(screen.getByText('PA contratada')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument(); // PA contratada
-    expect(card.textContent).toContain('1');
-    expect(card.textContent).toContain('férias');
+    expect(card!.textContent).toContain('1');
+    expect(card!.textContent).toContain('férias');
   });
 
   it('recolhe de volta quando o mouse sai', async () => {
     const user = userEvent.setup();
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
-    const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
+    const card = screen.getByText('Ilha 01 — SAC').closest('article');
 
-    await user.hover(card);
+    await user.hover(card!);
     expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'false');
 
-    await user.unhover(card);
+    await user.unhover(card!);
     expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('também expande no foco de teclado, não só no mouse', () => {
+  it('expõe detalhes pelo controle no foco de teclado, sem transformar o cartão em botão', () => {
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
-    const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
+    const navegacao = screen.getByRole('button', { name: /Abrir Ilha 01 — SAC/ });
+    const detalhes = screen.getByRole('button', { name: /Ver detalhes de Ilha 01 — SAC/ });
+    const regiao = screen.getByTestId('ilha-expand');
 
-    expect(card).toHaveAttribute('aria-expanded', 'false');
-    expect(card).toHaveAttribute('aria-controls', screen.getByTestId('ilha-expand').id);
-    fireEvent.focus(card);
-    expect(card).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'false');
+    expect(navegacao.closest('article')).not.toHaveAttribute('role');
+    expect(detalhes).toHaveAttribute('aria-expanded', 'false');
+    expect(detalhes).toHaveAttribute('aria-controls', regiao.id);
+    fireEvent.focus(detalhes);
+    expect(detalhes).toHaveAttribute('aria-expanded', 'true');
+    expect(regiao).toHaveAttribute('aria-hidden', 'false');
+    expect(regiao.closest('button')).toBeNull();
     expect(screen.getByText('PA contratada')).toBeVisible();
     expect(screen.getByText(/Por status/i)).toBeVisible();
+  });
+
+  it('abre e recolhe detalhes no toque sem disparar a navegação da ilha', async () => {
+    const abrir = vi.fn();
+    render(<IlhaTile ilha={ilha()} onOpen={abrir} />);
+    const detalhes = screen.getByRole('button', { name: /Ver detalhes de Ilha 01 — SAC/ });
+
+    fireEvent.pointerDown(detalhes, { pointerType: 'touch' });
+    fireEvent.click(detalhes);
+    expect(detalhes).toHaveAttribute('aria-expanded', 'true');
+    expect(abrir).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(detalhes, { pointerType: 'touch' });
+    fireEvent.click(detalhes);
+    expect(detalhes).toHaveAttribute('aria-expanded', 'false');
+    expect(abrir).not.toHaveBeenCalled();
+  });
+
+  it('mantém os detalhes abertos quando o mouse sai enquanto o controle tem foco', async () => {
+    const user = userEvent.setup();
+    render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
+    const card = screen.getByText('Ilha 01 — SAC').closest('article');
+    const detalhes = screen.getByRole('button', { name: /Ver detalhes de Ilha 01 — SAC/ });
+
+    await user.tab();
+    await user.tab();
+    await user.unhover(card!);
+
+    expect(detalhes).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('recolhe os detalhes quando o foco de teclado sai do cartão', async () => {
+    const user = userEvent.setup();
+    render(<><IlhaTile ilha={ilha()} onOpen={vi.fn()} /><button type="button">Depois</button></>);
+
+    await user.tab();
+    await user.tab();
+    await user.tab();
+
+    expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('mostra "—" e "sem PA" quando a ilha não tem PA Contratada no mês', async () => {
@@ -73,7 +117,7 @@ describe('IlhaTile', () => {
 
     expect(screen.getByText('—')).toBeInTheDocument();
 
-    await user.hover(screen.getByRole('button', { name: /Ilha 01 — SAC/ }));
+    await user.hover(screen.getByText('Ilha 01 — SAC').closest('article')!);
     expect(screen.getByText('sem PA')).toBeInTheDocument();
   });
 
@@ -82,7 +126,7 @@ describe('IlhaTile', () => {
     const user = userEvent.setup();
     render(<IlhaTile ilha={ilha()} onOpen={abrir} />);
 
-    await user.click(screen.getByRole('button', { name: /Ilha 01 — SAC/ }));
+    await user.click(screen.getByRole('button', { name: /Abrir Ilha 01 — SAC/ }));
     expect(abrir).toHaveBeenCalled();
   });
 });

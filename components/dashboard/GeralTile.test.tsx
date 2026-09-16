@@ -29,56 +29,96 @@ describe('GeralTile', () => {
 
   it('abre fechado, como os tiles de ilha', () => {
     render(<GeralTile geral={geral()} />);
-    const card = screen.getByLabelText(/Geral Quality/);
+    const card = screen.getByText('GERAL QUALITY').closest('article');
+    const botao = screen.getByRole('button', { name: /Ver detalhes consolidados/ });
     const detalhes = screen.getByTestId('geral-expand');
-    expect(card).toHaveAttribute('aria-expanded', 'false');
-    expect(card).toHaveAttribute('aria-controls', detalhes.id);
+    expect(card).not.toHaveAttribute('aria-expanded');
+    expect(card).not.toHaveAttribute('tabindex');
+    expect(botao).toHaveAttribute('aria-expanded', 'false');
+    expect(botao).toHaveAttribute('aria-controls', detalhes.id);
     expect(detalhes).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('revela PA contratada, ativos e a composição por status no hover', async () => {
     const user = userEvent.setup();
     render(<GeralTile geral={geral()} />);
-    const card = screen.getByLabelText(/Geral Quality/);
+    const card = screen.getByText('GERAL QUALITY').closest('article');
 
-    await user.hover(card);
+    await user.hover(card!);
 
     expect(screen.getByTestId('geral-expand')).toHaveAttribute('aria-hidden', 'false');
     expect(screen.getByText('142')).toBeInTheDocument();
     expect(screen.getByText('PA contratada')).toBeInTheDocument();
-    expect(card.textContent).toContain('férias');
+    expect(card!.textContent).toContain('férias');
   });
 
   it('recolhe de volta quando o mouse sai', async () => {
     const user = userEvent.setup();
     render(<GeralTile geral={geral()} />);
-    const card = screen.getByLabelText(/Geral Quality/);
+    const card = screen.getByText('GERAL QUALITY').closest('article');
 
-    await user.hover(card);
+    await user.hover(card!);
     expect(screen.getByTestId('geral-expand')).toHaveAttribute('aria-hidden', 'false');
 
-    await user.unhover(card);
+    await user.unhover(card!);
     expect(screen.getByTestId('geral-expand')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('também abre no foco de teclado', () => {
+  it('também abre no foco do controle de detalhes', () => {
     render(<GeralTile geral={geral()} />);
-    const card = screen.getByLabelText(/Geral Quality/);
-    fireEvent.focus(card);
-    expect(card).toHaveAttribute('aria-expanded', 'true');
+    const botao = screen.getByRole('button', { name: /Ver detalhes consolidados/ });
+    fireEvent.focus(botao);
+    expect(botao).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByTestId('geral-expand')).toHaveAttribute('aria-hidden', 'false');
   });
 
-  it('não se anuncia como botão — é leitura, não leva a lugar nenhum', () => {
+  it('mantém o cartão estrutural e delega a expansão ao botão de detalhes', () => {
     render(<GeralTile geral={geral()} />);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    const card = screen.getByText('GERAL QUALITY').closest('article');
+    expect(card).not.toHaveAttribute('role');
+    expect(screen.getByRole('button', { name: /Ver detalhes consolidados/ })).toBeInTheDocument();
+  });
+
+  it('abre e recolhe detalhes no toque pelo controle explícito', async () => {
+    render(<GeralTile geral={geral()} />);
+    const botao = screen.getByRole('button', { name: /Ver detalhes consolidados/ });
+
+    fireEvent.pointerDown(botao, { pointerType: 'touch' });
+    fireEvent.click(botao);
+    expect(botao).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.pointerDown(botao, { pointerType: 'touch' });
+    fireEvent.click(botao);
+    expect(botao).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('mantém os detalhes abertos quando o mouse sai enquanto o controle tem foco', async () => {
+    const user = userEvent.setup();
+    render(<GeralTile geral={geral()} />);
+    const card = screen.getByText('GERAL QUALITY').closest('article');
+    const botao = screen.getByRole('button', { name: /Ver detalhes consolidados/ });
+
+    await user.tab();
+    await user.unhover(card!);
+
+    expect(botao).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('recolhe os detalhes quando o foco de teclado sai do cartão', async () => {
+    const user = userEvent.setup();
+    render(<><GeralTile geral={geral()} /><button type="button">Depois</button></>);
+
+    await user.tab();
+    await user.tab();
+
+    expect(screen.getByTestId('geral-expand')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('avisa que a conta está incompleta quando alguma ilha não tem PA', async () => {
     const user = userEvent.setup();
     render(<GeralTile geral={geral({ semPa: 2 })} />);
 
-    await user.hover(screen.getByLabelText(/Geral Quality/));
+    await user.hover(screen.getByText('GERAL QUALITY').closest('article')!);
 
     expect(screen.getByText(/2 ilhas ainda sem PA definida/)).toBeInTheDocument();
     expect(screen.getByText(/mais alto do que é/)).toBeInTheDocument();
@@ -88,7 +128,7 @@ describe('GeralTile', () => {
     const user = userEvent.setup();
     render(<GeralTile geral={geral({ semPa: 0 })} />);
 
-    await user.hover(screen.getByLabelText(/Geral Quality/));
+    await user.hover(screen.getByText('GERAL QUALITY').closest('article')!);
 
     expect(screen.queryByText(/sem PA definida/)).not.toBeInTheDocument();
   });

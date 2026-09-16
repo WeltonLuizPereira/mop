@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import { AnelQ } from '../brand/AnelQ';
 import { Badge } from '../ui';
 import type { ConsolidadoStat } from '../../lib/ilhaStats';
@@ -17,20 +17,27 @@ import type { ConsolidadoStat } from '../../lib/ilhaStats';
 export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
   const [aberto, setAberto] = useState(false);
   const detalheId = useId();
+  const focoVeioDoPonteiro = useRef(false);
+  const mouseNoCartao = useRef(false);
   const semPa = !geral.paContratada;
   const pct = Math.round((geral.provimento ?? 0) * 100);
   const hot = !semPa && (geral.provimento ?? 0) < 0.8;
 
   return (
     <article
-      tabIndex={0}
-      aria-label="Geral Quality, a soma de todas as ilhas em operação"
-      aria-expanded={aberto}
-      aria-controls={detalheId}
-      onMouseEnter={() => setAberto(true)}
-      onMouseLeave={() => setAberto(false)}
-      onFocus={() => setAberto(true)}
-      onBlur={() => setAberto(false)}
+      onMouseEnter={() => {
+        mouseNoCartao.current = true;
+        setAberto(true);
+      }}
+      onMouseLeave={evento => {
+        mouseNoCartao.current = false;
+        if (!evento.currentTarget.contains(document.activeElement)) setAberto(false);
+      }}
+      onBlur={evento => {
+        if (!evento.currentTarget.contains(evento.relatedTarget as Node | null) && !mouseNoCartao.current) {
+          setAberto(false);
+        }
+      }}
       className="bg-canvas-soft border border-brand/40 rounded-tile px-4 py-3.5
                  transition-[border-color,box-shadow] duration-150 hover:border-brand hover:shadow-2"
     >
@@ -62,6 +69,25 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
           <div className="text-xs text-ink-mute mt-1.5">provimento geral</div>
         </div>
       </div>
+
+      <button
+        type="button"
+        aria-expanded={aberto}
+        aria-controls={detalheId}
+        aria-label={`${aberto ? 'Ocultar' : 'Ver'} detalhes consolidados`}
+        onPointerDown={() => { focoVeioDoPonteiro.current = true; }}
+        onPointerCancel={() => { focoVeioDoPonteiro.current = false; }}
+        onFocus={() => { if (!focoVeioDoPonteiro.current) setAberto(true); }}
+        onClick={() => {
+          focoVeioDoPonteiro.current = false;
+          setAberto(estado => !estado);
+        }}
+        className="w-full flex items-center justify-between border-0 border-t border-hairline bg-transparent px-0 py-2
+                   text-xs text-ink-mute hover:text-ink cursor-pointer"
+      >
+        <span>{aberto ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
+        <span aria-hidden="true">{aberto ? '−' : '+'}</span>
+      </button>
 
       <div
         id={detalheId}
