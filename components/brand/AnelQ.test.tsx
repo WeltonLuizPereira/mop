@@ -41,6 +41,17 @@ describe('AnelQ', () => {
     expect(screen.getByRole('img')).toHaveAccessibleName('85% em operação');
   });
 
+  it.each([
+    [0, '0% em operação'],
+    [0.5, '50% em operação'],
+    [1, '100% em operação'],
+    [1.2, '120% em operação'],
+  ])('anuncia o valor real de %s, mesmo quando o desenho é limitado a 100%', (value, label) => {
+    render(<AnelQ value={value} />);
+
+    expect(screen.getByRole('img')).toHaveAccessibleName(label);
+  });
+
   it('aceita rótulo próprio', () => {
     render(<AnelQ value={1} label="Marca Quality" />);
     expect(screen.getByRole('img')).toHaveAccessibleName('Marca Quality');

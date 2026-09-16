@@ -58,8 +58,13 @@ describe('IlhaTile', () => {
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
     const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
 
+    expect(card).toHaveAttribute('aria-expanded', 'false');
+    expect(card).toHaveAttribute('aria-controls', screen.getByTestId('ilha-expand').id);
     fireEvent.focus(card);
+    expect(card).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'false');
+    expect(screen.getByText('PA contratada')).toBeVisible();
+    expect(screen.getByText(/Por status/i)).toBeVisible();
   });
 
   it('mostra "—" e "sem PA" quando a ilha não tem PA Contratada no mês', async () => {

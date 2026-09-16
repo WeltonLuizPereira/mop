@@ -26,6 +26,7 @@ const prefereMenosMovimento = () =>
  */
 export const AnelQ = ({ value, threshold = 0.8, className = '', label }: AnelQProps) => {
   const alvo = Math.min(1, Math.max(0, value));
+  const percentualReal = Math.round(Math.max(0, value) * 100);
   const maskId = useId();
   const [desenhado, setDesenhado] = useState(() => (prefereMenosMovimento() ? alvo : 0));
 
@@ -52,7 +53,7 @@ export const AnelQ = ({ value, threshold = 0.8, className = '', label }: AnelQPr
       className={className}
       style={{ color: cor, display: 'block' }}
       role="img"
-      aria-label={label ?? `${Math.round(alvo * 100)}% em operação`}
+      aria-label={label ?? `${percentualReal}% em operação`}
     >
       {!cheio && (
         <defs>

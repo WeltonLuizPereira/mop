@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { AnelQ } from '../brand/AnelQ';
 import { Badge } from '../ui';
 import type { IlhaStat } from '../../lib/ilhaStats';
 
 export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void }) => {
   const [aberto, setAberto] = useState(false);
+  const detalheId = useId();
   const semPa = !ilha.paContratada;
   const pct = Math.round((ilha.provimento ?? 0) * 100);
   const hot = !semPa && (ilha.provimento ?? 0) < 0.8;
@@ -13,6 +14,8 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
     <article
       tabIndex={0}
       role="button"
+      aria-expanded={aberto}
+      aria-controls={detalheId}
       onClick={onOpen}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}
       onMouseEnter={() => setAberto(true)}
@@ -52,6 +55,9 @@ export const IlhaTile = ({ ilha, onOpen }: { ilha: IlhaStat; onOpen: () => void 
       </div>
 
       <div
+        id={detalheId}
+        role="region"
+        aria-label={`Detalhes de ${ilha.nome}`}
         data-testid="ilha-expand"
         aria-hidden={!aberto}
         className={`grid overflow-hidden transition-[grid-template-rows] duration-200 ease-out

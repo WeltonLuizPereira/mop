@@ -29,7 +29,11 @@ describe('GeralTile', () => {
 
   it('abre fechado, como os tiles de ilha', () => {
     render(<GeralTile geral={geral()} />);
-    expect(screen.getByTestId('geral-expand')).toHaveAttribute('aria-hidden', 'true');
+    const card = screen.getByLabelText(/Geral Quality/);
+    const detalhes = screen.getByTestId('geral-expand');
+    expect(card).toHaveAttribute('aria-expanded', 'false');
+    expect(card).toHaveAttribute('aria-controls', detalhes.id);
+    expect(detalhes).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('revela PA contratada, ativos e a composição por status no hover', async () => {
@@ -59,7 +63,9 @@ describe('GeralTile', () => {
 
   it('também abre no foco de teclado', () => {
     render(<GeralTile geral={geral()} />);
-    fireEvent.focus(screen.getByLabelText(/Geral Quality/));
+    const card = screen.getByLabelText(/Geral Quality/);
+    fireEvent.focus(card);
+    expect(card).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByTestId('geral-expand')).toHaveAttribute('aria-hidden', 'false');
   });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { AnelQ } from '../brand/AnelQ';
 import { Badge } from '../ui';
 import type { ConsolidadoStat } from '../../lib/ilhaStats';
@@ -16,6 +16,7 @@ import type { ConsolidadoStat } from '../../lib/ilhaStats';
  */
 export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
   const [aberto, setAberto] = useState(false);
+  const detalheId = useId();
   const semPa = !geral.paContratada;
   const pct = Math.round((geral.provimento ?? 0) * 100);
   const hot = !semPa && (geral.provimento ?? 0) < 0.8;
@@ -24,6 +25,8 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
     <article
       tabIndex={0}
       aria-label="Geral Quality, a soma de todas as ilhas em operação"
+      aria-expanded={aberto}
+      aria-controls={detalheId}
       onMouseEnter={() => setAberto(true)}
       onMouseLeave={() => setAberto(false)}
       onFocus={() => setAberto(true)}
@@ -61,6 +64,9 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
       </div>
 
       <div
+        id={detalheId}
+        role="region"
+        aria-label="Detalhes consolidados"
         data-testid="geral-expand"
         aria-hidden={!aberto}
         className={`grid overflow-hidden transition-[grid-template-rows] duration-200 ease-out
