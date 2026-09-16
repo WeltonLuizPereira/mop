@@ -1,11 +1,38 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { contrastRatio } from './contrast';
 
+const indexCss = readFileSync(resolve(process.cwd(), 'index.css'), 'utf8');
+
+function tokensIn(selector: ':root' | '.dark') {
+  const escapedSelector = selector.replace('.', '\\.');
+  const block = indexCss.match(new RegExp(`${escapedSelector}\\s*\\{([^}]*)\\}`))?.[1];
+  if (!block) throw new Error(`Bloco ${selector} ausente em index.css`);
+
+  return Object.fromEntries(
+    [...block.matchAll(/(--[a-z-]+)\s*:\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]),
+  ) as Record<string, string>;
+}
+
+function token(tokens: Record<string, string>, name: string) {
+  const value = tokens[name];
+  if (!value) throw new Error(`Token ${name} ausente em index.css`);
+  const normalized = value.trim();
+  return /^#[\da-f]{3}$/i.test(normalized)
+    ? `#${[...normalized.slice(1)].map(channel => channel.repeat(2)).join('')}`
+    : normalized;
+}
+
+const claro = tokensIn(':root');
+const escuro = tokensIn('.dark');
 const T = {
-  brandClaro: '#F27405', onBrandClaro: '#191310', brandTextClaro: '#D04200',
-  canvasClaro: '#FFFFFF', inkClaro: '#191310', inkMuteClaro: '#6B615C',
-  brandEscuro: '#FF5B35', onBrandEscuro: '#061625', brandTextEscuro: '#FF8A70',
-  canvasEscuro: '#061625', inkEscuro: '#EAF2F7', inkMuteEscuro: '#91A5B5',
+  brandClaro: token(claro, '--brand'), onBrandClaro: token(claro, '--on-brand'),
+  brandTextClaro: token(claro, '--brand-text'), canvasClaro: token(claro, '--canvas'),
+  inkClaro: token(claro, '--ink'), inkMuteClaro: token(claro, '--ink-mute'),
+  brandEscuro: token(escuro, '--brand'), onBrandEscuro: token(escuro, '--on-brand'),
+  brandTextEscuro: token(escuro, '--brand-text'), canvasEscuro: token(escuro, '--canvas'),
+  inkEscuro: token(escuro, '--ink'), inkMuteEscuro: token(escuro, '--ink-mute'),
 };
 
 describe('contrastRatio', () => {
@@ -13,7 +40,7 @@ describe('contrastRatio', () => {
     expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 1);
   });
   it('dá 1 para cores iguais', () => {
-    expect(contrastRatio('#F27405', '#F27405')).toBeCloseTo(1, 2);
+    expect(contrastRatio('#123456', '#123456')).toBeCloseTo(1, 2);
   });
 });
 
@@ -48,13 +75,15 @@ describe('tinta sobre canvas', () => {
 });
 
 describe('pontos de status', () => {
-  const claro = ['#12794F','#1264A3','#6544C0','#B4008C','#FF4D6D','#00786F','#C2304C'];
-  const escuro = ['#3FBE84','#5AA9E6','#9B8CFF','#E86FD8','#FF4D6D','#38B5A8','#C2304C'];
+  const status = [
+    '--st-ativo', '--st-ferias', '--st-afastado', '--st-maternidade',
+    '--st-aviso', '--st-realocado', '--st-desligado',
+  ];
 
-  it.each(claro)('%s alcança 3:1 sobre o canvas claro', c => {
+  it.each(status.map(name => token(claro, name)))('%s alcança 3:1 sobre o canvas claro', c => {
     expect(contrastRatio(c, T.canvasClaro)).toBeGreaterThanOrEqual(3);
   });
-  it.each(escuro)('%s alcança 3:1 sobre o canvas escuro', c => {
+  it.each(status.map(name => token(escuro, name)))('%s alcança 3:1 sobre o canvas escuro', c => {
     expect(contrastRatio(c, T.canvasEscuro)).toBeGreaterThanOrEqual(3);
   });
 
@@ -65,15 +94,15 @@ describe('pontos de status', () => {
   // cima. Se alguém o clarear até o vermelho dos pontos, "Excluir" e as
   // mensagens de erro caem abaixo do piso de leitura — este teste é o freio.
   it.each([
-    ['sobre o canvas claro', '#DE2E50', '#FFFFFF'],
-    ['com texto claro em cima', '#FFFFFF', '#DE2E50'],
+    ['sobre o canvas claro', token(claro, '--danger'), T.canvasClaro],
+    ['com texto claro em cima', '#FFFFFF', token(claro, '--danger')],
   ])('o vermelho de ação passa AA %s', (_o, a, b) => {
     expect(contrastRatio(a, b)).toBeGreaterThanOrEqual(4.5);
   });
 
   it.each([
-    ['claro',  '#FF4D6D', '#C2304C'],
-    ['escuro', '#FF4D6D', '#C2304C'],
+    ['claro', token(claro, '--st-aviso'), token(claro, '--st-desligado')],
+    ['escuro', token(escuro, '--st-aviso'), token(escuro, '--st-desligado')],
   ])('no modo %s, aviso e desligado ficam distinguíveis entre si', (_m, aviso, desligado) => {
     expect(contrastRatio(aviso, desligado)).toBeGreaterThanOrEqual(1.6);
   });
