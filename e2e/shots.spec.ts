@@ -152,6 +152,7 @@ for (const tema of ['claro', 'escuro'] as const) {
   for (const largura of [1440, 390]) {
     test(`dashboard editorial — ${tema} em ${largura}px`, async ({ page }, testInfo) => {
       await stub(page);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.setViewportSize({ width: largura, height: largura === 1440 ? 1000 : 844 });
       await page.addInitScript(t => {
         localStorage.setItem('mop-theme', t === 'escuro' ? 'dark' : 'light');
@@ -163,6 +164,7 @@ for (const tema of ['claro', 'escuro'] as const) {
       await page.getByRole('button', { name: 'Entrar' }).click();
 
       await expect(page.getByRole('heading', { name: /Ilhas em operação/i })).toBeVisible();
+      expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
       const gradeDasIlhas = page.locator('section[aria-labelledby="ilhas-title"]');
       await expect(gradeDasIlhas.getByRole('button', { name: /^Abrir / })).toHaveCount(9);
       await page.screenshot({

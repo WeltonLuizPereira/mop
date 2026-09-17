@@ -21,7 +21,7 @@ test('o corpo nunca rola na horizontal, do desktop ao celular', async ({ page })
   }
 });
 
-test('no desktop a grade usa quatro colunas quando há espaço', async ({ page }) => {
+test('a grade usa quatro, duas e uma coluna conforme a largura', async ({ page }) => {
   await page.route('**/rest/v1/mop_ilhas*', route => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -33,13 +33,23 @@ test('no desktop a grade usa quatro colunas quando há espaço', async ({ page }
     ]),
   }));
   await entrar(page);
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  const grade = page.locator('section[aria-labelledby="ilhas-title"] > div').last();
+  const itens = grade.locator(':scope > article');
+  await expect(itens).toHaveCount(5);
 
-  const botoes = page.locator('section[aria-labelledby="ilhas-title"]')
-    .getByRole('button', { name: /^Abrir / });
-  await expect(botoes).toHaveCount(4);
-  const caixas = await Promise.all([0, 1, 2].map(async indice => (await botoes.nth(indice).boundingBox())!));
-  expect(new Set(caixas.map(caixa => Math.round(caixa.x))).size).toBe(3);
+  const colunas = async (largura: number, quantosItens: number) => {
+    await page.setViewportSize({ width: largura, height: 1000 });
+    const caixas = await Promise.all(
+      Array.from({ length: quantosItens }, async (_, indice) => (await itens.nth(indice).boundingBox())!),
+    );
+    return new Set(caixas.map(caixa => Math.round(caixa.x))).size;
+  };
+
+  // Os quatro primeiros são Geral + três ilhas: medir só botões de ilha deixa
+  // uma grade de três colunas passar por engano.
+  expect(await colunas(1440, 4)).toBe(4);
+  expect(await colunas(1024, 4)).toBe(2);
+  expect(await colunas(390, 2)).toBe(1);
 });
 
 test('abaixo do desktop a navegação continua alcançável', async ({ page }) => {
