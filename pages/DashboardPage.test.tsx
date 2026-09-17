@@ -156,7 +156,7 @@ describe('Visão geral', () => {
     // 2 ativos sobre 3 PA contratada nas duas ilhas do mock; a ordem é o que
     // este teste guarda — contratado, de pé, o resultado, depois os ausentes
     expect(screen.getByRole('group', { name: 'Resumo do quadro' }).textContent)
-      .toBe('3PA contratada2ativos67%provimento geral1em férias0em aviso prévio0afastados');
+      .toBe('3PA contratada2ativos67%provimento geralAbaixo da meta de 80%1em férias0em aviso prévio0afastados');
 
     // o mesmo número na faixa e no card: são a mesma conta, feita uma vez só
     expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('PA contratada');
@@ -164,6 +164,22 @@ describe('Visão geral', () => {
     expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('provimento geral');
     expect(screen.getAllByRole('article')).toHaveLength(3);
     expect(screen.getAllByText('67%')).toHaveLength(2);
+  });
+
+  it('nomeia o provimento abaixo da meta na faixa de resumo', async () => {
+    montar();
+    await screen.findByText('Ilha 01 — SAC');
+
+    expect(within(screen.getByRole('group', { name: 'Resumo do quadro' }))
+      .getByText('Abaixo da meta de 80%')).toBeVisible();
+  });
+
+  it('usa a função tipográfica de dado nos valores da faixa de resumo', async () => {
+    montar();
+    await screen.findByText('Ilha 01 — SAC');
+
+    expect(within(screen.getByRole('group', { name: 'Resumo do quadro' }))
+      .getByText('67%')).toHaveClass('t-data');
   });
 
   it('enquadra o mapa com o título editorial da operação', async () => {
@@ -212,6 +228,21 @@ describe('Visão geral', () => {
     expect(screen.queryByText(/\+4%/)).not.toBeInTheDocument();
     expect(screen.queryByText(/turnover mensal/i)).not.toBeInTheDocument();
   });
+  it('mantém o quadro, informa a falha de provimento e permite tentar novamente', async () => {
+    const user = userEvent.setup();
+    vi.mocked(db.getProvimento).mockRejectedValueOnce(new Error('provisionamento indisponível'));
+
+    montar();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar o provimento.');
+    expect(screen.getByRole('heading', { level: 1, name: 'Operação em perspectiva.' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(await screen.findByText('Ilha 01 — SAC')).toBeInTheDocument();
+    expect(db.getProvimento).toHaveBeenCalledTimes(2);
+  });
+
   it('reutiliza os cadastros do Dashboard ao abrir o formulÃ¡rio', async () => {
     const store = createAppData(db);
     const { rerender } = render(

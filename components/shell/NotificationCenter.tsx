@@ -104,7 +104,7 @@ export const NotificationCenter = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Notificações"
                 aria-expanded={isOpen}
-                className="relative p-2 rounded-full text-ink-mute hover:text-brand-text hover:bg-brand-wash transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="relative grid h-11 w-11 place-items-center rounded-full text-ink-mute hover:text-brand-text hover:bg-brand-wash transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
                 <Bell size={20} />
                 {totalAlerts > 0 && (

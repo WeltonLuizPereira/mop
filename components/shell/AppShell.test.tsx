@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ThemeProvider } from '../../contexts/ThemeContext';
@@ -27,7 +27,7 @@ describe('AppShell', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
 
-    expect(screen.getByRole('dialog', { name: 'Menu principal' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Fechar menu de navegação' })).toHaveFocus();
     expect(skipLink).toHaveAttribute('inert');
   });
 
@@ -36,6 +36,29 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Pular para o conteúdo' }))
       .toHaveAttribute('href', '#conteudo-principal');
     expect(screen.getByRole('main')).toHaveAttribute('id', 'conteudo-principal');
+    expect(screen.getByRole('main')).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('contém o Tab na gaveta e fecha por um controle explícito', async () => {
+    const user = userEvent.setup();
+    montar();
+    await user.click(screen.getByRole('button', { name: 'Abrir menu' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Menu principal' });
+    const close = within(dialog).getByRole('button', { name: 'Fechar menu de navegação' });
+    const firstNavigationItem = within(dialog).getByRole('button', { name: 'Visão geral' });
+    const lastControl = within(dialog).getAllByRole('button').at(-1)!;
+
+    expect(close).toHaveFocus();
+    await user.tab();
+    expect(firstNavigationItem).toHaveFocus();
+
+    lastControl.focus();
+    await user.tab();
+    expect(close).toHaveFocus();
+
+    await user.tab({ shift: true });
+    expect(lastControl).toHaveFocus();
   });
 
   it('torna o fundo inerte enquanto a gaveta móvel está aberta', async () => {

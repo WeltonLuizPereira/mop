@@ -48,7 +48,7 @@
 :root {
   --canvas:#fff; --canvas-soft:#f6f6f4; --canvas-sunk:#efefed;
   --hairline:#e4e4e4; --hairline-2:#cbc7c3;
-  --ink:#191310; --ink-2:#453c38; --ink-mute:#6b615c; --ink-faint:#9a918c;
+  --ink:#191310; --ink-2:#453c38; --ink-mute:#6b615c; --ink-faint:#736a65;
   --brand:#f27405; --brand-hot:#f54e00; --brand-press:#d04200;
   --brand-text:#d04200; --brand-wash:#fff1e8; --on-brand:#191310;
   --shadow-1: 0 1px 3px rgb(25 19 16 / .06);
@@ -68,7 +68,7 @@
   color-scheme:dark;
   --canvas:#061625; --canvas-soft:#0a2032; --canvas-sunk:#04111d;
   --hairline:#17364d; --hairline-2:#28506b;
-  --ink:#eaf2f7; --ink-2:#bfd0dc; --ink-mute:#91a5b5; --ink-faint:#718899;
+  --ink:#eaf2f7; --ink-2:#bfd0dc; --ink-mute:#91a5b5; --ink-faint:#738a9b;
   --brand:#ff5b35; --brand-hot:#ff4d2e; --brand-press:#d93c22;
   --brand-text:#ff8a70; --brand-wash:rgb(255 77 46 / .12); --on-brand:#061625;
   --st-ativo: #3FBE84; --st-ferias: #5AA9E6; --st-afastado: #9B8CFF;

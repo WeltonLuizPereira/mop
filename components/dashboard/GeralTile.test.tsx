@@ -22,6 +22,18 @@ describe('GeralTile', () => {
     expect(screen.getByText('74%')).toBeInTheDocument();
   });
 
+  it('nomeia o consolidado abaixo da meta além de destacá-lo por cor', () => {
+    render(<GeralTile geral={geral()} />);
+
+    expect(screen.getByText('Abaixo da meta de 80%')).toBeVisible();
+  });
+
+  it('usa a função tipográfica de dado para o percentual consolidado', () => {
+    render(<GeralTile geral={geral()} />);
+
+    expect(screen.getByText('74%')).toHaveClass('t-data');
+  });
+
   it('concorda o singular quando só uma ilha entrou na soma', () => {
     render(<GeralTile geral={geral({ ilhas: 1 })} />);
     expect(screen.getByText('1 ilha em operação')).toBeInTheDocument();

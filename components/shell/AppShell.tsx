@@ -20,6 +20,26 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
   const gatilho = useRef<HTMLButtonElement>(null);
   const gaveta = useRef<HTMLDivElement>(null);
 
+  const conterFocoNaGaveta = (evento: React.KeyboardEvent<HTMLDivElement>) => {
+    if (evento.key !== 'Tab') return;
+    const controles = [...(gaveta.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? [])];
+    const primeiro = controles[0];
+    const ultimo = controles.at(-1);
+    if (!primeiro || !ultimo) {
+      evento.preventDefault();
+      return;
+    }
+    if (evento.shiftKey && document.activeElement === primeiro) {
+      evento.preventDefault();
+      ultimo.focus();
+    } else if (!evento.shiftKey && document.activeElement === ultimo) {
+      evento.preventDefault();
+      primeiro.focus();
+    }
+  };
+
   useEffect(() => {
     if (!menuAberto) return;
     const aoTeclar = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuAberto(false); };
@@ -36,7 +56,10 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
   }, [menuAberto]);
 
   useEffect(() => {
-    if (menuAberto) gaveta.current?.focus();
+    if (menuAberto) {
+      const fechar = gaveta.current?.querySelector<HTMLButtonElement>('[data-menu-close]');
+      (fechar ?? gaveta.current)?.focus();
+    }
   }, [menuAberto]);
 
   return (
@@ -69,6 +92,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
           aria-label="Menu principal"
           ref={gaveta}
           tabIndex={-1}
+          onKeyDown={conterFocoNaGaveta}
           className="lg:hidden fixed inset-0 z-40 flex"
         >
           <div className="absolute inset-0 bg-black/50" onClick={() => setMenuAberto(false)} />
@@ -76,6 +100,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
             <Sidebar
               {...{ currentUser, currentPage, onLogout }}
               onNavigate={p => { onNavigate(p); setMenuAberto(false); }}
+              onClose={() => setMenuAberto(false)}
             />
           </div>
         </div>
@@ -91,7 +116,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
           menuControls={MENU_ID}
           menuRef={gatilho}
         />
-        <main id={CONTEUDO_ID} inert={menuAberto} className="min-h-0 flex-1 overflow-y-auto">
+        <main id={CONTEUDO_ID} tabIndex={-1} inert={menuAberto} className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1440px] p-4 md:p-7 lg:p-8">{children}</div>
         </main>
       </div>

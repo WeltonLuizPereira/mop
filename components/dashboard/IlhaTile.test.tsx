@@ -23,6 +23,18 @@ describe('IlhaTile', () => {
     expect(screen.getByText('50%')).toBeInTheDocument();
   });
 
+  it('nomeia a condição abaixo da meta além de destacá-la por cor', () => {
+    render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
+
+    expect(screen.getByText('Abaixo da meta de 80%')).toBeVisible();
+  });
+
+  it('usa a função tipográfica de dado para o percentual', () => {
+    render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
+
+    expect(screen.getByText('50%')).toHaveClass('t-data');
+  });
+
   it('não mostra PA Contratada, Ativos nem o detalhamento por status fechado', () => {
     render(<IlhaTile ilha={ilha()} onOpen={vi.fn()} />);
     expect(screen.getByTestId('ilha-expand')).toHaveAttribute('aria-hidden', 'true');

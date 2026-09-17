@@ -61,12 +61,13 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
         />
         <div>
           <div
-            className={`font-display font-bold text-[26px] leading-none tracking-tight tabular-nums
+            className={`t-data font-bold text-[26px] leading-none tracking-tight
                         ${semPa ? 'text-ink-faint' : hot ? 'text-brand-hot' : 'text-ink'}`}
           >
             {semPa ? '—' : `${pct}%`}
           </div>
           <div className="text-xs text-ink-mute mt-1.5">provimento geral</div>
+          {hot && <p className="mt-1 text-[11px] font-medium leading-snug text-brand-text">Abaixo da meta de 80%</p>}
         </div>
       </div>
 
@@ -82,7 +83,7 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
           focoVeioDoPonteiro.current = false;
           setAberto(estado => !estado);
         }}
-        className="w-full flex items-center justify-between border-0 border-t border-hairline bg-transparent px-0 py-2
+        className="flex min-h-11 w-full items-center justify-between border-0 border-t border-hairline bg-transparent px-0 py-2
                    text-xs text-ink-mute hover:text-ink cursor-pointer"
       >
         <span>{aberto ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
@@ -101,13 +102,13 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
         <div className="min-h-0 pt-3.5">
           <div className="flex gap-[18px] pb-3.5">
             <div>
-              <span className="block font-display font-bold text-[16px] tracking-[-.01em] text-ink">
+              <span className="t-data block font-bold text-[16px] tracking-[-.01em] text-ink">
                 {semPa ? 'sem PA' : geral.paContratada}
               </span>
               <span className="block text-[11px] text-ink-faint mt-px">PA contratada</span>
             </div>
             <div>
-              <span className="block font-display font-bold text-[16px] tracking-[-.01em] text-ink">
+              <span className="t-data block font-bold text-[16px] tracking-[-.01em] text-ink">
                 {geral.ativos}
               </span>
               <span className="block text-[11px] text-ink-faint mt-px">ativos</span>

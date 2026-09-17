@@ -74,6 +74,17 @@ describe('tinta sobre canvas', () => {
   });
 });
 
+describe('tinta auxiliar nas superfícies reais dos cards', () => {
+  it.each([
+    ['claro', token(claro, '--ink-faint'), token(claro, '--canvas-soft')],
+    ['claro', token(claro, '--ink-faint'), token(claro, '--canvas-sunk')],
+    ['escuro', token(escuro, '--ink-faint'), token(escuro, '--canvas-soft')],
+    ['escuro', token(escuro, '--ink-faint'), token(escuro, '--canvas-sunk')],
+  ])('mantém AA em %s sobre cada superfície de detalhe', (_modo, tinta, superficie) => {
+    expect(contrastRatio(tinta, superficie)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
 describe('pontos de status', () => {
   const status = [
     '--st-ativo', '--st-ferias', '--st-afastado', '--st-maternidade',

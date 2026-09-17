@@ -26,7 +26,7 @@ export const Topbar = ({ title, onToggleMenu, menuOpen = false, menuControls, me
           aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
           aria-expanded={menuOpen}
           aria-controls={menuControls}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft lg:hidden"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft lg:hidden"
         >
           <Menu size={18} />
         </button>
@@ -37,7 +37,7 @@ export const Topbar = ({ title, onToggleMenu, menuOpen = false, menuControls, me
         type="button"
         onClick={toggleTheme}
         aria-label={theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}
-        className="grid h-8 w-8 place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft hover:text-ink"
+        className="grid h-11 w-11 place-items-center rounded-sm text-ink-2 hover:bg-canvas-soft hover:text-ink"
       >
         {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
       </button>

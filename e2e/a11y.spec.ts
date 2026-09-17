@@ -13,7 +13,7 @@ async function entrar(page: import('@playwright/test').Page) {
 
 test('o corpo nunca rola na horizontal, do desktop ao celular', async ({ page }) => {
   await entrar(page);
-  for (const w of [1440, 1024, 768, 390, 360]) {
+  for (const w of [1440, 1024, 768, 390, 360, 320]) {
     await page.setViewportSize({ width: w, height: 900 });
     const estoura = await page.evaluate(() =>
       document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
@@ -64,6 +64,32 @@ test('abaixo do desktop a navegação continua alcançável', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Colaboradores', exact: true })).toBeHidden();
 });
 
+test('os controles de toque do shell e dos detalhes medem ao menos 44px', async ({ page }) => {
+  await entrar(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+
+  const mede = async (controle: import('@playwright/test').Locator, nome: string) => {
+    await expect(controle, nome).toBeVisible();
+    const caixa = await controle.boundingBox();
+    expect(caixa, `${nome} precisa ter uma caixa`).not.toBeNull();
+    expect(caixa!.width, `${nome} precisa ter 44px de largura`).toBeGreaterThanOrEqual(44);
+    expect(caixa!.height, `${nome} precisa ter 44px de altura`).toBeGreaterThanOrEqual(44);
+  };
+
+  await mede(page.getByRole('button', { name: 'Abrir menu' }), 'abrir menu');
+  await mede(page.getByRole('button', { name: 'Usar tema escuro' }), 'trocar tema');
+  await mede(page.getByRole('button', { name: 'Notificações' }), 'notificações');
+
+  await page.getByRole('button', { name: 'Abrir menu' }).click();
+  await mede(page.getByRole('button', { name: 'Fechar menu de navegação' }), 'fechar menu');
+  await mede(page.getByRole('button', { name: 'Visão geral', exact: true }), 'item de navegação');
+  await mede(page.getByRole('button', { name: 'Sair' }), 'sair');
+  await page.getByRole('button', { name: 'Fechar menu de navegação' }).click();
+
+  await mede(page.getByRole('button', { name: 'Ver detalhes consolidados' }), 'detalhes consolidados');
+  await mede(page.getByRole('button', { name: 'Ver detalhes de Ilha 01 — SAC' }), 'detalhes da ilha');
+});
+
 test('a lista de colaboradores rola até o último nome', async ({ page }) => {
   // 60 pessoas: o suficiente para passar da altura da janela em qualquer tela
   const muitos = Array.from({ length: 60 }, (_, i) => ({
@@ -88,15 +114,56 @@ test('a lista de colaboradores rola até o último nome', async ({ page }) => {
   await expect(page.getByText('Colaborador 59')).toBeInViewport();
 });
 
-test('a navegação por teclado chega aos tiles com foco visível', async ({ page }) => {
+test('o atalho foca o conteúdo e o Tab alcança a navegação e o detalhe da ilha', async ({ page }) => {
   await entrar(page);
-  await page.keyboard.press('Tab');
+
+  const atalho = page.getByRole('link', { name: 'Pular para o conteúdo' });
+  const conteudo = page.getByRole('main');
+  const abrirIlha = page.getByRole('button', { name: 'Abrir Ilha 01 — SAC' });
+  await atalho.focus();
+  await page.keyboard.press('Enter');
+  await expect(conteudo).toBeFocused();
+
+  for (let tentativa = 0; tentativa < 8 && !await abrirIlha.evaluate(el => document.activeElement === el); tentativa++) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(abrirIlha).toBeFocused();
+
   const temContorno = await page.evaluate(() => {
     const el = document.activeElement as HTMLElement | null;
-    if (!el) return false;
-    return getComputedStyle(el).outlineStyle !== 'none';
+    return !!el && getComputedStyle(el).outlineStyle !== 'none';
   });
   expect(temContorno).toBe(true);
+
+  await page.keyboard.press('Tab');
+  const detalhes = page.getByRole('button', { name: 'Ocultar detalhes de Ilha 01 — SAC' });
+  await expect(detalhes).toBeFocused();
+  await expect(detalhes).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('a gaveta móvel contém o Tab e o devolve ao início e ao fim', async ({ page }) => {
+  await entrar(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+
+  await page.getByRole('button', { name: 'Abrir menu' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Menu principal' });
+  const close = page.getByRole('button', { name: 'Fechar menu de navegação' });
+  const sair = page.getByRole('button', { name: 'Sair' });
+  await expect(close).toBeFocused();
+
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Visão geral', exact: true })).toBeFocused();
+  for (let tentativa = 0; tentativa < 32 && !await sair.evaluate(el => document.activeElement === el); tentativa++) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(sair).toBeFocused();
+
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+  await expect(dialog).toContainText('MOP');
+
+  await page.keyboard.press('Shift+Tab');
+  await expect(sair).toBeFocused();
 });
 
 test('o foco expande uma ilha e Enter abre sua lista filtrada', async ({ page }) => {

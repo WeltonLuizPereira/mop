@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { EntityStatus, User, type Client, type Collaborator, type Ilha, type Operation, type Provimento } from '../types';
 import { db } from '../services/mockDb';
 import { computeIlhaStats, consolidarIlhas, totaisGerais, type Ordem } from '../lib/ilhaStats';
@@ -19,18 +19,25 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   const operations = operationsResource.data ?? [];
   const [provimentos, setProvimentos] = useState<Provimento[]>([]);
   const [carregandoProvimento, setCarregandoProvimento] = useState(true);
+  const [erroProvimento, setErroProvimento] = useState(false);
   const [cliente, setCliente] = useState('');
   const [operacao, setOperacao] = useState('');
   const [ordem, setOrdem] = useState<Ordem>('nome');
 
-  useEffect(() => {
-    const load = async () => {
+  const carregarProvimento = useCallback(async () => {
+    setCarregandoProvimento(true);
+    setErroProvimento(false);
+    try {
       const prov = await db.getProvimento(referenciaDoMes(new Date()));
       setProvimentos(prov);
+    } catch {
+      setErroProvimento(true);
+    } finally {
       setCarregandoProvimento(false);
-    };
-    load();
+    }
   }, []);
+
+  useEffect(() => { void carregarProvimento(); }, [carregarProvimento]);
 
   // Ilha inativa não está em operação: ela sai do mapa, mas continua no
   // cadastro para o histórico não perder a referência.
@@ -83,6 +90,27 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
     return <p className="text-sm text-ink-mute py-20 text-center">Carregando o mapa…</p>;
   }
 
+  if (erroProvimento) {
+    return (
+      <div className="mx-auto max-w-[1380px] px-4 py-7 sm:px-6 lg:px-9">
+        <header className="mb-7">
+          <h1 className="t-display-lg text-ink">Operação em perspectiva.</h1>
+          <p className="mt-2 text-sm text-ink-mute">Pessoas, capacidade e movimentos de hoje.</p>
+        </header>
+        <section role="alert" className="border-y border-hairline py-6 text-sm text-ink">
+          <p>Não foi possível carregar o provimento.</p>
+          <button
+            type="button"
+            onClick={carregarProvimento}
+            className="mt-3 min-h-11 rounded-sm border border-hairline-2 px-3 text-sm font-semibold text-ink hover:bg-canvas-soft"
+          >
+            Tentar novamente
+          </button>
+        </section>
+      </div>
+    );
+  }
+
   if (emOperacao.length === 0) {
     return (
       <div className="text-center py-20">
@@ -112,12 +140,13 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
         {numeros.map(({ rotulo, valor, aceso }) => (
           <div key={rotulo} className="flex flex-col gap-0.5">
             <strong
-              className={`font-display text-[21px] font-bold tracking-tight tabular-nums
+              className={`t-data text-[21px] font-bold tracking-tight
                           ${aceso ? 'text-brand-hot' : 'text-ink'}`}
             >
               {valor}
             </strong>
             <span className="text-[13px] text-ink-mute">{rotulo}</span>
+            {aceso && <span className="text-[11px] font-medium leading-snug text-brand-text">Abaixo da meta de 80%</span>}
           </div>
         ))}
       </div>

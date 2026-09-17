@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import { Logo } from '../brand/Logo';
 import { visibleGroups } from '../../lib/navigation';
 import { getInitials } from '../../utils';
@@ -11,9 +11,10 @@ interface SidebarProps {
   currentPage: string;
   onNavigate: (page: string) => void;
   onLogout: () => void;
+  onClose?: () => void;
 }
 
-export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout }: SidebarProps) => (
+export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout, onClose }: SidebarProps) => (
   <aside className="flex h-full w-[248px] shrink-0 flex-col border-r border-hairline bg-canvas-soft">
     <div className="flex h-20 items-center gap-3 border-b border-hairline px-5">
       <Logo variant="mark" className="w-6 h-6 shrink-0" />
@@ -21,6 +22,17 @@ export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout }: Side
         <div className="font-display text-[15px] font-bold leading-tight tracking-tight text-ink">MOP</div>
         <div className="truncate text-[10px] text-ink-faint">Quality Contact Center</div>
       </div>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar menu de navegação"
+          data-menu-close
+          className="ml-auto grid h-11 w-11 shrink-0 place-items-center rounded-sm text-ink-2 hover:bg-canvas-sunk hover:text-ink"
+        >
+          <X size={18} />
+        </button>
+      )}
     </div>
 
     <nav aria-label="Navega\u00e7\u00e3o principal" className="flex-1 overflow-y-auto px-4 py-5">
@@ -54,7 +66,7 @@ export const Sidebar = ({ currentUser, currentPage, onNavigate, onLogout }: Side
         type="button"
         onClick={onLogout}
         aria-label="Sair"
-        className="w-8 h-8 grid place-items-center rounded-sm text-danger hover:bg-danger/10"
+        className="h-11 w-11 grid place-items-center rounded-sm text-danger hover:bg-danger/10"
       >
         <LogOut size={15} />
       </button>

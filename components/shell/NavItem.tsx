@@ -13,7 +13,7 @@ export const NavItem = ({ icon: Icon, label, active, onClick }: NavItemProps) =>
     onClick={onClick}
     aria-current={active ? 'page' : undefined}
     className={
-      'w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-sm text-[13px] text-left ' +
+      'w-full min-h-11 flex items-center gap-2.5 px-2.5 py-[7px] rounded-sm text-[13px] text-left ' +
       '-ml-0.5 border-l-2 transition-colors duration-100 ' +
       (active
         ? 'bg-brand-wash text-ink border-brand font-semibold'

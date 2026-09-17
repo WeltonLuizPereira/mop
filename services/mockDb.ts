@@ -382,7 +382,8 @@ class SupabaseService {
 
   // --- Provimento (PA Contratada) ---
   async getProvimento(referencia: string): Promise<Provimento[]> {
-    const { data } = await supabase.from('mop_provimento').select('*').eq('referencia', referencia);
+    const { data, error } = await supabase.from('mop_provimento').select('*').eq('referencia', referencia);
+    if (error) throw error;
     return (data ?? []).map((p: any) => ({
       id: p.id, ilhaId: p.ilha_id, referencia: p.referencia, paContratada: p.pa_contratada,
     }));

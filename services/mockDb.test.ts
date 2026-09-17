@@ -10,6 +10,7 @@ const TETO = 1000;
 /** Linhas servidas pelo banco falso, por tabela. */
 const tabelas: Record<string, any[]> = {};
 const errosEscrita: Record<string, Error | undefined> = {};
+const errosLeitura: Record<string, Error | undefined> = {};
 
 /**
  * Construtor que imita o encadeamento do supabase-js: leitura paginada e
@@ -59,8 +60,11 @@ function construtor(tabela: string) {
         return Promise.resolve({ error: null });
       },
     }),
-    then: (resolver: (r: { data: any[]; error: null }) => unknown) =>
-      Promise.resolve(resolver({ data: filtradas().slice(de, ate + 1), error: null })),
+    then: (resolver: (r: { data: any[] | null; error: Error | null }) => unknown) =>
+      Promise.resolve(resolver({
+        data: errosLeitura[tabela] ? null : filtradas().slice(de, ate + 1),
+        error: errosLeitura[tabela] ?? null,
+      })),
   };
   return alvo;
 }
@@ -75,6 +79,7 @@ const { referenciaDoMes } = await import('../lib/provimentoStats');
 beforeEach(() => {
   for (const k of Object.keys(tabelas)) delete tabelas[k];
   for (const k of Object.keys(errosEscrita)) delete errosEscrita[k];
+  for (const k of Object.keys(errosLeitura)) delete errosLeitura[k];
 });
 
 describe('falhas de escrita', () => {
@@ -168,6 +173,12 @@ describe('provimento — leitura e gravação de uma linha', () => {
     const doMes = await db.getProvimento('2026-08-01');
 
     expect(doMes).toEqual([{ id: 'p2', ilhaId: 'i1', referencia: '2026-08-01', paContratada: 10 }]);
+  });
+
+  it('getProvimento propaga a falha real da leitura', async () => {
+    errosLeitura['mop_provimento'] = new Error('provisionamento indisponível');
+
+    await expect(db.getProvimento('2026-08-01')).rejects.toThrow('provisionamento indisponível');
   });
 
   it('saveProvimento insere quando não existe linha para a ilha no mês', async () => {
