@@ -99,30 +99,32 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-[1380px] px-4 py-7 sm:px-6 lg:px-9">
+      <header className="mb-7">
+        <h1 className="t-display-lg text-ink">Operação em perspectiva.</h1>
+        <p className="mt-2 text-sm text-ink-mute">Pessoas, capacidade e movimentos de hoje.</p>
+      </header>
       <div
         role="group"
         aria-label="Resumo do quadro"
-        className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5 mb-6"
+        className="mb-8 grid grid-cols-2 gap-x-5 gap-y-4 border-y border-hairline py-4 sm:grid-cols-3 lg:grid-cols-6"
       >
-        {numeros.map(({ rotulo, valor, aceso }, i) => (
-          <React.Fragment key={rotulo}>
-            {i > 0 && <div className="w-px h-4 bg-hairline-2" aria-hidden="true" />}
-            <div className="flex items-baseline gap-1.5">
-              <span
-                className={`font-display font-bold text-[21px] tracking-tight tabular-nums
-                            ${aceso ? 'text-brand-hot' : 'text-ink'}`}
-              >
-                {valor}
-              </span>
-              <span className="text-[13px] text-ink-mute">{rotulo}</span>
-            </div>
-          </React.Fragment>
+        {numeros.map(({ rotulo, valor, aceso }) => (
+          <div key={rotulo} className="flex flex-col gap-0.5">
+            <strong
+              className={`font-display text-[21px] font-bold tracking-tight tabular-nums
+                          ${aceso ? 'text-brand-hot' : 'text-ink'}`}
+            >
+              {valor}
+            </strong>
+            <span className="text-[13px] text-ink-mute">{rotulo}</span>
+          </div>
         ))}
       </div>
 
-      <div className="flex items-center flex-wrap gap-3.5 mb-3.5">
-        <h2 className="t-eyebrow text-ink-faint flex-1">Ilhas em operação</h2>
+      <section aria-labelledby="ilhas-title">
+        <div className="mb-3.5 flex flex-wrap items-end gap-3">
+          <h2 id="ilhas-title" className="t-eyebrow mr-auto text-ink-faint">Ilhas em operação</h2>
         <ChipSelect
           rotulo="Cliente"
           value={cliente}
@@ -152,14 +154,14 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
           <option value="asc">provimento ↑</option>
           <option value="desc">provimento ↓</option>
         </ChipSelect>
-      </div>
+        </div>
 
       {stats.length === 0 ? (
         <p className="text-sm text-ink-mute py-16 text-center">
           Nenhuma ilha ativa nesse recorte. Volte o cliente ou a operação para todos.
         </p>
       ) : (
-        <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(286px, 1fr))' }}>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-4">
           {/* fora do sort de propósito: o consolidado abre o mapa em qualquer
               ordenação, porque é o número que enquadra todos os outros */}
           <GeralTile geral={geral} />
@@ -168,6 +170,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
           ))}
         </div>
       )}
+      </section>
     </div>
   );
 };

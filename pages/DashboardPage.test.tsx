@@ -128,7 +128,7 @@ describe('Visão geral', () => {
     montar(abrir);
     await screen.findByText('Ilha 07 — Cobrança');
 
-    await user.click(screen.getByRole('button', { name: /Ilha 07 — Cobrança/ }));
+    await user.click(screen.getByRole('button', { name: 'Abrir Ilha 07 — Cobrança' }));
 
     // a ilha clicada, e não um genérico "abrir colaboradores"
     expect(abrir).toHaveBeenCalledWith('i2');
@@ -142,7 +142,7 @@ describe('Visão geral', () => {
 
     // o foco real precisa entrar no act: focar o tile expande ele, e um
     // setState solto fora do act polui a saída do teste com aviso do React
-    const card = screen.getByRole('button', { name: /Ilha 01 — SAC/ });
+    const card = screen.getByRole('button', { name: 'Abrir Ilha 01 — SAC' });
     await act(async () => { card.focus(); });
     await user.keyboard('{Enter}');
 
@@ -159,7 +159,16 @@ describe('Visão geral', () => {
       .toBe('3PA contratada2ativos67%provimento geral1em férias0em aviso prévio0afastados');
 
     // o mesmo número na faixa e no card: são a mesma conta, feita uma vez só
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('PA contratada');
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('ativos');
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('provimento geral');
+    expect(screen.getAllByRole('article')).toHaveLength(3);
     expect(screen.getAllByText('67%')).toHaveLength(2);
+  });
+
+  it('enquadra o mapa com o título editorial da operação', async () => {
+    montar();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Operação em perspectiva.' })).toBeInTheDocument();
   });
 
   it('recalcula a faixa e o consolidado quando o filtro recorta o mapa', async () => {
