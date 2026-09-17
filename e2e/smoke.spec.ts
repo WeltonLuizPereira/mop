@@ -53,12 +53,11 @@ test('todas as 24 telas abrem sem erro de console', async ({ page }) => {
   await entrar(page);
 
   for (const [item] of ROTAS) {
-    // Rótulo do menu e título da página vêm da mesma fonte (lib/navigation.ts),
-    // então os dois textos são idênticos agora. Por isso a prova de navegação
-    // é o <h1> do Header — o título da tela — e não o próprio item da barra
-    // lateral, que já está visível antes do clique.
+    // O título da barra superior vem da mesma fonte que o item de navegação.
+    // A página editorial do Dashboard também tem um h1 próprio, então o
+    // seletor usa o nome acessível exato do título do shell, não `locator(h1)`.
     await page.getByRole('button', { name: item, exact: true }).click();
-    await expect(page.locator('h1')).toHaveText(item);
+    await expect(page.getByRole('heading', { name: item, exact: true }).first()).toBeVisible();
   }
 
   expect(erros, `erros de console:\n${erros.join('\n')}`).toEqual([]);
@@ -72,16 +71,16 @@ test('o rodape do login mostra a versao do package.json', async ({ page }) => {
 
 test('o tile do mapa abre a lista recortada pela ilha clicada', async ({ page }) => {
   await entrar(page);
-  await page.getByRole('button', { name: /Ilha 07 — Cobranca|Ilha 07 — Cobrança/ }).click();
+  await page.getByRole('button', { name: 'Abrir Ilha 07 — Cobrança' }).click();
 
-  await expect(page.locator('h1')).toHaveText('Colaboradores');
+  await expect(page.getByRole('heading', { name: 'Colaboradores', exact: true })).toBeVisible();
   await expect(page.getByText('Camila Souza Rocha')).toBeVisible();
   await expect(page.getByText('Adriana Lopes Ferreira')).toBeHidden();
 });
 
 test('voltar a Colaboradores pelo menu devolve a lista inteira', async ({ page }) => {
   await entrar(page);
-  await page.getByRole('button', { name: /Ilha 07 — Cobranca|Ilha 07 — Cobrança/ }).click();
+  await page.getByRole('button', { name: 'Abrir Ilha 07 — Cobrança' }).click();
   await expect(page.getByText('Adriana Lopes Ferreira')).toBeHidden();
 
   // pedir Colaboradores pelo menu e pedir a lista toda, nao o recorte anterior

@@ -8,7 +8,7 @@ async function entrar(page: import('@playwright/test').Page) {
   await page.getByLabel('Matrícula').fill('3924');
   await page.getByLabel('Senha').fill('senha-de-teste');
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page.getByText('Ilhas em operação')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ilhas em operação' })).toBeVisible();
 }
 
 test('o corpo nunca rola na horizontal, do desktop ao celular', async ({ page }) => {
@@ -19,6 +19,27 @@ test('o corpo nunca rola na horizontal, do desktop ao celular', async ({ page })
       document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     expect(estoura, `rolagem horizontal em ${w}px`).toBe(false);
   }
+});
+
+test('no desktop a grade usa quatro colunas quando há espaço', async ({ page }) => {
+  await page.route('**/rest/v1/mop_ilhas*', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify([
+      { id: 'i1', nome: 'Ilha 01 — SAC', client_id: 'c1', operation_id: 'o1', coordinator_ids: ['k1'], supervisor_ids: ['s1'], status: 'ATIVO' },
+      { id: 'i2', nome: 'Ilha 07 — Cobrança', client_id: 'c2', operation_id: 'o2', coordinator_ids: ['k1'], supervisor_ids: ['s1'], status: 'ATIVO' },
+      { id: 'i3', nome: 'Ilha 11 — Retenção', client_id: 'c1', operation_id: 'o1', coordinator_ids: ['k1'], supervisor_ids: ['s1'], status: 'ATIVO' },
+      { id: 'i4', nome: 'Ilha 12 — Vendas', client_id: 'c2', operation_id: 'o2', coordinator_ids: ['k1'], supervisor_ids: ['s1'], status: 'ATIVO' },
+    ]),
+  }));
+  await entrar(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+
+  const botoes = page.locator('section[aria-labelledby="ilhas-title"]')
+    .getByRole('button', { name: /^Abrir / });
+  await expect(botoes).toHaveCount(4);
+  const caixas = await Promise.all([0, 1, 2].map(async indice => (await botoes.nth(indice).boundingBox())!));
+  expect(new Set(caixas.map(caixa => Math.round(caixa.x))).size).toBe(3);
 });
 
 test('abaixo do desktop a navegação continua alcançável', async ({ page }) => {
@@ -66,6 +87,24 @@ test('a navegação por teclado chega aos tiles com foco visível', async ({ pag
     return getComputedStyle(el).outlineStyle !== 'none';
   });
   expect(temContorno).toBe(true);
+});
+
+test('o foco expande uma ilha e Enter abre sua lista filtrada', async ({ page }) => {
+  await entrar(page);
+
+  const abrirIlha = page.getByRole('button', { name: 'Abrir Ilha 07 — Cobrança' });
+  await abrirIlha.focus();
+
+  const detalhe = page.getByRole('button', { name: 'Ocultar detalhes de Ilha 07 — Cobrança' });
+  await expect(detalhe).toHaveAttribute('aria-expanded', 'true');
+  const regiao = page.getByRole('region', { name: 'Detalhes de Ilha 07 — Cobrança' });
+  await expect(regiao).toContainText('PA contratada');
+  await expect(regiao).toContainText(/férias/i);
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('h1')).toHaveText('Colaboradores');
+  await expect(page.getByText('Camila Souza Rocha')).toBeVisible();
+  await expect(page.getByText('Adriana Lopes Ferreira')).toBeHidden();
 });
 
 test('o tema alterna e persiste entre recargas', async ({ page }) => {

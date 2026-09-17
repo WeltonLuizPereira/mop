@@ -161,7 +161,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
           Nenhuma ilha ativa nesse recorte. Volte o cliente ou a operação para todos.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {/* fora do sort de propósito: o consolidado abre o mapa em qualquer
               ordenação, porque é o número que enquadra todos os outros */}
           <GeralTile geral={geral} />

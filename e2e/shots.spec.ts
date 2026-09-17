@@ -1,4 +1,4 @@
-import { test, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { FIXTURES } from '../test/supabaseFixtures';
 
 const DIR = process.env.SHOT_DIR ?? 'test-results/shots';
@@ -16,6 +16,14 @@ const ILHAS = [
   ['i8', 'INBOUND', 'c1', 'o1'],
   ['i9', 'ATIVO RETENÇÃO CARTEIRA', 'c1', 'o1'],
 ];
+
+// O Dashboard consulta sempre o mês corrente. Gerar a referência no fuso do
+// processo mantém a captura reproduzível em qualquer mês, sem esconder o
+// Anel Q no estado "sem PA".
+const referencia = (() => {
+  const hoje = new Date();
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`;
+})();
 
 const NOMES = [
   'Adriana Lopes Ferreira', 'Bruno Cardoso Alves', 'Camila Souza Rocha',
@@ -103,6 +111,9 @@ const DADOS: Record<string, unknown[]> = {
     id, nome, client_id: clientId, operation_id: operationId,
     coordinator_ids: ['k1'], supervisor_ids: ['s1'], status: 'ATIVO',
   })),
+  mop_provimento: ILHAS.map(([ilhaId], indice) => ({
+    id: `p${indice + 1}`, ilha_id: ilhaId, referencia, pa_contratada: 8 + indice,
+  })),
   mop_collaborators: [...COLABS, ...DA_SAFRA],
 };
 
@@ -133,6 +144,33 @@ async function soltarAltura(page: Page) {
       .h-screen { height: auto !important; min-height: 100vh; }
     `,
   });
+}
+
+/** Capturas enxutas do Dashboard para a revisão visual responsiva. A massa é
+ * fixa e a imagem vai para o artefato do teste, sem depender de SHOT_DIR. */
+for (const tema of ['claro', 'escuro'] as const) {
+  for (const largura of [1440, 390]) {
+    test(`dashboard editorial — ${tema} em ${largura}px`, async ({ page }, testInfo) => {
+      await stub(page);
+      await page.setViewportSize({ width: largura, height: largura === 1440 ? 1000 : 844 });
+      await page.addInitScript(t => {
+        localStorage.setItem('mop-theme', t === 'escuro' ? 'dark' : 'light');
+      }, tema);
+
+      await page.goto('/');
+      await page.getByLabel('Matrícula').fill('3924');
+      await page.getByLabel('Senha').fill('senha-de-teste');
+      await page.getByRole('button', { name: 'Entrar' }).click();
+
+      await expect(page.getByRole('heading', { name: /Ilhas em operação/i })).toBeVisible();
+      const gradeDasIlhas = page.locator('section[aria-labelledby="ilhas-title"]');
+      await expect(gradeDasIlhas.getByRole('button', { name: /^Abrir / })).toHaveCount(9);
+      await page.screenshot({
+        path: testInfo.outputPath(`dashboard-${tema}-${largura}.png`),
+        fullPage: true,
+      });
+    });
+  }
 }
 
 const TELAS = [
