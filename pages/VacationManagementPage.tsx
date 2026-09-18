@@ -111,7 +111,7 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                     <th className="p-4 text-center">Status Retorno</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-hairline">
+                            <tbody className="">
                                 {activeVacations.map(c => {
                                     const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
                                     const daysUntil = getDaysUntilReturn(c.feriasFim);
@@ -120,7 +120,7 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                     return (
                                         <tr key={c.matricula} className={`hover:bg-canvas-soft cursor-pointer transition-colors ${isAlert ? 'bg-danger/10 hover:bg-danger/15' : ''}`} onClick={() => onViewDetails && onViewDetails(c)}>
                                             <td className="p-4">
-                                                 <div className="w-9 h-9 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-xs">
+                                                 <div className="w-9 h-9 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-sm flex items-center justify-center font-bold text-xs">
                                                     {getInitials(c.nome)}
                                                 </div>
                                             </td>
@@ -206,7 +206,7 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                     <th className="p-4">Fim</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-hairline">
+                            <tbody className="">
                                 {filteredHistory.map(h => {
                                     const c = collabs.find(col => col.matricula === h.collaborator_matricula);
                                     const nome = c ? c.nome : 'Desconhecido';
@@ -214,7 +214,7 @@ export const VacationManagementPage = ({ currentUser, onBack, onViewDetails }: a
                                     return (
                                         <tr key={h.id} className="hover:bg-canvas-soft transition-colors">
                                             <td className="p-4">
-                                                <div className="w-9 h-9 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-xs">
+                                                <div className="w-9 h-9 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-sm flex items-center justify-center font-bold text-xs">
                                                     {getInitials(nome)}
                                                 </div>
                                             </td>

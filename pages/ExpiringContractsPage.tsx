@@ -169,18 +169,16 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
                     <table className="w-full text-left text-[13px] text-ink-mute bg-canvas">
                         <thead>
                             <tr>
-                                <th className="p-4 w-12"></th>
-                                <th className="p-4">Nome</th>
-                                <th className="p-4">Data de entrada</th>
-                                <th className="p-4">Vencimento<br/>45 dias</th>
-                                <th className="p-4">Dias Restantes</th>
-                                <th className="p-4">Vencimento<br/>90 dias</th>
-                                <th className="p-4">Dias Restantes</th>
-                                <th className="p-4">Operação</th>
-                                <th className="p-4 text-center whitespace-nowrap">Efetivar?</th>
+                                <th className="px-2 py-4 w-10"></th>
+                                <th className="px-2 py-4">Nome</th>
+                                <th className="px-2 py-4">Data Entrada</th>
+                                <th className="px-2 py-4">Vencimento (45d)</th>
+                                <th className="px-2 py-4">Vencimento (90d)</th>
+                                <th className="px-2 py-4">Operação</th>
+                                <th className="px-2 py-4 text-center whitespace-nowrap">Efetivar?</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-hairline">
+                        <tbody className="">
                             {filtered.map(c => {
                                 const opName = operations.find(o => o.id === c.operationId)?.nome || '-';
                                 
@@ -195,42 +193,46 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
 
                                 return (
                                     <tr key={c.matricula} className="hover:bg-canvas-soft">
-                                        <td className="p-4">
-                                            <div className="w-9 h-9 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-xs">
+                                        <td className="px-2 py-3">
+                                            <div className="w-8 h-8 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-sm flex items-center justify-center font-bold text-xs">
                                                 {getInitials(c.nome)}
                                             </div>
                                         </td>
-                                        <td className="p-4 font-medium min-w-[200px] break-words whitespace-normal">{c.nome}</td>
-                                        <td className="p-4 dado">{formatDateString(c.dtEntradaProduto)}</td>
-                                        <td className="p-4 text-ink dado">{formatDateString(c.calc.vence45)}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${st45.bg} ${st45.color}`}>
-                                                {c.daysRemaining45 < 0 ? '-' : 
-                                                 c.daysRemaining45 === 0 ? 'Vence Hoje' : 
-                                                 `${c.daysRemaining45} dias`}
-                                            </span>
+                                        <td className="px-2 py-3 font-medium min-w-[150px] break-words whitespace-normal leading-tight">{c.nome}</td>
+                                        <td className="px-2 py-3 dado">{formatDateString(c.dtEntradaProduto)}</td>
+                                        <td className="px-2 py-3">
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className="text-ink dado">{formatDateString(c.calc.vence45)}</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${st45.bg} ${st45.color}`}>
+                                                    {c.daysRemaining45 < 0 ? '-' : 
+                                                     c.daysRemaining45 === 0 ? 'Hoje' : 
+                                                     `${c.daysRemaining45} dias`}
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td className="p-4 text-ink dado">{formatDateString(c.calc.vence90)}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${st90.bg} ${st90.color}`}>
-                                                {c.daysRemaining90 < 0 ? '-' : 
-                                                 c.daysRemaining90 === 0 ? 'Vence Hoje' : 
-                                                 `${c.daysRemaining90} dias`}
-                                            </span>
+                                        <td className="px-2 py-3">
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className="text-ink dado">{formatDateString(c.calc.vence90)}</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${st90.bg} ${st90.color}`}>
+                                                    {c.daysRemaining90 < 0 ? '-' : 
+                                                     c.daysRemaining90 === 0 ? 'Hoje' : 
+                                                     `${c.daysRemaining90} dias`}
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td className="p-4">{opName}</td>
-                                        <td className="p-4 text-center whitespace-nowrap">
+                                        <td className="px-2 py-3 leading-tight">{opName}</td>
+                                        <td className="px-2 py-3 text-center whitespace-nowrap">
                                             {canEdit ? (
-                                                <div className="flex justify-center gap-2">
+                                                <div className="flex justify-center gap-1.5">
                                                     <button 
                                                         onClick={() => handleEfetivacao(c, 'SIM')}
-                                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${c.efetivacao === 'SIM' ? 'bg-ok text-canvas shadow-1' : 'bg-canvas-sunk text-ink-faint hover:bg-ok/10 hover:text-ok'}`}
+                                                        className={`px-2 py-1 text-[11px] font-bold rounded transition-colors ${c.efetivacao === 'SIM' ? 'bg-ok text-canvas shadow-sm' : 'bg-canvas-sunk text-ink-faint hover:bg-ok/10 hover:text-ok'}`}
                                                     >
                                                         SIM
                                                     </button>
                                                     <button 
                                                         onClick={() => handleEfetivacao(c, 'NÃO')}
-                                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${c.efetivacao === 'NÃO' ? 'bg-danger text-canvas shadow-1' : 'bg-canvas-sunk text-ink-faint hover:bg-danger/10 hover:text-danger'}`}
+                                                        className={`px-2 py-1 text-[11px] font-bold rounded transition-colors ${c.efetivacao === 'NÃO' ? 'bg-danger text-canvas shadow-sm' : 'bg-canvas-sunk text-ink-faint hover:bg-danger/10 hover:text-danger'}`}
                                                     >
                                                         NÃO
                                                     </button>
@@ -243,14 +245,14 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
                                 );
                             })}
                             {filtered.length === 0 && (
-                                <tr><td colSpan={9} className="p-10 text-center text-[13px] text-ink-mute">
+                                <tr><td colSpan={7} className="p-10 text-center text-[13px] text-ink-mute">
                                     {searchTerm
                                         ? 'Nada com esse texto. Ajuste a busca.'
                                         : 'Nenhum contrato vence nos próximos 90 dias.'}
                                 </td></tr>
                             )}
                         </tbody>
-                </table>
+                    </table>
                </div>
                ) : (
                     <div className="border border-hairline rounded-lg bg-canvas overflow-hidden flex w-full" style={{ height: 'calc(100vh - 220px)', minHeight: '300px' }}>
@@ -400,7 +402,7 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
                                                     )}
 
                                                     <div 
-                                                        className="absolute top-1/2 -translate-y-1/2 flex items-center z-20 cursor-pointer rounded-full shadow-1 overflow-hidden" 
+                                                        className="absolute top-1/2 -translate-y-1/2 flex items-center z-20 cursor-pointer rounded-full shadow-sm overflow-hidden" 
                                                         style={{ left: `${leftPx}px`, width: `${widthPx}px`, height: '24px', backgroundColor: barra, opacity: .5 }}
                                                     >
                                                         <div className="h-full transition-all" style={{ width: `${pct}%`, backgroundColor: barra }}></div>
@@ -412,14 +414,14 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
                                                     {/* 45 Day Icon */}
                                                     {left45Px > 0 && left45Px < ganttDates.length * 40 && (
                                                         <div className="absolute top-1/2 -translate-y-1/2 z-30 pointer-events-none" style={{ left: `${left45Px - 8}px` }} title="Vencimento 45 dias">
-                                                            <div className="w-[16px] h-[16px] bg-brand text-on-brand rounded-full flex items-center justify-center font-bold text-[10px] shadow-1">!</div>
+                                                            <div className="w-[16px] h-[16px] bg-brand text-on-brand rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm">!</div>
                                                         </div>
                                                     )}
 
                                                     {/* 90 Day Icon */}
                                                     {left90Px > 0 && left90Px < ganttDates.length * 40 && (
                                                         <div className="absolute top-1/2 -translate-y-1/2 z-30 pointer-events-none" style={{ left: `${left90Px - 8}px` }} title="Vencimento 90 dias">
-                                                            <div className="w-[16px] h-[16px] bg-danger text-canvas rounded-full flex items-center justify-center font-bold text-[10px] shadow-1">!</div>
+                                                            <div className="w-[16px] h-[16px] bg-danger text-canvas rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm">!</div>
                                                         </div>
                                                     )}
                                                 </div>

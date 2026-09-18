@@ -26,7 +26,7 @@ export const AboutPage = () => (
       <h2 className="t-display-xl text-ink mb-2">MOP — Mapa Operacional</h2>
       <p className="text-base text-ink-mute mb-8">Desenvolvido para simplificar o seu dia a dia.</p>
 
-      <div className="bg-canvas p-8 rounded-xl shadow-1 border border-hairline max-w-lg w-full">
+      <div className="bg-canvas p-8 rounded-xl shadow-sm border border-hairline max-w-lg w-full">
         <dl className="space-y-6">
           <Linha termo="Versão">
             <span className="bg-canvas-sunk px-3 py-1 rounded-full text-sm">{VERSAO}</span>

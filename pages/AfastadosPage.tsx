@@ -39,7 +39,7 @@ export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
 
             {/* termo e número: é uma ficha de contagem, e a marcação diz isso */}
             <dl aria-label="Resumo da lista" className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div className="bg-canvas p-4 rounded-lg border border-hairline shadow-1 flex items-center gap-4">
+                 <div className="bg-canvas p-4 rounded-lg border border-hairline shadow-sm flex items-center gap-4">
                     {/* a cor do cartão é a mesma do ponto do status na tabela */}
                     <div className="p-3 bg-st-afastado/15 text-st-afastado rounded-lg" aria-hidden="true"><Activity size={24} /></div>
                     <div>
@@ -47,7 +47,7 @@ export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
                         <dd className="t-display-lg text-ink">{countAfastado}</dd>
                     </div>
                 </div>
-                 <div className="bg-canvas p-4 rounded-lg border border-hairline shadow-1 flex items-center gap-4">
+                 <div className="bg-canvas p-4 rounded-lg border border-hairline shadow-sm flex items-center gap-4">
                     <div className="p-3 bg-st-maternidade/15 text-st-maternidade rounded-lg" aria-hidden="true"><UserIcon size={24} /></div>
                     <div>
                         <dt className="t-eyebrow text-ink-faint">Licença maternidade</dt>
@@ -74,7 +74,7 @@ export const AfastadosPage = ({ onBack, onViewDetails }: any) => {
                             <Table.Th>Ilha</Table.Th>
                             <Table.Th>Supervisor</Table.Th>
                         </Table.Head>
-                        <tbody className="divide-y divide-hairline">
+                        <tbody className="">
                             {filtered.map(c => {
                                 const ilha = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
                                 const sup = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';

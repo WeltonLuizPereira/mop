@@ -17,6 +17,7 @@ const CONTEUDO_ID = 'conteudo-principal';
 
 export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, children }: AppShellProps) => {
   const [menuAberto, setMenuAberto] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const gatilho = useRef<HTMLButtonElement>(null);
   const gaveta = useRef<HTMLDivElement>(null);
 
@@ -63,7 +64,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
   }, [menuAberto]);
 
   return (
-    <div className="min-h-dvh bg-canvas-sunk text-ink lg:p-5">
+    <div className="h-dvh bg-canvas-sunk text-ink lg:p-5">
       {/* Primeiro tabulável da página: pula a navegação inteira para quem
           chega pelo teclado. Fica invisível até receber foco. */}
       <a
@@ -71,14 +72,14 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
         inert={menuAberto}
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50
                    focus:bg-canvas focus:text-ink focus:border focus:border-brand
-                   focus:rounded-sm focus:px-3 focus:py-2 focus:shadow-1"
+                   focus:rounded-sm focus:px-3 focus:py-2 focus:shadow-sm"
       >
         Pular para o conteúdo
       </a>
 
-      <div className="mx-auto grid min-h-dvh max-w-[1600px] overflow-hidden bg-canvas shadow-3 lg:min-h-[calc(100dvh-2.5rem)] lg:grid-cols-[248px_minmax(0,1fr)] lg:rounded-[24px]">
-      <div className="hidden lg:flex">
-        <Sidebar {...{ currentUser, currentPage, onNavigate, onLogout }} />
+      <div className={`mx-auto grid h-full max-w-[1600px] overflow-hidden bg-canvas shadow-3 lg:h-[calc(100dvh-2.5rem)] lg:rounded-[32px] transition-[grid-template-columns] duration-300 ease-in-out ${sidebarCollapsed ? 'lg:grid-cols-[82px_minmax(0,1fr)]' : 'lg:grid-cols-[280px_minmax(0,1fr)]'}`}>
+      <div className="hidden lg:flex min-h-0 min-w-0 relative z-20">
+        <Sidebar {...{ currentUser, currentPage, onNavigate, onLogout }} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
       </div>
 
       {/* Abaixo de lg a lateral vira sobreposição: sem ela não há navegação
@@ -99,6 +100,7 @@ export const AppShell = ({ currentUser, currentPage, onNavigate, onLogout, child
           <div className="relative z-10 h-full">
             <Sidebar
               {...{ currentUser, currentPage, onLogout }}
+              collapsed={false}
               onNavigate={p => { onNavigate(p); setMenuAberto(false); }}
               onClose={() => setMenuAberto(false)}
             />

@@ -8,16 +8,16 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-sm font-semibold text-[13px] ' +
-  'leading-none min-h-9 px-4 py-[9px] border border-transparent ' +
-  'transition-colors duration-100 disabled:opacity-50 disabled:pointer-events-none';
+  'inline-flex items-center justify-center gap-2 rounded-sm font-extrabold text-[14px] ' +
+  'leading-none min-h-[46px] px-[18px] py-[13px] border border-transparent ' +
+  'transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none hover:-translate-y-[1px]';
 
 const VARIANTES: Record<Variant, string> = {
-  primary:        'bg-brand text-on-brand hover:bg-brand-hot active:bg-brand-press',
-  secondary:      'bg-brand-wash text-brand-text hover:bg-brand/20',
-  ghost:          'bg-transparent text-ink border-hairline-2 hover:bg-canvas-soft',
-  danger:         'bg-transparent text-danger hover:bg-danger/10',
-  'solid-danger': 'bg-danger text-canvas hover:opacity-90',
+  primary:        'bg-[linear-gradient(135deg,#E3362A,#FF681F)] text-on-brand shadow-accent',
+  secondary:      'bg-canvas-soft text-ink border-hairline hover:bg-canvas-sunk shadow-sm',
+  ghost:          'bg-transparent text-ink border-hairline-2 hover:bg-canvas-sunk',
+  danger:         'bg-transparent text-danger border border-danger/30 hover:bg-danger/10',
+  'solid-danger': 'bg-danger text-white shadow-sm hover:opacity-90',
 };
 
 export const Button = ({

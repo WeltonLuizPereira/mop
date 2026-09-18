@@ -64,7 +64,7 @@ export const AvisoPrevioPage = ({ onBack, onViewDetails }: any) => {
                             <Table.Th>Dias restantes</Table.Th>
                             <Table.Th>Status</Table.Th>
                         </Table.Head>
-                        <tbody className="divide-y divide-hairline">
+                        <tbody className="">
                             {filtered.map(c => (
                                 <tr key={c.matricula} {...linhaAtivavel(() => onViewDetails && onViewDetails(c))}>
                                     {/* o nome e a identidade da linha: a bolinha de iniciais

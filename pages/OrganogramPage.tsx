@@ -192,7 +192,7 @@ export const OrganogramPage = () => {
         const isIlhaNode = node.type === 'ilha';
         
         // ... node styles ...
-        let cardStyle = "bg-canvas border-2 p-3 rounded-lg shadow-1 min-w-[180px] text-center relative z-10 transition-shadow hover:shadow-2";
+        let cardStyle = "bg-canvas border-2 p-3 rounded-lg shadow-sm min-w-[180px] text-center relative z-10 transition-shadow hover:shadow-2";
         let headerColor = "";
         // a hierarquia já está na posição do nó; a borda marca só o topo da
         // cadeia e as ilhas, que são o nível onde a operação acontece
@@ -214,7 +214,7 @@ export const OrganogramPage = () => {
                     <ul className="grid grid-cols-2 gap-4 bg-brand-wash/30 p-3 rounded-lg border border-hairline relative w-max">
                         <div className="absolute -top-3 left-1/2 w-px h-3 bg-hairline-2"></div>
                         {node.children.map((child: any) => (
-                             <li key={child.id} className="bg-canvas p-3 rounded-lg border border-hairline shadow-1 text-left flex flex-col justify-between w-44 hover:border-brand-hot transition-colors">
+                             <li key={child.id} className="bg-canvas p-3 rounded-lg border border-hairline shadow-sm text-left flex flex-col justify-between w-44 hover:border-brand-hot transition-colors">
                                  <div className="mb-2">
                                      <div className="font-bold text-xs text-ink truncate" title={child.name}>{child.name}</div>
                                      <div className="text-[10px] text-ink-mute font-medium truncate mt-0.5">Matrícula: {child.id}</div>
@@ -273,7 +273,7 @@ export const OrganogramPage = () => {
                             {supervisorsList.filter(s => !filterCoord || s.coordinatorIds?.includes(filterCoord)).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                         </ChipSelect>
                     </div>
-                    <div className="flex items-center gap-2 bg-canvas px-2 py-1 rounded-lg border border-hairline shadow-1">
+                    <div className="flex items-center gap-2 bg-canvas px-2 py-1 rounded-lg border border-hairline shadow-sm">
                         <button type="button" onClick={() => setTool('hand')} aria-label="Mover" aria-pressed={tool === 'hand'} className={`p-2 rounded-md transition-colors ${tool === 'hand' ? 'bg-brand-wash text-brand' : 'text-ink-faint hover:text-ink-mute'}`}><Hand size={18} /></button>
                          <div className="w-px h-6 bg-hairline"></div>
                         <button type="button" onClick={() => { setTool('mouse'); }} aria-label="Selecionar" aria-pressed={tool === 'mouse'} className={`p-2 rounded-md transition-colors ${tool === 'mouse' ? 'bg-brand-wash text-brand' : 'text-ink-faint hover:text-ink-mute'}`}><MousePointer2 size={18} /></button>

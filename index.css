@@ -31,68 +31,106 @@
   --color-danger: var(--danger);
   --color-ok:     var(--ok);
 
+  --radius-xs: 8px;  --radius-sm: 12px;   --radius-md: 16px;
+  --radius-lg: 24px; --radius-xl: 32px;  --radius-tile: 24px;
 
+  --shadow-1: var(--shadow-sm);
+  --shadow-2: var(--shadow-md);
+  --shadow-3: var(--shadow-md);
+  --shadow-accent: var(--shadow-accent);
 
-  --radius-xs: 4px;  --radius-sm: 6px;   --radius-md: 8px;
-  --radius-lg: 12px; --radius-xl: 16px;  --radius-tile: 20px;
-
-  --shadow-1: 0 1px 3px rgb(0 0 0 / .06);
-  --shadow-2: 0 8px 24px rgb(0 0 0 / .08);
-  --shadow-3: 0 16px 48px rgb(0 0 0 / .12);
-
-  --font-display: 'Archivo', system-ui, sans-serif;
-  --font-sans:    'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-sans:    'Inter', system-ui, sans-serif;
   --font-data:    'IBM Plex Mono', ui-monospace, monospace;
+  --font-editorial: 'Georgia', serif;
 }
 
 :root {
-  --canvas:#fff; --canvas-soft:#f6f6f4; --canvas-sunk:#efefed;
-  --hairline:#e4e4e4; --hairline-2:#cbc7c3;
-  --ink:#191310; --ink-2:#453c38; --ink-mute:#6b615c; --ink-faint:#736a65;
-  --brand:#f27405; --brand-hot:#f54e00; --brand-press:#d04200;
-  --brand-text:#d04200; --brand-wash:#fff1e8; --on-brand:#191310;
-  --shadow-1: 0 1px 3px rgb(25 19 16 / .06);
-  --shadow-2: 0 8px 24px rgb(25 19 16 / .08);
-  --shadow-3: 0 16px 48px rgb(25 19 16 / .12);
-  --st-ativo: #12794F; --st-ferias: #1264A3; --st-afastado: #6544C0;
-  --st-maternidade: #B4008C; --st-aviso: #FF4D6D; --st-realocado: #00786F;
-  --st-desligado: #C2304C;
-  /* Os pontos de status só precisam de 3:1, então levam o vermelho do modo
-     escuro tal e qual. `--danger` não: ele vira texto ("Excluir", mensagens de
-     erro) e fundo de botão com texto claro em cima, onde o piso é 4,5:1 —
-     #FF4D6D dá 3,21 sobre branco. #DE2E50 é o mais claro que ainda passa. */
-  --danger: #DE2E50; --ok: #12794F;
+  /* Primitive colors from Design System */
+  --navy-950: #031321; --navy-900: #06182A; --navy-850: #0A2035;
+  --navy-800: #102A43; --navy-700: #173A58;
+  --flame-600: #E3362A; --flame-500: #F14A2C;
+  --orange-500: #FF681F; --orange-400: #FF812E;
+  --peach-100: #FFE8DA; --peach-50: #FFF4EC;
+  --warm-50: #FAF9F7; --white: #FFFFFF;
+  --sys-ink: #101418; --sys-text: #1F2937; --sys-muted: #667085;
+  --sys-soft: #98A2B3; --sys-line: #E7E9EC;
+  --sys-success: #22A06B; --sys-warning: #F79009; --sys-danger: #D92D20;
+
+  /* Semantic mappings - Light Mode */
+  --canvas: var(--warm-50);
+  --canvas-soft: var(--white);
+  --canvas-sunk: #F2F3F4; /* Gray body background specified earlier */
+
+  --hairline: var(--sys-line);
+  --hairline-2: var(--sys-soft);
+  
+  --ink: var(--sys-ink);
+  --ink-2: var(--sys-text);
+  --ink-mute: var(--sys-muted);
+  --ink-faint: var(--sys-soft);
+
+  --brand: var(--orange-500);
+  --brand-hot: var(--flame-500);
+  --brand-press: var(--flame-600);
+  --brand-text: var(--flame-600);
+  --brand-wash: var(--peach-50);
+  --on-brand: var(--white);
+
+  --shadow-sm: 0 8px 24px rgba(16,24,40,.08);
+  --shadow-md: 0 18px 50px rgba(3,19,33,.14);
+  --shadow-accent: 0 16px 42px rgba(241,74,44,.28);
+  
+  --st-ativo: var(--sys-success); --st-ferias: #1264A3; --st-afastado: #6544C0;
+  --st-maternidade: #B4008C; --st-aviso: var(--sys-warning); --st-realocado: #00786F;
+  --st-desligado: var(--sys-danger);
+  --danger: var(--sys-danger); --ok: var(--sys-success);
 }
 
 .dark {
-  color-scheme:dark;
-  --canvas:#061625; --canvas-soft:#0a2032; --canvas-sunk:#04111d;
-  --hairline:#17364d; --hairline-2:#28506b;
-  --ink:#eaf2f7; --ink-2:#bfd0dc; --ink-mute:#91a5b5; --ink-faint:#738a9b;
-  --brand:#ff5b35; --brand-hot:#ff4d2e; --brand-press:#d93c22;
-  --brand-text:#ff8a70; --brand-wash:rgb(255 77 46 / .12); --on-brand:#061625;
-  --st-ativo: #3FBE84; --st-ferias: #5AA9E6; --st-afastado: #9B8CFF;
-  --st-maternidade: #E86FD8; --st-aviso: #FF4D6D; --st-realocado: #38B5A8;
-  --st-desligado: #C2304C;
-  --danger: #FF4D6D; --ok: #3FBE84;
+  color-scheme: dark;
+  
+  /* Semantic mappings - Dark Mode */
+  --canvas: var(--navy-900);
+  --canvas-soft: var(--navy-850);
+  --canvas-sunk: var(--navy-950);
 
-  --shadow-1: 0 1px 3px rgb(0 9 18 / .42);
-  --shadow-2: 0 8px 24px rgb(0 9 18 / .52);
-  --shadow-3: 0 16px 48px rgb(0 9 18 / .62);
+  --hairline: rgba(255,255,255,0.08);
+  --hairline-2: rgba(255,255,255,0.13);
+  
+  --ink: var(--white);
+  --ink-2: #AFC0D0;
+  --ink-mute: #9AAEBD;
+  --ink-faint: rgba(255,255,255,0.4);
+
+  --brand: var(--orange-500);
+  --brand-hot: var(--flame-500);
+  --brand-press: var(--flame-600);
+  --brand-text: var(--orange-400);
+  --brand-wash: rgba(255,104,31,0.08);
+  --on-brand: var(--white);
+
+  --shadow-sm: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-md: 0 18px 50px rgba(0,0,0,0.6);
+  --shadow-accent: 0 16px 42px rgba(241,74,44,.28);
+  
+  --st-ativo: #3FBE84; --st-ferias: #5AA9E6; --st-afastado: #9B8CFF;
+  --st-maternidade: #E86FD8; --st-aviso: var(--sys-warning); --st-realocado: #38B5A8;
+  --st-desligado: #FF4D6D;
+  --danger: #FF4D6D; --ok: #3FBE84;
 }
 
 html, body {
-  background-color: var(--canvas);
+  background-color: var(--canvas-sunk);
   color: var(--ink);
   font-family: var(--font-sans);
 }
 
-/* registros tipográficos — os dois do logo */
 .t-display-xl { font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 1.08; letter-spacing: -.022em; }
 .t-display-lg { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.15; letter-spacing: -.02em; }
 .t-display-md { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.25; letter-spacing: -.015em; }
 .t-eyebrow {
-  font-family: var(--font-display); font-weight: 500; font-size: 11px;
+  font-family: var(--font-display); font-weight: 600; font-size: 11px;
   text-transform: uppercase; letter-spacing: .18em; line-height: 1;
 }
 .t-data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
@@ -103,12 +141,6 @@ html, body {
   border-radius: var(--radius-xs);
 }
 
-/* Shim legado de animação, nos mesmos termos do shim de cor `--color-brand-*`
-   acima. `CollaboratorFormModal.tsx` (7 usos) e `CrudPage.tsx` (3 usos) são
-   telas de leva 1 que ficam fora do escopo de restilo desta leva e ainda
-   referenciam estas classes; removê-las agora deixaria essas telas com
-   animações mortas pelo resto das levas 2 e 3. Sai ao fim da leva 3, junto
-   do shim de cor. */
 @keyframes mop-node-pulse {
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.2); }
@@ -120,13 +152,6 @@ html, body {
   animation: mop-node-pulse 2.4s ease-in-out infinite;
 }
 
-/* As duas animações de entrada terminam com `transform` explícito. Com
-   `fill-mode: both` esse valor fica aplicado para sempre, e um elemento com
-   `transform` — mesmo a identidade — vira bloco de contenção de
-   `position: fixed`: qualquer diálogo dentro dele deixa de se medir pela
-   janela e passa a se medir pela caixa de conteúdo da página. Daí
-   `backwards`, que só segura o primeiro quadro e devolve o elemento ao
-   estado normal quando a animação acaba. */
 @keyframes mop-fade-up {
   from { opacity: 0; transform: translateY(8px); }
 }
@@ -151,9 +176,6 @@ html, body {
   }
 }
 
-
-
-/* Ritmo de página compartilhado pelas rotas extraídas do monólito. */
 main > div > h2,
 main > div > div:first-child h2 {
   font-family: var(--font-display);
@@ -162,48 +184,51 @@ main > div > div:first-child h2 {
   color: var(--ink);
 }
 
-/* Cabeçalho e linhas no mesmo registro da tabela do mockup: sem preenchimento,
-   sem zebra, separador de 1px e o eyebrow largo no topo. As páginas herdadas
-   ainda trazem classes próprias de fundo e tamanho; estas regras não estão em
-   nenhuma layer, então prevalecem sobre as utilidades do Tailwind. */
-main table thead {
-  background-color: transparent;
-  color: var(--ink-faint);
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 11px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
+main table {
+  width: 100%;
+  background-color: var(--canvas-soft);
+  border-radius: var(--radius-xl);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
 }
 
-/* Cabeçalho fixo é a exceção: as linhas passam por baixo dele e precisam
-   de um fundo opaco para não atravessar o texto. */
+main table thead {
+  background-color: var(--canvas);
+  color: var(--ink-mute);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
 main table thead.sticky { background-color: var(--canvas); }
 
 main table thead th {
-  padding: 10px 14px;
+  padding: 14px 20px;
   text-align: left;
   border-bottom: 1px solid var(--hairline);
   white-space: nowrap;
 }
 
 main table tbody tr {
-  border-color: var(--hairline);
   transition: background-color 140ms ease;
 }
 
 main table tbody td {
-  padding: 9px 14px;
-  font-size: 13px;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--ink);
   vertical-align: middle;
-  /* dígito de largura fixa: a coluna se alinha sozinha, sem tabulação
-     manual, e 1.284 fica sob 37 na mesma casa */
   font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--hairline);
 }
 
-/* `.num` para contagem — mono e à direita, onde a unidade importa.
-   `.dado` para data e matrícula — mono, mas segue o alinhamento da coluna.
-   Nenhuma das duas mexe na cor: quem decide isso é a coluna. */
+main table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 main table td.num,
 main table th.num { text-align: right; }
 main table td.num,
@@ -212,19 +237,16 @@ main table td.dado {
   font-weight: 500;
 }
 
-main table tbody tr:hover { background-color: var(--canvas-soft); }
+main table tbody tr:hover { background-color: var(--canvas-sunk); }
 
-/* Sob o cursor, a linha recebe a mesma régua de 2px que marca a página atual
-   na barra lateral — o sistema já ensinou esse sinal. Vai por dentro da
-   célula (`inset`) para não empurrar a coluna um pixel. */
 main table tbody tr:hover > td:first-child {
-  box-shadow: inset 2px 0 0 var(--brand);
+  box-shadow: inset 3px 0 0 var(--brand);
 }
 
 main select,
 main input:not([type='checkbox']):not([type='radio']),
 main textarea {
-  background-color: var(--canvas);
+  background-color: var(--canvas-soft);
   border-color: var(--hairline-2);
   color: var(--ink);
 }
@@ -237,3 +259,22 @@ main textarea:focus {
 }
 
 main ::placeholder { color: var(--ink-faint); }
+
+/* Custom Scrollbar for Sidebar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline-2) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--hairline-2);
+  border-radius: 10px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: var(--ink-faint);
+}

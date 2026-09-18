@@ -137,7 +137,7 @@ export const ScheduledTasksPage = () => {
                         <Table.Th>Criado por</Table.Th>
                         <Table.Th className="text-right">Ações</Table.Th>
                     </Table.Head>
-                    <tbody className="divide-y divide-hairline">
+                    <tbody className="">
                         {tasks.map(task => (
                             <tr key={task.id} className="hover:bg-canvas-soft">
                                 <td className="p-4 text-brand-text dado">{formatDateString(task.scheduled_date)}</td>

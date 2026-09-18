@@ -3,10 +3,11 @@ import React, { useId } from 'react';
 /** Moldura comum a Input, Select e ao gatilho do MultiSelect. */
 export const CAMPO =
   'w-full rounded-sm border border-hairline-2 bg-canvas text-ink ' +
-  'text-sm px-3 py-[9px] min-h-9 placeholder:text-ink-faint ' +
-  'disabled:opacity-50 disabled:cursor-not-allowed';
+  'text-sm px-[13px] min-h-[46px] placeholder:text-ink-faint outline-none ' +
+  'focus:border-brand focus:ring-[3px] focus:ring-[#FFE6D7] dark:focus:ring-brand/20 ' +
+  'disabled:opacity-50 disabled:cursor-not-allowed transition-all';
 
-export const ROTULO = 'block text-[13px] font-medium text-ink-2 mb-1.5';
+export const ROTULO = 'block text-[12px] font-extrabold text-ink mb-1.5';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;

@@ -45,7 +45,7 @@ export const Badge = ({ status, count, className = '' }: BadgeProps) => {
   // é o que mantém o ponto da tabela e o do tile do mapa na mesma cor
   const canonico = normalizarStatus(status) ?? status;
   return (
-    <span className={`inline-flex items-center gap-[7px] text-[13px] text-ink-2 whitespace-nowrap ${className}`}>
+    <span className={`inline-flex items-center gap-[7px] px-[10px] py-[5px] rounded-full text-[12px] font-extrabold border border-hairline bg-canvas-soft text-ink-2 whitespace-nowrap ${className}`}>
       <span
         data-dot
         aria-hidden="true"

@@ -347,7 +347,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                 </button>
             </div>
 
-            <div className="bg-canvas p-8 rounded-lg shadow-1 border border-hairline text-center">
+            <div className="bg-canvas p-8 rounded-lg shadow-sm border border-hairline text-center">
                  <div className="w-16 h-16 bg-brand-wash text-brand rounded-full flex items-center justify-center mx-auto mb-4">
                      <FileSpreadsheet size={32} />
                  </div>
@@ -401,7 +401,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                                          )}
                                      </tr>
                                  </thead>
-                                 <tbody className="divide-y divide-hairline">
+                                 <tbody className="">
                                      {preview.map((row, i) => (
                                          <tr key={i}>
                                              {activeTab === 'import' ? (

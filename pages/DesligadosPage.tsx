@@ -270,14 +270,14 @@ export const DesligadosPage = ({ onBack, onViewDetails }: any) => {
                             <th className="p-4 text-right">Ações</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-hairline">
+                    <tbody className="">
                         {filtered.map(c => {
                             const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
                             const supName = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';
                             return (
                                 <tr key={c.matricula} className="hover:bg-canvas-soft cursor-pointer" onClick={() => onViewDetails && onViewDetails(c)}>
                                     <td className="p-4">
-                                        <div className="w-9 h-9 rounded-full bg-danger/15 text-danger border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-xs">
+                                        <div className="w-9 h-9 rounded-full bg-danger/15 text-danger border-2 border-canvas shadow-sm flex items-center justify-center font-bold text-xs">
                                             {getInitials(c.nome)}
                                         </div>
                                     </td>

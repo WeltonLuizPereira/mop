@@ -60,28 +60,10 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
   const visiveis = new Set(recortadas.map(i => i.id));
   const totais = totaisGerais(collabs.filter(c => visiveis.has(c.ilhaId)));
 
-  // A faixa segue a ordem em que a pergunta é feita: quanto foi contratado,
-  // quanto está de pé, o que isso dá — e só depois onde está o resto do
-  // quadro. Os três primeiros são uma conta só, lida da esquerda para a
-  // direita; os outros três explicam quem não está no numerador.
-  const numeros = [
-    {
-      rotulo: 'PA contratada',
-      valor: geral.paContratada === null ? '—' : geral.paContratada.toLocaleString('pt-BR'),
-      aceso: false,
-    },
-    { rotulo: 'ativos', valor: totais.ativos.toLocaleString('pt-BR'), aceso: false },
-    {
-      rotulo: 'provimento geral',
-      valor: geral.provimento === null ? '—' : `${Math.round(geral.provimento * 100)}%`,
-      // é o único número da faixa que tem limiar: abaixo de 80% ele acende no
-      // mesmo quente que o anel dos cards usa para dizer a mesma coisa
-      aceso: geral.provimento !== null && geral.provimento < 0.8,
-    },
-    { rotulo: 'em férias', valor: totais.ferias.toLocaleString('pt-BR'), aceso: false },
-    { rotulo: 'em aviso prévio', valor: totais.aviso.toLocaleString('pt-BR'), aceso: false },
-    { rotulo: 'afastados', valor: totais.afastados.toLocaleString('pt-BR'), aceso: false },
-  ];
+  const formatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const _dataExtenso = formatter.format(new Date());
+  const dataExtenso = _dataExtenso.charAt(0).toUpperCase() + _dataExtenso.slice(1);
+  const ausentes = totais.ferias + totais.aviso + totais.afastados;
 
   const carregando = carregandoProvimento || [collaboratorsResource, ilhasResource, clientsResource, operationsResource]
     .some(resource => resource.loading && !resource.data);
@@ -128,27 +110,64 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
 
   return (
     <div className="mx-auto max-w-[1380px] px-4 py-7 sm:px-6 lg:px-9">
-      <header className="mb-7">
-        <h1 className="t-display-lg text-ink">Operação em perspectiva.</h1>
-        <p className="mt-2 text-sm text-ink-mute">Pessoas, capacidade e movimentos de hoje.</p>
+      <header className="mb-7 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="t-display-lg text-ink font-bold tracking-tight">Operação em perspectiva.</h1>
+          <p className="mt-2 text-[15px] text-ink-mute">Uma leitura direta das pessoas, capacidades e movimentos de hoje.</p>
+        </div>
+        <p className="text-[13px] text-ink-faint font-medium mb-1">{dataExtenso}</p>
       </header>
-      <div
-        role="group"
-        aria-label="Resumo do quadro"
-        className="mb-8 grid grid-cols-2 gap-x-5 gap-y-4 border-y border-hairline py-4 sm:grid-cols-3 lg:grid-cols-6"
-      >
-        {numeros.map(({ rotulo, valor, aceso }) => (
-          <div key={rotulo} className="flex flex-col gap-0.5">
-            <strong
-              className={`t-data text-[21px] font-bold tracking-tight
-                          ${aceso ? 'text-brand-hot' : 'text-ink'}`}
-            >
-              {valor}
-            </strong>
-            <span className="text-[13px] text-ink-mute">{rotulo}</span>
-            {aceso && <span className="text-[11px] font-medium leading-snug text-brand-text">Abaixo da meta de 80%</span>}
+
+      <div className="mb-12 flex flex-col md:flex-row rounded-tile overflow-hidden shadow-sm border border-hairline">
+        {/* Bloco 1: Panorama da operação */}
+        <div 
+          className="text-white p-8 md:w-[45%] flex flex-col justify-center relative overflow-hidden"
+          style={{ background: 'linear-gradient(120deg, #ff4f10, #ff7b29)' }}
+        >
+          {/* Efeito do Q (Anel sutil ao fundo como no mockup) */}
+          <div className="absolute right-[-75px] top-[-110px] w-[270px] h-[270px] rounded-full border-[55px] border-[#ffffff20] pointer-events-none" />
+
+          <p className="text-[11px] font-medium opacity-90 mb-5 relative z-10">Panorama da operação</p>
+          <div className="font-display font-bold text-[58px] leading-none tracking-tight mb-2 relative z-10">
+            {totais.ativos.toLocaleString('pt-BR')}
           </div>
-        ))}
+          <p className="text-[12px] opacity-90 relative z-10">
+            colaboradores ativos em {geral.ilhas} {geral.ilhas === 1 ? 'ilha' : 'ilhas'}
+          </p>
+        </div>
+
+        {/* Bloco 2: Provimento geral */}
+        <div className="bg-canvas-soft border-t md:border-t-0 md:border-l border-hairline p-8 md:w-[27.5%] flex flex-col justify-between">
+          <p className="text-[13px] text-ink-mute mb-8">Provimento geral</p>
+          <div>
+            <div className="font-display font-bold text-[40px] leading-none tracking-tight text-ink mb-1">
+              {geral.provimento === null ? '—' : `${Math.round(geral.provimento * 100)}%`}
+            </div>
+            {geral.provimento !== null && geral.provimento < 0.8 ? (
+              <p className="text-[13px] font-medium text-brand-text">↓ Abaixo da meta de 80%</p>
+            ) : (
+              <p className="text-[13px] font-medium text-ok">
+                PA contratada: {geral.paContratada === null ? '—' : geral.paContratada.toLocaleString('pt-BR')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Bloco 3: Movimentos próximos */}
+        <div className="bg-canvas-soft border-t md:border-t-0 md:border-l border-hairline p-8 md:w-[27.5%] flex flex-col justify-between">
+          <p className="text-[13px] text-ink-mute mb-8">Movimentos próximos</p>
+          <div>
+            <div className="font-display font-bold text-[40px] leading-none tracking-tight text-ink mb-1">
+              {ausentes.toLocaleString('pt-BR')}
+            </div>
+            <p className="text-[13px] font-medium text-ink-faint">
+              {totais.ferias > 0 && `${totais.ferias} férias `}
+              {totais.aviso > 0 && `· ${totais.aviso} aviso `}
+              {totais.afastados > 0 && `· ${totais.afastados} afastados`}
+              {ausentes === 0 && 'nenhum'}
+            </p>
+          </div>
+        </div>
       </div>
 
       <section aria-labelledby="ilhas-title">
@@ -190,7 +209,7 @@ export const DashboardPage: React.FC<{ currentUser: User, onAbrirIlha: (ilhaId: 
           Nenhuma ilha ativa nesse recorte. Volte o cliente ou a operação para todos.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {/* fora do sort de propósito: o consolidado abre o mapa em qualquer
               ordenação, porque é o número que enquadra todos os outros */}
           <GeralTile geral={geral} />

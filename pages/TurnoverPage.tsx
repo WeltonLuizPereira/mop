@@ -585,7 +585,7 @@ export const TurnoverPage = () => {
                                     <th className="p-3 num border-b border-hairline">Taxa Deslig. (%)</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-hairline">
+                            <tbody className="">
                                 {chartData.map((d, i) => (
                                     <tr key={i} className="hover:bg-canvas-soft/50">
                                         <td className="p-3 font-semibold text-ink">{d.name}</td>

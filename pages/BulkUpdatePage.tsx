@@ -268,7 +268,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                 <div className="space-y-6 lg:col-span-1">
                     
                     {/* Actions Panel */}
-                    <div className="bg-canvas p-5 rounded-lg shadow-1 border border-brand-wash ring-1 ring-brand-wash">
+                    <div className="bg-canvas p-5 rounded-lg shadow-sm border border-brand-wash ring-1 ring-brand-wash">
                         <h3 className="font-bold text-ink mb-4 flex items-center gap-2">
                             <ListChecks size={18} className="text-brand"/> O que alterar
                         </h3>
@@ -382,7 +382,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                     </div>
 
                     {/* Filters Panel */}
-                    <div className="bg-canvas p-5 rounded-lg shadow-1 border border-hairline">
+                    <div className="bg-canvas p-5 rounded-lg shadow-sm border border-hairline">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-ink flex items-center gap-2">
                                 <Filter size={18} className="text-ink-faint"/> Filtros
@@ -437,13 +437,13 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                 </div>
 
                 {/* Right Column: Table */}
-                <div className="lg:col-span-3 bg-canvas rounded-lg shadow-1 border border-hairline flex flex-col h-[600px]">
+                <div className="lg:col-span-3 bg-canvas rounded-lg shadow-sm border border-hairline flex flex-col h-[600px]">
                     <div className="p-4 border-b border-hairline flex justify-between items-center bg-canvas-soft">
                         <span className="text-sm font-bold text-ink-mute">{filtered.length} colaboradores encontrados</span>
                     </div>
                     <div className="flex-1 overflow-auto">
                         <table className="w-full text-left text-sm text-ink-mute bg-canvas">
-                            <thead className="sticky top-0 shadow-1 z-10">
+                            <thead className="sticky top-0 shadow-sm z-10">
                                 <tr>
                                     <th className="p-4 w-10">
                                         <input 
@@ -459,7 +459,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
                                     <th className="p-4">Ilha</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-hairline">
+                            <tbody className="">
                                 {filtered.map(c => {
                                     const sup = supervisors.find(s => s.id === c.supervisorId)?.nome || '-';
                                     const coord = coordinators.find(co => co.id === c.coordinatorId)?.nome || '-';

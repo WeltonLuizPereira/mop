@@ -5,22 +5,24 @@ interface NavItemProps {
   label: string;
   active: boolean;
   onClick: () => void;
+  collapsed?: boolean;
 }
 
-export const NavItem = ({ icon: Icon, label, active, onClick }: NavItemProps) => (
+export const NavItem = ({ icon: Icon, label, active, onClick, collapsed }: NavItemProps) => (
   <button
     type="button"
     onClick={onClick}
     aria-current={active ? 'page' : undefined}
+    title={collapsed ? label : undefined}
     className={
-      'w-full min-h-11 flex items-center gap-2.5 px-2.5 py-[7px] rounded-sm text-[13px] text-left ' +
-      '-ml-0.5 border-l-2 transition-colors duration-100 ' +
+      `w-full min-h-[44px] flex items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-sm text-[14px] text-left ` +
+      'transition-colors duration-100 ' +
       (active
-        ? 'bg-brand-wash text-ink border-brand font-semibold'
-        : 'text-ink-2 border-transparent hover:bg-canvas-sunk hover:text-ink font-medium')
+        ? 'bg-brand-wash text-brand font-extrabold'
+        : 'text-ink-mute hover:bg-canvas-sunk hover:text-ink font-semibold')
     }
   >
     <Icon size={16} />
-    {label}
+    {!collapsed && <span>{label}</span>}
   </button>
 );

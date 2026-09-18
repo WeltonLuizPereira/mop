@@ -8,7 +8,7 @@ import { versaoExibida } from '../lib/versao';
 
 declare const __APP_VERSION__: string;
 
-const VERSAO = versaoExibida(typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.0');
+const VERSAO = versaoExibida(typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.1.0');
 
 export const LoginPage = ({ onLogin }: { onLogin: (u: User) => void }) => {
     const [matricula, setMatricula] = useState('');

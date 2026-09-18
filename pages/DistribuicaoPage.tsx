@@ -3,6 +3,8 @@ import type { Collaborator, Ilha, Operation, Supervisor } from '../types';
 import { db } from '../services/mockDb';
 import { distribuir, doQuadro } from '../lib/distribuicaoStats';
 import { DistribuicaoCard } from '../components/dashboard/DistribuicaoCard';
+import { SaudeOperacaoCard } from '../components/dashboard/SaudeOperacaoCard';
+import { AlertasCard } from '../components/dashboard/AlertasCard';
 import { useResource } from '../contexts/DataContext';
 
 /** Por qual cadastro a lista de colaboradores será recortada no clique. */
@@ -49,6 +51,11 @@ export const DistribuicaoPage: React.FC<DistribuicaoPageProps> = ({ onAbrirLista
         <p className="text-xs text-ink-faint mt-1">
           Base de todos os percentuais desta tela. Desligados ficam de fora.
         </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+        <SaudeOperacaoCard collabs={collabs} />
+        <AlertasCard collabs={collabs} />
       </div>
 
       <h2 className="t-eyebrow text-ink-faint mb-3.5">Distribuição</h2>

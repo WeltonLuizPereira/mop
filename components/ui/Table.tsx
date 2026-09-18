@@ -20,13 +20,13 @@ export const Table = ({ children, label }: { children: React.ReactNode; label?: 
     className="overflow-x-auto"
     {...(label ? { role: 'region', 'aria-label': label, tabIndex: 0 } : {})}
   >
-    <table className="w-full border-collapse bg-canvas">{children}</table>
+    <table className="w-full border-collapse bg-transparent text-sm">{children}</table>
   </div>
 );
 
 /** O cartão que emoldura a lista: barra em cima, tabela dentro. */
 Table.Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-canvas-soft rounded-lg border border-hairline overflow-hidden ${className}`}>
+  <div className={`bg-canvas-soft rounded-md border border-hairline overflow-hidden ${className}`}>
     {children}
   </div>
 );
@@ -66,7 +66,7 @@ Table.Toolbar = ({
 
   return (
     <>
-      <div className="px-4 py-3.5 border-b border-hairline flex items-center flex-wrap gap-x-2.5 gap-y-3">
+      <div className="px-4 py-3.5 flex items-center flex-wrap gap-x-2.5 gap-y-3">
         {busca && (
           <div className="relative flex-1 min-w-[180px] max-w-[260px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" size={15} />
@@ -131,7 +131,7 @@ Table.Toolbar = ({
 };
 
 Table.Head = ({ children }: { children: React.ReactNode }) => (
-  <thead>
+  <thead className="bg-canvas-sunk">
     <tr>{children}</tr>
   </thead>
 );
@@ -145,7 +145,7 @@ interface ThProps {
   onOrdenar?: (campo: string) => void;
 }
 
-const TH_BASE = 't-eyebrow text-ink-faint text-left px-3.5 py-2.5 border-b border-hairline whitespace-nowrap';
+const TH_BASE = 't-eyebrow text-ink-mute text-left px-4 py-3.5 whitespace-nowrap tracking-wider';
 
 Table.Th = ({ children, className = '', campo, ordenacao, onOrdenar }: ThProps) => {
   if (!campo || !onOrdenar) {
@@ -183,7 +183,7 @@ Table.Th = ({ children, className = '', campo, ordenacao, onOrdenar }: ThProps) 
 };
 
 Table.Td = ({ children, className = '' }: { children?: React.ReactNode; className?: string }) => (
-  <td className={`px-3.5 py-2.5 border-b border-hairline text-[13px] align-middle whitespace-nowrap ${className}`}>
+  <td className={`px-4 py-3 align-middle whitespace-nowrap ${className}`}>
     {children}
   </td>
 );

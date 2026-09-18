@@ -47,7 +47,7 @@ export const HistoryPage: React.FC = () => {
                             <Table.Th className="w-48">Alvo</Table.Th>
                             <Table.Th>Detalhes</Table.Th>
                         </Table.Head>
-                        <tbody className="divide-y divide-hairline">
+                        <tbody className="">
                             {logs.map(log => (
                                 <tr key={log.id}>
                                     <td className="p-4 text-xs text-ink-mute dado">{log.date}</td>

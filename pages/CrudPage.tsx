@@ -106,7 +106,7 @@ export const CrudPage = <T extends { id: string, nome: string, status: string | 
                         {isAdmin && <th className="p-4 text-right">Ações</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-hairline">
+                    <tbody className="">
                       {filteredData.map((item) => (
                         <tr key={item.id} className="hover:bg-canvas-soft transition-colors">
                           <td className="p-4 font-medium text-ink">{item.nome}</td>

@@ -17,7 +17,7 @@ interface TopbarProps {
 export const Topbar = ({ title, onToggleMenu, menuOpen = false, menuControls, menuRef }: TopbarProps) => {
   const { theme, toggleTheme } = useTheme();
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-hairline bg-canvas px-5 md:gap-4 md:px-8">
+    <header className="flex h-[80px] shrink-0 items-center gap-3 border-b border-hairline bg-canvas-soft px-5 md:gap-4 md:px-8">
       {onToggleMenu && (
         <button
           type="button"
@@ -31,7 +31,7 @@ export const Topbar = ({ title, onToggleMenu, menuOpen = false, menuControls, me
           <Menu size={18} />
         </button>
       )}
-      <h1 className="truncate font-display text-lg font-bold tracking-tight text-ink">{title}</h1>
+      <h1 className="truncate font-display text-[24px] font-extrabold tracking-tight text-ink">{title}</h1>
       <div className="flex-1" />
       <button
         type="button"

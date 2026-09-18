@@ -205,7 +205,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 {client?.logo ? (
                     <img src={client.logo} alt={`Logo ${client.nome}`} className="w-12 h-12 rounded-full object-cover object-center bg-canvas border border-hairline" referrerPolicy="no-referrer" />
                 ) : (
-                    <div className="w-12 h-12 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-1 flex items-center justify-center font-bold text-lg">
+                    <div className="w-12 h-12 rounded-full bg-brand-wash text-brand-text border-2 border-canvas shadow-sm flex items-center justify-center font-bold text-lg">
                         {getInitials(currentCollab.nome)}
                     </div>
                 )}
@@ -227,15 +227,15 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="space-y-6">
-                    <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                <div className="flex flex-col gap-6 h-full">
+                    <div className="bg-canvas-soft p-6 rounded-lg border-[0.5px] border-hairline">
                         <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><UserIcon size={18} className="text-brand"/> Dados pessoais</h3>
                         <Field label="Email" value={currentCollab.email} className="break-all" />
                         <Field label="Data de Nascimento" value={formatDateString(currentCollab.dtNasc)} />
                         <Field label="Status" value={<Badge status={currentCollab.status} />} />
                     </div>
                     
-                    <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                    <div className="bg-canvas-soft p-6 rounded-lg border-[0.5px] border-hairline flex-1">
                         <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Briefcase size={18} className="text-brand"/> Contrato</h3>
                         <Field label="Data de Entrada" value={formatDateString(currentCollab.dtEntradaProduto)} />
                         {currentCollab.status === CollaboratorStatus.DESLIGADO && (
@@ -253,8 +253,8 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                     <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                <div className="flex flex-col gap-6 h-full">
+                     <div className="bg-canvas-soft p-6 rounded-lg border-[0.5px] border-hairline">
                         <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><MapPin size={18} className="text-brand"/> Alocação</h3>
                         <Field label="Cliente" value={client?.nome} />
                         <Field label="Operação" value={op?.nome} />
@@ -263,7 +263,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                         <Field label="Supervisor" value={sup?.nome} />
                     </div>
 
-                    <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                    <div className="bg-canvas-soft p-6 rounded-lg border-[0.5px] border-hairline flex-1">
                         <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Clock size={18} className="text-brand"/> Jornada</h3>
                         <div className="flex gap-8">
                              <Field label="Entrada" value={formatTime(currentCollab.horarioEntrada)} />
@@ -272,15 +272,15 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                     </div>
                 </div>
                 
-                <div className="space-y-6">
-                     <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                <div className="flex flex-col gap-6 h-full">
+                     <div className="bg-canvas-soft p-6 rounded-lg border-[0.5px] border-hairline">
                         <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Key size={18} className="text-brand"/> Dados de acesso</h3>
                         <Field label="Email VR" value={currentCollab.email_vr} className="break-all" />
                         <Field label="Senha" value={currentCollab.senha} />
                     </div>
                     
                     {/* Férias Display */}
-                     <div className="bg-canvas p-6 rounded-lg shadow-1 border border-hairline">
+                     <div className="bg-canvas-soft p-6 rounded-lg border-[0.5px] border-hairline flex-1">
                         <h3 className="font-bold text-ink mb-4 flex items-center gap-2"><Sun size={18} className="text-brand"/> Férias</h3>
                         {currentCollab.feriasInicio ? (
                              <>
@@ -339,7 +339,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                                 <th className="p-4">Detalhes</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-hairline">
+                        <tbody className="">
                             {historyLogs.map(log => (
                                 <tr key={log.id}>
                                     <td className="p-4 text-xs text-ink-mute dado">{log.date}</td>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useId, useRef } from 'react';
 import { ChevronDown, Check, X } from 'lucide-react';
-import { ROTULO } from './Input';
+import { ROTULO, CAMPO } from './Input';
 
 export const MultiSelect = ({ label, options, value, onChange }: {
   label: string,
@@ -100,9 +100,8 @@ export const MultiSelect = ({ label, options, value, onChange }: {
         aria-controls={isOpen ? listaId : undefined}
         aria-activedescendant={isOpen && ativa >= 0 ? `${listaId}-${ativa}` : undefined}
         className={
-          'w-full text-left rounded-sm border bg-canvas text-ink text-sm px-3 py-[9px] ' +
-          'min-h-9 flex justify-between items-center gap-2 transition-colors duration-100 ' +
-          (isOpen ? 'border-brand' : 'border-hairline-2 hover:bg-canvas-soft')
+          CAMPO + ' flex justify-between items-center gap-2 cursor-pointer ' +
+          (isOpen ? '!border-brand !ring-[3px] !ring-[#FFE6D7]' : '')
         }
       >
         <span className="truncate">{displayText}</span>
@@ -134,7 +133,7 @@ export const MultiSelect = ({ label, options, value, onChange }: {
                    type="text"
                    placeholder="Buscar"
                    aria-label={`Buscar em ${label}`}
-                   className="w-full rounded-sm border border-hairline-2 bg-canvas text-ink text-xs px-2 py-1.5 placeholder:text-ink-faint"
+                   className={`${CAMPO} !min-h-9 !py-1.5`}
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
                    onClick={(e) => e.stopPropagation()}

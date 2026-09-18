@@ -66,7 +66,7 @@ export const BirthdaysPage = ({ onBack }: any) => {
                          <Table.Th>Ilha</Table.Th>
                          <Table.Th>Data completa</Table.Th>
                      </Table.Head>
-                     <tbody className="divide-y divide-hairline">
+                     <tbody className="">
                          {filtered.map(c => {
                              const ilhaName = ilhas.find(i => i.id === c.ilhaId)?.nome || '-';
                              const day = c.dtNasc ? c.dtNasc.split('-')[2] : '--';

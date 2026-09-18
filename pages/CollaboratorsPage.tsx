@@ -392,7 +392,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
                               tabIndex={0}
                               onClick={() => onViewDetails(c)}
                               onKeyDown={e => { if (e.key === 'Enter') onViewDetails(c); }}
-                              className="cursor-pointer hover:bg-canvas-soft"
+                              className="cursor-pointer hover:bg-canvas-sunk"
                             >
                               {/* a logo encosta na direita da coluna para
                                   formar um bloco só com o nome ao lado */}

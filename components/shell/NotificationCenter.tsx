@@ -116,7 +116,7 @@ export const NotificationCenter = () => {
                 <div
                     role="dialog"
                     aria-label="Central de notificações"
-                    className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-canvas rounded-xl shadow-3 border border-hairline z-50 overflow-hidden"
+                    className="mop-pop-in absolute right-0 mt-4 w-80 sm:w-96 bg-canvas rounded-md shadow-3 border border-hairline z-50 overflow-hidden"
                 >
                     <div className="p-4 border-b border-hairline bg-canvas-soft flex justify-between items-center">
                         <h3 className="font-bold text-ink text-sm">Central de Notificações</h3>
