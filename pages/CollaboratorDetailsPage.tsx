@@ -161,7 +161,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
             return;
         }
 
-        await db.scheduleTask(data.matricula, changes, date, currentUser.nome);
+        await db.scheduleOrMergeTask(data.matricula, changes, date, currentUser.nome);
         await db.addHistory({
             action: 'Agendamento de Tarefa',
             target: data.nome,

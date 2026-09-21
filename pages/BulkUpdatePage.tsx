@@ -120,7 +120,7 @@ export const BulkUpdatePage = ({ currentUser, onRefresh }: { currentUser: User, 
             const schedulePromises = matriculas.map(mat => {
                 const c = collabs.find(col => String(col.matricula) === String(mat));
                 if(!c) return Promise.resolve();
-                return db.scheduleTask(mat, changes, scheduleDate, currentUser.nome);
+                return db.scheduleOrMergeTask(mat, changes, scheduleDate, currentUser.nome);
             });
             await Promise.all(schedulePromises);
 

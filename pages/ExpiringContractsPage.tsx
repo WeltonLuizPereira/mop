@@ -6,6 +6,7 @@ import { getCollaboratorCalculations, formatDateString, getInitials } from '../u
 import { Button, Badge, Chip, Table } from '../components/ui';
 import { useChartTokens } from '../lib/tokens';
 import { porProximoMarco } from '../lib/vencimento';
+import { contabilizaComoAtivo } from '../lib/status';
 
 export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: User }> = ({ onBack, currentUser }) => {
     // as barras do gantt recebem cor como valor; vêm do tema em vigor
@@ -57,7 +58,7 @@ export const ExpiringContractsPage: React.FC<{ onBack: () => void, currentUser: 
     const canEdit = [UserRole.ADMIN, UserRole.MANAGER, UserRole.COORDINATOR, UserRole.SUPPORT].includes(currentUser.role);
 
     const filtered = useMemo(() => collabs
-        .filter(c => c.status === CollaboratorStatus.ATIVO)
+        .filter(c => contabilizaComoAtivo(c.status))
         .filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()))
         .map(c => {
             const calc = getCollaboratorCalculations(c.dtEntradaProduto);

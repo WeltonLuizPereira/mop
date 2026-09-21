@@ -3,6 +3,7 @@ import { Bell, Gift, AlertTriangle, CheckCircle, UserMinus } from 'lucide-react'
 import { Collaborator, CollaboratorStatus, HistoryLog } from '../../types';
 import { db } from '../../services/mockDb';
 import { getCollaboratorCalculations, formatDateString } from '../../utils';
+import { contabilizaComoAtivo } from '../../lib/status';
 
 export const NotificationCenter = () => {
     // ... same as original ...
@@ -51,7 +52,7 @@ export const NotificationCenter = () => {
             const m = today.getMonth() + 1;
 
             const todaysBirthdays = collabs.filter(c => {
-                if (!c.dtNasc || c.status !== CollaboratorStatus.ATIVO) return false;
+                if (!c.dtNasc || !contabilizaComoAtivo(c.status)) return false;
                 const parts = c.dtNasc.split('-');
                 const bDay = parseInt(parts[2]);
                 const bMonth = parseInt(parts[1]);
@@ -59,7 +60,7 @@ export const NotificationCenter = () => {
             });
 
             const todaysExpiring = collabs.filter(c => {
-                if (c.status !== CollaboratorStatus.ATIVO) return false;
+                if (!contabilizaComoAtivo(c.status)) return false;
                 const calc = getCollaboratorCalculations(c.dtEntradaProduto);
                 return calc.vence === todayStr;
             }).map(c => ({

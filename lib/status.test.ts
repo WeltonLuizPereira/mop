@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CollaboratorStatus } from '../types';
-import { normalizarStatus } from './status';
+import { contabilizaComoAtivo, normalizarStatus } from './status';
 
 describe('normalizarStatus', () => {
   it('devolve o próprio status quando já está canônico', () => {
@@ -21,5 +21,17 @@ describe('normalizarStatus', () => {
     expect(normalizarStatus('')).toBeNull();
     expect(normalizarStatus(undefined)).toBeNull();
     expect(normalizarStatus('EM GOZO')).toBeNull();
+  });
+});
+
+describe('contabilizaComoAtivo', () => {
+  it('contabiliza aviso prévio como ativo até o desligamento', () => {
+    expect(contabilizaComoAtivo(CollaboratorStatus.ATIVO)).toBe(true);
+    expect(contabilizaComoAtivo(CollaboratorStatus.AVISO_PREVIO)).toBe(true);
+    expect(contabilizaComoAtivo(CollaboratorStatus.DESLIGADO)).toBe(false);
+  });
+
+  it('aceita a grafia sem acento vinda de planilhas antigas', () => {
+    expect(contabilizaComoAtivo('aviso previo')).toBe(true);
   });
 });

@@ -545,6 +545,7 @@ class SupabaseService {
   // --- Scheduled Tasks ---
 
   async scheduleTask(matricula: string, changes: Partial<Collaborator>, date: string, user: string) {
+    if (!date) throw new Error('Informe a data do agendamento.');
     const task: Omit<ScheduledTask, 'id' | 'created_at'> = {
         matricula,
         changes,
@@ -557,6 +558,20 @@ class SupabaseService {
         id: generateId()
     });
     if (error) throw error;
+  }
+
+  async scheduleOrMergeTask(matricula: string, changes: Partial<Collaborator>, date: string, user: string) {
+    if (!date) throw new Error('Informe a data do agendamento.');
+    const pendingTasks = await this.getPendingTasks();
+    const existing = pendingTasks.find(task =>
+      String(task.matricula) === String(matricula) && task.scheduled_date === date,
+    );
+    if (existing) {
+      await this.updateTask(existing.id, { ...existing.changes, ...changes }, date);
+      return existing.id;
+    }
+    await this.scheduleTask(matricula, changes, date, user);
+    return null;
   }
 
   async getPendingTasks(): Promise<ScheduledTask[]> {

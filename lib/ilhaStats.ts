@@ -1,7 +1,7 @@
 import {
   CollaboratorStatus, type Client, type Collaborator, type Ilha, type Operation, type Provimento,
 } from '../types';
-import { normalizarStatus } from './status';
+import { contabilizaComoAtivo, normalizarStatus } from './status';
 
 export interface IlhaStat {
   id: string;
@@ -52,7 +52,7 @@ export function computeIlhaStats(
 
       // Desligado não é quadro: quem saiu não entra no denominador.
       const doQuadro = daIlha.filter(c => c.status !== CollaboratorStatus.DESLIGADO);
-      const ativos = doQuadro.filter(c => c.status === CollaboratorStatus.ATIVO).length;
+      const ativos = doQuadro.filter(c => contabilizaComoAtivo(c.status)).length;
 
       // 0 e ausência de linha significam a mesma coisa: nenhum dos dois é
       // uma meta válida pra dividir por ela.
@@ -135,7 +135,7 @@ export function totaisGerais(collabs: Collaborator[]) {
   const status = collabs.map(c => normalizarStatus(c.status));
   const contar = (s: CollaboratorStatus) => status.filter(atual => atual === s).length;
   return {
-    ativos: contar(CollaboratorStatus.ATIVO),
+    ativos: status.filter(contabilizaComoAtivo).length,
     ferias: contar(CollaboratorStatus.FERIAS),
     aviso: contar(CollaboratorStatus.AVISO_PREVIO),
     afastados: contar(CollaboratorStatus.AFASTADO),

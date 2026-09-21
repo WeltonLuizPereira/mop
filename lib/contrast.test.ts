@@ -11,7 +11,7 @@ function tokensIn(selector: ':root' | '.dark') {
   if (!block) throw new Error(`Bloco ${selector} ausente em index.css`);
 
   return Object.fromEntries(
-    [...block.matchAll(/(--[a-z-]+)\s*:\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]),
+    [...block.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]),
   ) as Record<string, string>;
 }
 
@@ -19,13 +19,17 @@ function token(tokens: Record<string, string>, name: string) {
   const value = tokens[name];
   if (!value) throw new Error(`Token ${name} ausente em index.css`);
   const normalized = value.trim();
+  const referencia = normalized.match(/^var\((--[a-z0-9-]+)\)$/i)?.[1];
+  if (referencia) return token(tokens, referencia);
   return /^#[\da-f]{3}$/i.test(normalized)
     ? `#${[...normalized.slice(1)].map(channel => channel.repeat(2)).join('')}`
     : normalized;
 }
 
 const claro = tokensIn(':root');
-const escuro = tokensIn('.dark');
+// O modo escuro sobrescreve apenas tokens semânticos; primitivas como
+// --orange-500 continuam herdadas de :root no CSS real.
+const escuro = { ...claro, ...tokensIn('.dark') };
 const T = {
   brandClaro: token(claro, '--brand'), onBrandClaro: token(claro, '--on-brand'),
   brandTextClaro: token(claro, '--brand-text'), canvasClaro: token(claro, '--canvas'),

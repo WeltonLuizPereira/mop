@@ -102,6 +102,23 @@ describe('falhas de escrita', () => {
   });
 });
 
+describe('agendamento', () => {
+  it('rejeita agendamento sem data antes de chamar o banco', async () => {
+    await expect(db.scheduleTask('1', { nome: 'Ana' }, '', 'Welton')).rejects.toThrow('data');
+    expect(tabelas['mop_scheduled_tasks']).toBeUndefined();
+  });
+
+  it('mescla alterações na tarefa pendente da mesma matrícula e data', async () => {
+    tabelas['mop_scheduled_tasks'] = [{
+      id: 't1', matricula: '1', scheduled_date: '2026-10-01', status: 'PENDING',
+      created_by: 'Welton', created_at: '2026-09-21', changes: { nome: 'Ana' },
+    }];
+    await db.scheduleOrMergeTask('1', { status: 'AVISO PRÉVIO' } as any, '2026-10-01', 'Welton');
+    expect(tabelas['mop_scheduled_tasks']).toHaveLength(1);
+    expect(tabelas['mop_scheduled_tasks'][0].changes).toEqual({ nome: 'Ana', status: 'AVISO PRÉVIO' });
+  });
+});
+
 describe('leitura de tabela grande', () => {
   it('traz todos os colaboradores, mesmo passando de 1000', async () => {
     tabelas['mop_collaborators'] = Array.from({ length: 2350 }, (_, i) => ({

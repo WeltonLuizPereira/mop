@@ -146,7 +146,7 @@ describe('totaisGerais', () => {
       colab('5', 'i1', CollaboratorStatus.AFASTADO),
       colab('6', 'i1', CollaboratorStatus.DESLIGADO),
     ]);
-    expect(t).toEqual({ ativos: 2, ferias: 1, aviso: 1, afastados: 1 });
+    expect(t).toEqual({ ativos: 3, ferias: 1, aviso: 1, afastados: 1 });
   });
 });
 

@@ -33,7 +33,7 @@ vi.mock('../services/mockDb', () => ({
     saveCollaborator: vi.fn(async () => undefined),
     addVacationHistory: vi.fn(async () => undefined),
     addHistory: vi.fn(async () => undefined),
-    scheduleTask: vi.fn(async () => undefined),
+    scheduleOrMergeTask: vi.fn(async () => undefined),
   },
 }));
 

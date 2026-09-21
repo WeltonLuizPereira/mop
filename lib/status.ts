@@ -30,3 +30,9 @@ export function normalizarStatus(valor?: string | null): CollaboratorStatus | nu
   if (!valor) return null;
   return POR_CHAVE.get(chave(valor)) ?? null;
 }
+
+/** O aviso prévio mantém seu rótulo, mas ocupa uma posição ativa até o desligamento. */
+export function contabilizaComoAtivo(valor?: string | null): boolean {
+  const status = normalizarStatus(valor);
+  return status === CollaboratorStatus.ATIVO || status === CollaboratorStatus.AVISO_PREVIO;
+}

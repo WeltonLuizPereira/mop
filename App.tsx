@@ -57,6 +57,8 @@ const App = () => {
           await db.checkAvisoPrevioEnds();
       };
       runChecks();
+      const interval = window.setInterval(runChecks, 60_000);
+      return () => window.clearInterval(interval);
   }, []);
 
   const handleLogin = (u: User) => {

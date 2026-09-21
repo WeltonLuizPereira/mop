@@ -35,7 +35,7 @@ vi.mock('../services/mockDb', () => ({
     addVacationHistory: (...args: unknown[]) => addVacationHistory(...args),
     addHistory: (...args: unknown[]) => addHistory(...args),
     deleteCollaborator: (...args: unknown[]) => deleteCollaborator(...args),
-    scheduleTask: (...args: unknown[]) => scheduleTask(...args),
+    scheduleOrMergeTask: (...args: unknown[]) => scheduleTask(...args),
   },
 }));
 

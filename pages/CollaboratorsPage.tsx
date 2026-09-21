@@ -161,7 +161,7 @@ export const CollaboratorsPage: React.FC<{ currentUser: User, onViewDetails: (c:
             return;
         }
 
-        await db.scheduleTask(data.matricula, data, date, currentUser.nome);
+        await db.scheduleOrMergeTask(data.matricula, data, date, currentUser.nome);
         await db.addHistory({
             action: 'Agendamento de Cadastro',
             target: data.nome,

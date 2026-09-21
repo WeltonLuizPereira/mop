@@ -70,6 +70,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
         setIsProcessing(true);
         try {
             const newCollaborators: Collaborator[] = [];
+            let scheduledCount = 0;
             for (const row of rawRows) {
                 const clientName = row['CLIENTE'] || row['Cliente'] || 'N/A';
                 const client = await db.findOrCreateClient(clientName);
@@ -153,16 +154,8 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                 
                 if (matricula && nome !== 'Sem Nome') {
                     if (isScheduling && scheduleDate) {
-                        const pendingTasks = await db.getPendingTasks();
-                        const existingTask = pendingTasks.find(t => t.matricula === collab.matricula && t.scheduled_date === scheduleDate);
-                        
-                        if (existingTask) {
-                            await db.updateTask(existingTask.id, { ...existingTask.changes, ...collab }, scheduleDate);
-                        } else {
-                            await db.scheduleTask(collab.matricula, collab, scheduleDate, currentUser.nome);
-                        }
-                        if (!globalThis.scheduledCount) globalThis.scheduledCount = 0;
-                        globalThis.scheduledCount++;
+                        await db.scheduleOrMergeTask(collab.matricula, collab, scheduleDate, currentUser.nome);
+                        scheduledCount++;
                     } else {
                         newCollaborators.push(collab);
                     }
@@ -195,9 +188,8 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
 
             let msg = '';
             if (newCollaborators.length > 0) msg += `${newCollaborators.length} colaboradores importados.\n`;
-            if (globalThis.scheduledCount > 0) {
-                msg += `${globalThis.scheduledCount} tarefas agendadas para o mês de referência.\n`;
-                globalThis.scheduledCount = 0;
+            if (scheduledCount > 0) {
+                msg += `${scheduledCount} tarefas agendadas para o mês de referência.\n`;
             }
             
             alert(msg ? `Operação concluída com sucesso!\n${msg}` : 'Nenhum registro válido encontrado.');
@@ -224,7 +216,7 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
             const existingCoordinators = await db.getCoordinators();
             const existingSupervisors = await db.getSupervisors();
             const existingIlhas = await db.getIlhas();
-            const pendingTasks = await db.getPendingTasks();
+            let scheduledCount = 0;
             
             for (const row of rawRows) {
                 const matricula = String(row['MATRICULA'] || row['Matricula'] || row['Matrícula']);
@@ -281,16 +273,8 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
 
                 if (Object.keys(updatePayload).length > 0) {
                     if (isScheduling && scheduleDate) {
-                        const pendingTasks = await db.getPendingTasks();
-                        const existingTask = pendingTasks.find(t => t.matricula === collab.matricula && t.scheduled_date === scheduleDate);
-                        
-                        if (existingTask) {
-                            await db.updateTask(existingTask.id, { ...existingTask.changes, ...updatePayload }, scheduleDate);
-                        } else {
-                            await db.scheduleTask(collab.matricula, updatePayload, scheduleDate, currentUser.nome);
-                        }
-                        if (!globalThis.scheduledCountUpdate) globalThis.scheduledCountUpdate = 0;
-                        globalThis.scheduledCountUpdate++;
+                        await db.scheduleOrMergeTask(collab.matricula, updatePayload, scheduleDate, currentUser.nome);
+                        scheduledCount++;
                     } else {
                         await db.saveCollaborator({ ...collab, ...updatePayload });
                     }
@@ -309,11 +293,10 @@ export const ImportPage: React.FC<{ currentUser: User, onRefresh: () => void }> 
                 });
                 
                 let msg = '';
-                const scheduledUpdates = globalThis.scheduledCountUpdate || 0;
+                const scheduledUpdates = scheduledCount;
                 const immediateUpdates = updates.length - scheduledUpdates;
                 if (immediateUpdates > 0) msg += `${immediateUpdates} colaboradores atualizados imediatamente.\n`;
                 if (scheduledUpdates > 0) msg += `${scheduledUpdates} atualizações agendadas para o mês de referência.\n`;
-                globalThis.scheduledCountUpdate = 0;
                 alert(`Operação concluída!\n${msg}`);
 
             } else {

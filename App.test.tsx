@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DataProvider } from './contexts/DataContext';
 import { createAppData } from './data/appData';
 import { db } from './services/mockDb';
@@ -26,6 +26,23 @@ vi.mock('./pages/CollaboratorsPage', () => ({ CollaboratorsPage: ({ onRefresh }:
 </> }));
 
 describe('App', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('processa tarefas vencidas novamente enquanto o aplicativo permanece aberto', async () => {
+    vi.useFakeTimers();
+    vi.mocked(db.processDueTasks).mockClear();
+    try {
+      const store = createAppData(db as any);
+      render(<DataProvider store={store}><App /></DataProvider>);
+      await act(async () => undefined);
+      expect(db.processDueTasks).toHaveBeenCalledTimes(1);
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(db.processDueTasks).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('preserva o estado local ao invalidar somente o recurso alterado', async () => {
     const store = createAppData(db as any);
     await Promise.all([store.collaborators.refresh(), store.clients.refresh()]);
