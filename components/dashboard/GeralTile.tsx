@@ -43,7 +43,7 @@ export const GeralTile = ({ geral }: { geral: ConsolidadoStat }) => {
     >
       <header className="pb-2 border-b border-hairline">
         <h3 className="font-display font-bold text-[15px] leading-[1.25] tracking-[-.01em] text-[#E3362A]">
-          GERAL QUALITY
+          GERAL QUALITY (NEW)
         </h3>
         {/* a contagem de ilhas fixa o alcance da soma: com um filtro ligado
             ela cai junto, e o número deixa de poder ser lido como se fosse

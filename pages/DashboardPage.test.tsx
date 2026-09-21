@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CollaboratorStatus, EntityStatus, UserRole } from '../types';
@@ -149,29 +149,37 @@ describe('Visão geral', () => {
     expect(abrir).toHaveBeenCalledWith('i1');
   });
 
-  it('resume ativos, provimento e movimentos nos três blocos editoriais', async () => {
+  it('abre a faixa pela conta do provimento e fecha com o resto do quadro', async () => {
     montar();
     await screen.findByText('Ilha 01 — SAC');
 
-    expect(screen.getByText('Panorama da operação').parentElement).toHaveTextContent('2');
-    expect(screen.getByText('Provimento geral').parentElement).toHaveTextContent('67%');
-    expect(screen.getByText('Movimentos próximos').parentElement).toHaveTextContent('1');
+    // 2 ativos sobre 3 PA contratada nas duas ilhas do mock; a ordem é o que
+    // este teste guarda — contratado, de pé, o resultado, depois os ausentes
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' }).textContent)
+      .toBe('3PA contratada2ativos67%provimento geralAbaixo da meta de 80%1em férias0em aviso prévio0afastados');
+
+    // o mesmo número na faixa e no card: são a mesma conta, feita uma vez só
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('PA contratada');
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('ativos');
+    expect(screen.getByRole('group', { name: 'Resumo do quadro' })).toHaveTextContent('provimento geral');
     expect(screen.getAllByRole('article')).toHaveLength(3);
     expect(screen.getAllByText('67%')).toHaveLength(2);
   });
 
-  it('nomeia o provimento abaixo da meta no bloco editorial', async () => {
+  it('nomeia o provimento abaixo da meta na faixa de resumo', async () => {
     montar();
     await screen.findByText('Ilha 01 — SAC');
 
-    expect(screen.getAllByText(/Abaixo da meta de 80%/).length).toBeGreaterThan(0);
+    expect(within(screen.getByRole('group', { name: 'Resumo do quadro' }))
+      .getByText('Abaixo da meta de 80%')).toBeVisible();
   });
 
-  it('usa a função tipográfica de dado no consolidado', async () => {
+  it('usa a função tipográfica de dado nos valores da faixa de resumo', async () => {
     montar();
     await screen.findByText('Ilha 01 — SAC');
 
-    expect(screen.getAllByText('67%').some(element => element.classList.contains('t-data'))).toBe(true);
+    expect(within(screen.getByRole('group', { name: 'Resumo do quadro' }))
+      .getByText('67%')).toHaveClass('t-data');
   });
 
   it('enquadra o mapa com o título editorial da operação', async () => {
@@ -195,18 +203,22 @@ describe('Visão geral', () => {
     expect(screen.getAllByText('100%')).toHaveLength(3);
   });
 
-  it('recorta também os ativos e movimentos dos blocos editoriais', async () => {
+  it('recorta também a contagem por status da faixa de totais', async () => {
     const user = userEvent.setup();
     montar();
     await screen.findByText('Ilha 01 — SAC');
 
-    expect(screen.getByText('Panorama da operação').parentElement).toHaveTextContent('2');
-    expect(screen.getByText('Movimentos próximos').parentElement).toHaveTextContent('1');
+    // sem filtro: 2 ativos e 1 em férias entre as duas ilhas
+    const faixa = () => within(screen.getByRole('group', { name: 'Resumo do quadro' }));
+    const naFaixa = (rotulo: string) =>
+      faixa().getByText(rotulo).parentElement!.textContent!.replace(rotulo, '');
+    expect(naFaixa('ativos')).toBe('2');
+    expect(naFaixa('em férias')).toBe('1');
 
     // a Ilha 07 não tem ninguém de férias — a faixa tem que acompanhar
     await user.selectOptions(screen.getByLabelText('Filtrar ilhas por cliente'), 'c2');
-    expect(screen.getByText('Panorama da operação').parentElement).toHaveTextContent('1');
-    expect(screen.getByText('Movimentos próximos').parentElement).toHaveTextContent('0');
+    expect(naFaixa('ativos')).toBe('1');
+    expect(naFaixa('em férias')).toBe('0');
   });
 
   it('não afirma tendência que não calculou', async () => {
