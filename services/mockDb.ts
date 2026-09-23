@@ -166,12 +166,36 @@ class SupabaseService {
   }
 
   async getCollaboratorHistory(matricula: string, nome: string): Promise<HistoryLog[]> {
-    const matriculaSegura = encodeURIComponent(matricula);
-    const nomeSeguro = encodeURIComponent(nome);
-    const { data, error } = await supabase.from('mop_history')
+    let { data, error } = await supabase.from('mop_history')
       .select('*')
-      .or(`collaborator_matricula.eq.${matriculaSegura},target.eq.${nomeSeguro}`)
+      .or(`collaborator_matricula.eq."${matricula}",target.eq."${nome}"`)
       .order('created_at', { ascending: false });
+
+    // Se o banco ainda não tiver as colunas novas (collaborator_matricula, created_at)
+    if (error && error.code === '42703') {
+      const fallback = await supabase.from('mop_history')
+        .select('*')
+        .eq('target', nome);
+      
+      error = fallback.error;
+      data = fallback.data;
+
+      if (!error && data) {
+        // Ordenação manual pela coluna 'date' (formato: DD/MM/YYYY, HH:mm:ss)
+        data = data.sort((a, b) => {
+          const parseDate = (dStr: string) => {
+            if (!dStr) return 0;
+            const [datePart, timePart] = dStr.split(', ');
+            if (!datePart) return 0;
+            const [day, month, year] = datePart.split('/');
+            const [hour, min, sec] = (timePart || '00:00:00').split(':');
+            return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(min), Number(sec)).getTime();
+          };
+          return parseDate(b.date) - parseDate(a.date);
+        });
+      }
+    }
+
     if (error) throw error;
     return data ?? [];
   }

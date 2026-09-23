@@ -34,7 +34,11 @@ function construtor(tabela: string) {
     or: (expressao: string) => {
       alternativas = expressao.split(',').map(parte => {
         const [coluna, _operador, ...valor] = parte.split('.');
-        return [coluna, decodeURIComponent(valor.join('.'))];
+        let val = decodeURIComponent(valor.join('.'));
+        if (val.startsWith('"') && val.endsWith('"')) {
+          val = val.slice(1, -1);
+        }
+        return [coluna, val];
       });
       return alvo;
     },
