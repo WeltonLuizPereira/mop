@@ -26,6 +26,7 @@ import { VacationManagementPage } from './pages/VacationManagementPage';
 import { AfastadosPage } from './pages/AfastadosPage';
 import { DesligadosPage } from './pages/DesligadosPage';
 import { ProvimentoPage } from './pages/ProvimentoPage';
+import { AbsPage } from './pages/AbsPage';
 import { useAppData, useResource } from './contexts/DataContext';
 import type { ResourceName } from './data/appData';
 
@@ -85,6 +86,9 @@ const App = () => {
       case 'distribuicao': return <DistribuicaoPage onAbrirLista={abrirLista} />;
       case 'turnover': return <TurnoverPage />;
       case 'safra': return <SafraPage />;
+      case 'abs': return currentUser!.role === 'VISUALIZADOR'
+        ? <DashboardPage currentUser={currentUser!} onAbrirIlha={id => abrirLista('ilha', id)} />
+        : <AbsPage currentUser={currentUser!} />;
       case 'organogram': return <OrganogramPage />;
       case 'collaborators':
         if (selectedCollab) return <CollaboratorDetailsPage collab={selectedCollab} onBack={() => setSelectedCollab(null)} {...commonProps} />;

@@ -2,7 +2,7 @@ import {
   AlertCircle, AlertTriangle, Briefcase, Building2, Cake, Calendar, Globe,
   History, Info, LayoutDashboard, ListChecks, MapPin, Network, PieChart,
   ShieldCheck, Sprout, Stethoscope, Sun, Target, TrendingUp, Upload, UserCog, UserMinus,
-  UserX, Users,
+  UserX, Users, Activity,
 } from 'lucide-react';
 import { UserRole } from '../types';
 
@@ -32,6 +32,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { key: 'organogram', label: 'Organograma', icon: Network, roles: TODOS },
     { key: 'turnover', label: 'Turnover', icon: TrendingUp, roles: SEM_VISUALIZADOR },
     { key: 'safra', label: 'Safra', icon: Sprout, roles: SEM_VISUALIZADOR },
+    { key: 'abs', label: 'ABS', icon: Activity, roles: SEM_VISUALIZADOR },
   ]},
   { group: 'RH', items: [
     { key: 'birthdays', label: 'Aniversariantes', icon: Cake, roles: TODOS },
