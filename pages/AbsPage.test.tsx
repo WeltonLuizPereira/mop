@@ -5,23 +5,33 @@ import { AbsPage } from './AbsPage';
 import { getAbsMonth } from '../services/abs';
 
 const resources = vi.hoisted(() => ({
-  clients: [{ id: 'c1', nome: 'Cliente 1', status: 'ATIVO' }],
+  clients: [{ id: 'c1', nome: 'Cliente 1', status: 'ATIVO' }, { id: 'c2', nome: 'Cliente 2', status: 'ATIVO' }],
   operations: [
     { id: 'o1', nome: 'Operação 1', clientId: 'c1', status: 'ATIVO' },
     { id: 'o2', nome: 'Operação 2', clientId: 'c1', status: 'ATIVO' },
+    { id: 'o3', nome: 'Operação 3', clientId: 'c2', status: 'ATIVO' },
   ],
   coordinators: [
     { id: 'co1', nome: 'Coord 1', status: 'ATIVO' },
     { id: 'co2', nome: 'Coord 2', status: 'ATIVO' },
+    { id: 'co3', nome: 'Coord 3', status: 'ATIVO' },
   ],
   supervisors: [
     { id: 's1', nome: 'Super 1', coordinatorIds: ['co1'], status: 'ATIVO' },
     { id: 's2', nome: 'Super 2', coordinatorIds: ['co2'], status: 'ATIVO' },
+    { id: 's3', nome: 'Super inativo', coordinatorIds: ['co3'], status: 'INATIVO' },
   ],
   ilhas: [
     { id: 'i1', nome: 'Ilha 1', clientId: 'c1', operationId: 'o1', coordinatorIds: ['co1'], supervisorIds: ['s1'], status: 'ATIVO' },
     { id: 'i2', nome: 'Ilha 2', clientId: 'c1', operationId: 'o1', coordinatorIds: ['co2'], supervisorIds: ['s2'], status: 'ATIVO' },
     { id: 'i3', nome: 'Ilha 3', clientId: 'c1', operationId: 'o2', coordinatorIds: ['co1'], supervisorIds: ['s1'], status: 'ATIVO' },
+    { id: 'i4', nome: 'Ilha 4', clientId: 'c2', operationId: 'o3', coordinatorIds: ['co3'], supervisorIds: ['s3'], status: 'ATIVO' },
+  ],
+  collaborators: [
+    { matricula: '1', nome: 'Ana', clientId: 'c1', operationId: 'o1', coordinatorId: 'co1', supervisorId: 's1', ilhaId: 'i1', status: 'ATIVO' },
+    { matricula: '2', nome: 'Bia', clientId: 'c1', operationId: 'o1', coordinatorId: 'co2', supervisorId: 's2', ilhaId: 'i2', status: 'ATIVO' },
+    { matricula: '3', nome: 'Caio', clientId: 'c1', operationId: 'o2', coordinatorId: 'co1', supervisorId: 's1', ilhaId: 'i3', status: 'ATIVO' },
+    { matricula: '4', nome: 'Dani', clientId: 'c2', operationId: 'o3', coordinatorId: 'co3', supervisorId: 's3', ilhaId: 'i4', status: 'ATIVO' },
   ],
 }));
 
@@ -80,7 +90,7 @@ describe('AbsPage', () => {
     expect(screen.getByLabelText('Cliente')).toBeInTheDocument();
   });
 
-  it('permite filtrar em qualquer ordem e limita ilhas pelo supervisor', async () => {
+  it('cruza todos os filtros pela base MOP e remove entidades inativas', async () => {
     const user = userEvent.setup();
     render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
     await screen.findByText('Ana Silva');
@@ -91,19 +101,20 @@ describe('AbsPage', () => {
     expect(screen.getByLabelText('Supervisor')).toBeEnabled();
     expect(screen.getByLabelText('Ilha')).toBeEnabled();
 
+    expect(within(screen.getByLabelText('Supervisor')).queryByRole('option', { name: 'Super inativo' })).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Ilha'), 'i1');
+    expect(within(screen.getByLabelText('Cliente')).queryByRole('option', { name: 'Cliente 2' })).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Operação')).queryByRole('option', { name: 'Operação 2' })).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Coordenador')).queryByRole('option', { name: 'Coord 2' })).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Supervisor')).queryByRole('option', { name: 'Super 2' })).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Ilha'), '');
     await user.selectOptions(screen.getByLabelText('Supervisor'), 's1');
     expect(within(screen.getByLabelText('Ilha')).getByRole('option', { name: 'Ilha 1' })).toBeInTheDocument();
-    expect(within(screen.getByLabelText('Ilha')).queryByRole('option', { name: 'Ilha 2' })).not.toBeInTheDocument();
     expect(within(screen.getByLabelText('Ilha')).getByRole('option', { name: 'Ilha 3' })).toBeInTheDocument();
-
-    await user.selectOptions(screen.getByLabelText('Ilha'), 'i3');
-    await user.selectOptions(screen.getByLabelText('Operação'), 'o1');
-    expect(screen.getByLabelText('Ilha')).toHaveValue('');
-    expect(within(screen.getByLabelText('Ilha')).queryByRole('option', { name: 'Ilha 3' })).not.toBeInTheDocument();
-
-    await user.selectOptions(screen.getByLabelText('Coordenador'), 'co2');
-    expect(screen.getByLabelText('Supervisor')).toHaveValue('');
-    expect(within(screen.getByLabelText('Supervisor')).queryByRole('option', { name: 'Super 1' })).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Ilha')).queryByRole('option', { name: 'Ilha 2' })).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Cliente')).queryByRole('option', { name: 'Cliente 2' })).not.toBeInTheDocument();
   });
 
   it('abre os indicadores individuais ao clicar na linha do colaborador', async () => {

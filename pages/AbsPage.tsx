@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, BookOpen, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
-import type { User } from '../types';
+import { EntityStatus, type User } from '../types';
 import { getAbsImportStatus, getAbsMonth, type AbsFilters, type AbsImportStatus, type AbsMonthRow } from '../services/abs';
 import { useResource } from '../contexts/DataContext';
 import { Card, Chip, Modal, Table } from '../components/ui';
@@ -92,6 +92,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const coordinators = useResource('coordinators').data ?? [];
   const ilhas = useResource('ilhas').data ?? [];
   const supervisors = useResource('supervisors').data ?? [];
+  const collaborators = useResource('collaborators').data ?? [];
   const [filters, setFilters] = useState<AbsFilters>({ month: initialMonth ?? currentMonth(), clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
   const [rows, setRows] = useState<AbsMonthRow[]>([]);
   const [status, setStatus] = useState<AbsImportStatus | null>(null);
@@ -139,31 +140,22 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
     });
   }, [visibleRows, sort]);
   const tableWidth = 1_100 + days.length * 48;
-  const update = (key: keyof AbsFilters, value: string) => setFilters(old => {
-    const next = { ...old, [key]: value };
-    if (next.operationId && next.clientId && operations.find(item => item.id === next.operationId)?.clientId !== next.clientId) next.operationId = '';
-    if (next.supervisorId && next.coordinatorId && !supervisors.find(item => item.id === next.supervisorId)?.coordinatorIds?.includes(next.coordinatorId)) next.supervisorId = '';
-    if (next.ilhaId) {
-      const ilha = ilhas.find(item => item.id === next.ilhaId);
-      const compatible = ilha
-        && (!next.clientId || ilha.clientId === next.clientId)
-        && (!next.operationId || ilha.operationId === next.operationId)
-        && (!next.coordinatorId || ilha.coordinatorIds?.includes(next.coordinatorId))
-        && (!next.supervisorId || ilha.supervisorIds?.includes(next.supervisorId));
-      if (!compatible) next.ilhaId = '';
-    }
-    return next;
-  });
-  const filterOps = filters.clientId ? operations.filter(item => item.clientId === filters.clientId) : operations;
-  const filterCoordinators = coordinators;
-  const filterSupervisors = filters.coordinatorId
-    ? supervisors.filter(item => item.coordinatorIds?.includes(filters.coordinatorId))
-    : supervisors;
-  const filterIlhas = ilhas.filter(item =>
-    (!filters.clientId || item.clientId === filters.clientId)
-    && (!filters.operationId || item.operationId === filters.operationId)
-    && (!filters.coordinatorId || item.coordinatorIds?.includes(filters.coordinatorId))
-    && (!filters.supervisorId || item.supervisorIds?.includes(filters.supervisorId)));
+  const update = (key: keyof AbsFilters, value: string) => setFilters(old => ({ ...old, [key]: value }));
+  type DimensionKey = Exclude<keyof AbsFilters, 'month'>;
+  const dimensionKeys: DimensionKey[] = ['clientId', 'operationId', 'coordinatorId', 'supervisorId', 'ilhaId'];
+  const availableIds = (dimension: DimensionKey) => new Set(collaborators
+    .filter(collaborator => dimensionKeys.every(key => key === dimension || !filters[key] || collaborator[key] === filters[key]))
+    .map(collaborator => collaborator[dimension]));
+  const byName = <T extends { nome: string }>(left: T, right: T) => left.nome.localeCompare(right.nome, 'pt-BR');
+  const activeOptions = <T extends { id: string; nome: string; status: EntityStatus }>(items: T[], dimension: DimensionKey) => {
+    const ids = availableIds(dimension);
+    return items.filter(item => item.status === EntityStatus.ACTIVE && ids.has(item.id)).sort(byName);
+  };
+  const filterClients = activeOptions(clients, 'clientId');
+  const filterOps = activeOptions(operations, 'operationId');
+  const filterCoordinators = activeOptions(coordinators, 'coordinatorId');
+  const filterSupervisors = activeOptions(supervisors, 'supervisorId');
+  const filterIlhas = activeOptions(ilhas, 'ilhaId');
   const activeFilters = [filters.month !== currentMonth(), filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId].filter(Boolean).length;
   const clearFilters = () => setFilters({ month: currentMonth(), clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
   const cycleSort = (key: SortKey) => setSort(current => {
@@ -198,7 +190,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
         filtros={<>
           <label className="text-xs text-ink-mute">Mês<input aria-label="Mês" type="month" value={filters.month} onChange={event => update('month', event.target.value)} className="mt-1 block w-full rounded-sm border border-hairline bg-canvas px-2 py-2 text-sm" /></label>
           {([
-            ['Cliente', 'clientId', clients],
+            ['Cliente', 'clientId', filterClients],
             ['Operação', 'operationId', filterOps],
             ['Coordenador', 'coordinatorId', filterCoordinators],
             ['Supervisor', 'supervisorId', filterSupervisors],
