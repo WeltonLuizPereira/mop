@@ -29,10 +29,13 @@ as $$
   left join public.mop_abs_records records
     on records.work_date >= date_trunc('month', p_month)::date
     and records.work_date < (date_trunc('month', p_month) + interval '1 month')::date
+    and records.work_date <= (now() at time zone 'America/Sao_Paulo')::date - 1
   group by latest_run.status, latest_run.finished_at, latest_run.unmatched_count
 $$;
 
-create or replace function public.mop_abs_month(p_month date,p_client_id text default null,p_operation_id text default null,p_supervisor_id text default null,p_ilha_id text default null)
+drop function if exists public.mop_abs_month(date, text, text, text, text);
+
+create or replace function public.mop_abs_month(p_month date,p_client_id text default null,p_operation_id text default null,p_coordinator_id text default null,p_supervisor_id text default null,p_ilha_id text default null)
 returns table(matricula text,collaborator_name text,supervisor_name text,ilha_name text,employment_status text,justified_absences bigint,unjustified_absences bigint,total_absences bigint,presences bigint,abs_rate numeric,daily_statuses jsonb)
 language sql
 stable
@@ -43,9 +46,12 @@ with bounds as (
   select
     date_trunc('month', p_month)::date as start_date,
     (date_trunc('month', p_month) + interval '1 month - 1 day')::date as end_date,
-    coalesce(
-      (select max(max_work_date) from public.mop_abs_import_runs where status like 'COMPLETED%'),
-      p_month - 1
+    least(
+      coalesce(
+        (select max(max_work_date) from public.mop_abs_import_runs where status like 'COMPLETED%'),
+        p_month - 1
+      ),
+      (now() at time zone 'America/Sao_Paulo')::date - 1
     ) as cutoff
 ),
 people as (
@@ -55,6 +61,7 @@ people as (
   left join public.mop_ilhas i on i.id = c.ilha_id
   where (p_client_id is null or c.client_id = p_client_id)
     and (p_operation_id is null or c.operation_id = p_operation_id)
+    and (p_coordinator_id is null or c.coordinator_id = p_coordinator_id)
     and (p_supervisor_id is null or c.supervisor_id = p_supervisor_id)
     and (p_ilha_id is null or c.ilha_id = p_ilha_id)
     and (
@@ -75,13 +82,13 @@ calendar as (
     p.status,
     generated.work_date::date as work_date,
     case
+      when generated.work_date::date > b.cutoff then '-'
       when extract(isodow from generated.work_date) in (6, 7) then 'FG'
       when upper(p.status::text) = 'DESLIGADO'
         and nullif(trim(p.data_fim::text), '') is not null
         and generated.work_date::date >= nullif(trim(p.data_fim::text), '')::date then 'DES'
       when nullif(trim(p.dt_entrada_produto::text), '') is not null
         and generated.work_date::date < nullif(trim(p.dt_entrada_produto::text), '')::date then '-'
-      when generated.work_date::date > b.cutoff then '-'
       else coalesce(r.validated_status, '-')
     end as daily
   from people p
@@ -121,6 +128,6 @@ order by max(c.nome)
 $$;
 
 revoke all on function public.mop_abs_last_import(date) from public;
-revoke all on function public.mop_abs_month(date, text, text, text, text) from public;
+revoke all on function public.mop_abs_month(date, text, text, text, text, text) from public;
 grant execute on function public.mop_abs_last_import(date) to anon, authenticated;
-grant execute on function public.mop_abs_month(date, text, text, text, text) to anon, authenticated;
+grant execute on function public.mop_abs_month(date, text, text, text, text, text) to anon, authenticated;

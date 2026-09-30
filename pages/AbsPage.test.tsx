@@ -2,9 +2,31 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbsPage } from './AbsPage';
+import { getAbsMonth } from '../services/abs';
+
+const resources = vi.hoisted(() => ({
+  clients: [{ id: 'c1', nome: 'Cliente 1', status: 'ATIVO' }],
+  operations: [
+    { id: 'o1', nome: 'Operação 1', clientId: 'c1', status: 'ATIVO' },
+    { id: 'o2', nome: 'Operação 2', clientId: 'c1', status: 'ATIVO' },
+  ],
+  coordinators: [
+    { id: 'co1', nome: 'Coord 1', status: 'ATIVO' },
+    { id: 'co2', nome: 'Coord 2', status: 'ATIVO' },
+  ],
+  supervisors: [
+    { id: 's1', nome: 'Super 1', coordinatorIds: ['co1'], status: 'ATIVO' },
+    { id: 's2', nome: 'Super 2', coordinatorIds: ['co2'], status: 'ATIVO' },
+  ],
+  ilhas: [
+    { id: 'i1', nome: 'Ilha 1', clientId: 'c1', operationId: 'o1', coordinatorIds: ['co1'], supervisorIds: ['s1'], status: 'ATIVO' },
+    { id: 'i2', nome: 'Ilha 2', clientId: 'c1', operationId: 'o1', coordinatorIds: ['co2'], supervisorIds: ['s2'], status: 'ATIVO' },
+    { id: 'i3', nome: 'Ilha 3', clientId: 'c1', operationId: 'o2', coordinatorIds: ['co1'], supervisorIds: ['s1'], status: 'ATIVO' },
+  ],
+}));
 
 vi.mock('../contexts/DataContext', () => ({
-  useResource: () => ({ data: [] }),
+  useResource: (name: keyof typeof resources) => ({ data: resources[name] ?? [] }),
 }));
 
 vi.mock('../services/abs', () => ({
@@ -58,6 +80,32 @@ describe('AbsPage', () => {
     expect(screen.getByLabelText('Cliente')).toBeInTheDocument();
   });
 
+  it('permite filtrar em qualquer ordem e limita ilhas pelo supervisor', async () => {
+    const user = userEvent.setup();
+    render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
+    await screen.findByText('Ana Silva');
+    await user.click(screen.getByRole('button', { name: 'Filtros' }));
+
+    expect(screen.getByLabelText('Operação')).toBeEnabled();
+    expect(screen.getByLabelText('Coordenador')).toBeEnabled();
+    expect(screen.getByLabelText('Supervisor')).toBeEnabled();
+    expect(screen.getByLabelText('Ilha')).toBeEnabled();
+
+    await user.selectOptions(screen.getByLabelText('Supervisor'), 's1');
+    expect(within(screen.getByLabelText('Ilha')).getByRole('option', { name: 'Ilha 1' })).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Ilha')).queryByRole('option', { name: 'Ilha 2' })).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Ilha')).getByRole('option', { name: 'Ilha 3' })).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Ilha'), 'i3');
+    await user.selectOptions(screen.getByLabelText('Operação'), 'o1');
+    expect(screen.getByLabelText('Ilha')).toHaveValue('');
+    expect(within(screen.getByLabelText('Ilha')).queryByRole('option', { name: 'Ilha 3' })).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Coordenador'), 'co2');
+    expect(screen.getByLabelText('Supervisor')).toHaveValue('');
+    expect(within(screen.getByLabelText('Supervisor')).queryByRole('option', { name: 'Super 1' })).not.toBeInTheDocument();
+  });
+
   it('abre os indicadores individuais ao clicar na linha do colaborador', async () => {
     const user = userEvent.setup();
     render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
@@ -78,5 +126,33 @@ describe('AbsPage', () => {
     expect(screen.getByRole('dialog', { name: 'Legenda do ABS' })).toBeInTheDocument();
     expect(screen.getByText('Presença')).toBeInTheDocument();
     expect(screen.getByText('Falta justificada')).toBeInTheDocument();
+  });
+
+  it('ordena as colunas de identificação e indicadores em três estados', async () => {
+    vi.mocked(getAbsMonth).mockResolvedValueOnce([
+      {
+        matricula: '20', collaboratorName: 'Bruna', supervisorName: 'Carlos', ilhaName: 'Ilha 2', employmentStatus: 'ATIVO',
+        justifiedAbsences: 2, unjustifiedAbsences: 0, totalAbsences: 2, presences: 6, absRate: 0.25, dailyStatuses: {},
+      },
+      {
+        matricula: '3', collaboratorName: 'Ana', supervisorName: 'Bia', ilhaName: 'Ilha 1', employmentStatus: 'ATIVO',
+        justifiedAbsences: 0, unjustifiedAbsences: 1, totalAbsences: 1, presences: 9, absRate: 0.1, dailyStatuses: {},
+      },
+    ]);
+    const user = userEvent.setup();
+    render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
+    await screen.findByText('Bruna');
+
+    const dataRows = () => screen.getAllByRole('row').slice(1);
+    expect(dataRows()[0]).toHaveAccessibleName('Ver ABS de Bruna');
+
+    await user.click(screen.getByRole('button', { name: 'Ordenar por Matrícula' }));
+    expect(dataRows()[0]).toHaveAccessibleName('Ver ABS de Ana');
+
+    await user.click(screen.getByRole('button', { name: 'Ordenar por Matrícula, crescente' }));
+    expect(dataRows()[0]).toHaveAccessibleName('Ver ABS de Bruna');
+
+    await user.click(screen.getByRole('button', { name: 'Ordenar por Matrícula, decrescente' }));
+    expect(dataRows()[0]).toHaveAccessibleName('Ver ABS de Bruna');
   });
 });

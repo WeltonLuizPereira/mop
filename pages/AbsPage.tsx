@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, BookOpen, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, BookOpen, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import type { User } from '../types';
 import { getAbsImportStatus, getAbsMonth, type AbsFilters, type AbsImportStatus, type AbsMonthRow } from '../services/abs';
 import { useResource } from '../contexts/DataContext';
@@ -24,6 +24,33 @@ const COLORS: Record<string, string> = {
 
 const STICKY_REGISTRATION = 'sticky left-0 z-20 w-24 min-w-24 max-w-24';
 const STICKY_NAME = 'sticky left-24 z-20 w-60 min-w-60 max-w-60';
+
+type SortKey = 'matricula' | 'collaboratorName' | 'supervisorName' | 'ilhaName' | 'employmentStatus' | 'justifiedAbsences' | 'unjustifiedAbsences' | 'totalAbsences' | 'presences' | 'absRate';
+type SortDirection = 'asc' | 'desc';
+
+const SORT_COLUMNS: Array<{ key: SortKey; label: string; sticky?: string }> = [
+  { key: 'matricula', label: 'Matrícula', sticky: STICKY_REGISTRATION },
+  { key: 'collaboratorName', label: 'Colaborador', sticky: STICKY_NAME },
+  { key: 'supervisorName', label: 'Supervisor' },
+  { key: 'ilhaName', label: 'Ilha' },
+  { key: 'employmentStatus', label: 'Status' },
+  { key: 'justifiedAbsences', label: 'FJ' },
+  { key: 'unjustifiedAbsences', label: 'FI' },
+  { key: 'totalAbsences', label: 'Faltas' },
+  { key: 'presences', label: 'P' },
+  { key: 'absRate', label: 'ABS' },
+];
+
+function SortableHeader({ column, activeKey, direction, onSort }: { column: typeof SORT_COLUMNS[number]; activeKey: SortKey | null; direction: SortDirection | null; onSort: (key: SortKey) => void }) {
+  const active = activeKey === column.key;
+  const ariaLabel = active ? `Ordenar por ${column.label}, ${direction === 'asc' ? 'crescente' : 'decrescente'}` : `Ordenar por ${column.label}`;
+  const Icon = active ? (direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+  return <th aria-sort={active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'} className={`${column.sticky ?? 'sticky'} top-0 ${column.sticky ? 'z-40 border-r' : 'z-30 min-w-20'} whitespace-nowrap border-b border-hairline bg-canvas-sunk p-0 text-left`}>
+    <button type="button" aria-label={ariaLabel} onClick={() => onSort(column.key)} className={`flex w-full items-center gap-1.5 px-2 py-3 text-left font-semibold transition-colors hover:bg-brand/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-brand ${active ? 'text-brand-text' : 'text-ink-2'}`}>
+      <span>{column.label}</span><Icon size={13} className={active ? 'text-brand' : 'text-ink-faint'} aria-hidden="true" />
+    </button>
+  </th>;
+}
 
 const currentMonth = () => new Date().toLocaleDateString('en-CA', {
   timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit',
@@ -62,9 +89,10 @@ function Metric({ label, value, tone = 'text-ink', testId }: { label: string; va
 export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUser: User; initialMonth?: string }) {
   const clients = useResource('clients').data ?? [];
   const operations = useResource('operations').data ?? [];
+  const coordinators = useResource('coordinators').data ?? [];
   const ilhas = useResource('ilhas').data ?? [];
   const supervisors = useResource('supervisors').data ?? [];
-  const [filters, setFilters] = useState<AbsFilters>({ month: initialMonth ?? currentMonth(), clientId: '', operationId: '', supervisorId: '', ilhaId: '' });
+  const [filters, setFilters] = useState<AbsFilters>({ month: initialMonth ?? currentMonth(), clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
   const [rows, setRows] = useState<AbsMonthRow[]>([]);
   const [status, setStatus] = useState<AbsImportStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +100,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const [search, setSearch] = useState('');
   const [selectedRow, setSelectedRow] = useState<AbsMonthRow | null>(null);
   const [legendOpen, setLegendOpen] = useState(false);
+  const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
 
@@ -89,7 +118,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
     }
   };
 
-  useEffect(() => { void load(); }, [filters.month, filters.clientId, filters.operationId, filters.supervisorId, filters.ilhaId]);
+  useEffect(() => { void load(); }, [filters.month, filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId]);
 
   const days = useMemo(() => monthDays(filters.month), [filters.month]);
   const summary = useMemo(() => summarizeAbsRows(rows), [rows]);
@@ -98,16 +127,50 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
     if (!term) return rows;
     return rows.filter(row => normalizeSearch(`${row.collaboratorName} ${row.matricula}`).includes(term));
   }, [rows, search]);
+  const sortedRows = useMemo(() => {
+    if (!sort) return visibleRows;
+    return [...visibleRows].sort((left, right) => {
+      const leftValue = left[sort.key];
+      const rightValue = right[sort.key];
+      const comparison = typeof leftValue === 'number' && typeof rightValue === 'number'
+        ? leftValue - rightValue
+        : String(leftValue).localeCompare(String(rightValue), 'pt-BR', { numeric: true, sensitivity: 'base' });
+      return sort.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [visibleRows, sort]);
   const tableWidth = 1_100 + days.length * 48;
-  const update = (key: keyof AbsFilters, value: string) => setFilters(old => ({
-    ...old,
-    [key]: value,
-    ...(key === 'clientId' ? { operationId: '', ilhaId: '' } : {}),
-  }));
+  const update = (key: keyof AbsFilters, value: string) => setFilters(old => {
+    const next = { ...old, [key]: value };
+    if (next.operationId && next.clientId && operations.find(item => item.id === next.operationId)?.clientId !== next.clientId) next.operationId = '';
+    if (next.supervisorId && next.coordinatorId && !supervisors.find(item => item.id === next.supervisorId)?.coordinatorIds?.includes(next.coordinatorId)) next.supervisorId = '';
+    if (next.ilhaId) {
+      const ilha = ilhas.find(item => item.id === next.ilhaId);
+      const compatible = ilha
+        && (!next.clientId || ilha.clientId === next.clientId)
+        && (!next.operationId || ilha.operationId === next.operationId)
+        && (!next.coordinatorId || ilha.coordinatorIds?.includes(next.coordinatorId))
+        && (!next.supervisorId || ilha.supervisorIds?.includes(next.supervisorId));
+      if (!compatible) next.ilhaId = '';
+    }
+    return next;
+  });
   const filterOps = filters.clientId ? operations.filter(item => item.clientId === filters.clientId) : operations;
-  const filterIlhas = filters.clientId ? ilhas.filter(item => item.clientId === filters.clientId) : ilhas;
-  const activeFilters = [filters.month !== currentMonth(), filters.clientId, filters.operationId, filters.supervisorId, filters.ilhaId].filter(Boolean).length;
-  const clearFilters = () => setFilters({ month: currentMonth(), clientId: '', operationId: '', supervisorId: '', ilhaId: '' });
+  const filterCoordinators = coordinators;
+  const filterSupervisors = filters.coordinatorId
+    ? supervisors.filter(item => item.coordinatorIds?.includes(filters.coordinatorId))
+    : supervisors;
+  const filterIlhas = ilhas.filter(item =>
+    (!filters.clientId || item.clientId === filters.clientId)
+    && (!filters.operationId || item.operationId === filters.operationId)
+    && (!filters.coordinatorId || item.coordinatorIds?.includes(filters.coordinatorId))
+    && (!filters.supervisorId || item.supervisorIds?.includes(filters.supervisorId)));
+  const activeFilters = [filters.month !== currentMonth(), filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId].filter(Boolean).length;
+  const clearFilters = () => setFilters({ month: currentMonth(), clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
+  const cycleSort = (key: SortKey) => setSort(current => {
+    if (!current || current.key !== key) return { key, direction: 'asc' };
+    if (current.direction === 'asc') return { key, direction: 'desc' };
+    return null;
+  });
 
   const syncFromTop = (event: React.UIEvent<HTMLDivElement>) => {
     if (gridScrollRef.current) gridScrollRef.current.scrollLeft = event.currentTarget.scrollLeft;
@@ -134,7 +197,13 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
         </>}
         filtros={<>
           <label className="text-xs text-ink-mute">Mês<input aria-label="Mês" type="month" value={filters.month} onChange={event => update('month', event.target.value)} className="mt-1 block w-full rounded-sm border border-hairline bg-canvas px-2 py-2 text-sm" /></label>
-          {([['Cliente', 'clientId', clients], ['Operação', 'operationId', filterOps], ['Supervisor', 'supervisorId', supervisors], ['Ilha', 'ilhaId', filterIlhas]] as const).map(([label, key, options]) =>
+          {([
+            ['Cliente', 'clientId', clients],
+            ['Operação', 'operationId', filterOps],
+            ['Coordenador', 'coordinatorId', filterCoordinators],
+            ['Supervisor', 'supervisorId', filterSupervisors],
+            ['Ilha', 'ilhaId', filterIlhas],
+          ] as const).map(([label, key, options]) =>
             <label key={key} className="text-xs text-ink-mute">{label}<select aria-label={label} value={filters[key]} onChange={event => update(key, event.target.value)} className="mt-1 block w-full rounded-sm border border-hairline bg-canvas px-2 py-2 text-sm"><option value="">Todos</option>{options.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>)}
         </>}
       />
@@ -165,14 +234,12 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
         <table className="border-separate border-spacing-0 text-xs" style={{ minWidth: tableWidth }}>
           <thead>
             <tr>
-              <th className={`${STICKY_REGISTRATION} top-0 z-40 border-b border-r border-hairline bg-canvas-sunk p-2 text-left`}>Matrícula</th>
-              <th className={`${STICKY_NAME} top-0 z-40 border-b border-r border-hairline bg-canvas-sunk p-2 text-left`}>Colaborador</th>
-              {['Supervisor', 'Ilha', 'Status', 'FJ', 'FI', 'Faltas', 'P', 'ABS'].map(label => <th key={label} className="sticky top-0 z-30 min-w-20 whitespace-nowrap border-b border-hairline bg-canvas-sunk p-2 text-left">{label}</th>)}
+              {SORT_COLUMNS.map(column => <SortableHeader key={column.key} column={column} activeKey={sort?.key ?? null} direction={sort?.direction ?? null} onSort={cycleSort} />)}
               {days.map(day => <th key={day.date} aria-label={`${String(day.day).padStart(2, '0')} ${day.weekday}`} className="sticky top-0 z-30 min-w-12 border-b border-hairline bg-canvas-sunk p-2 text-center"><span className="block font-bold">{String(day.day).padStart(2, '0')}</span><span className="font-normal text-ink-faint">{day.weekday}</span></th>)}
             </tr>
           </thead>
           <tbody>
-            {visibleRows.map((row, rowIndex) => {
+            {sortedRows.map((row, rowIndex) => {
               const interactiveRow = linhaAtivavel(() => setSelectedRow(row));
               return <tr key={row.matricula} {...interactiveRow} className={`${interactiveRow.className} group`} aria-label={`Ver ABS de ${row.collaboratorName}`}>
               <td className={`${STICKY_REGISTRATION} border-b border-r border-hairline/70 p-2 font-medium tabular-nums ${rowIndex % 2 ? 'bg-canvas-soft' : 'bg-canvas'} group-hover:bg-brand/5`}>{row.matricula}</td>
