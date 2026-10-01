@@ -90,7 +90,7 @@ describe('AbsPage', () => {
     render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
     await screen.findByText('Ana Silva');
 
-    expect(screen.getByTestId('abs-attendance-table')).toHaveClass('overflow-visible');
+    expect(screen.getByTestId('abs-attendance-table')).toHaveStyle({ overflow: 'visible' });
     expect(screen.getByRole('columnheader', { name: 'Matrícula' })).toHaveClass('sticky', 'left-0');
     expect(screen.getByRole('columnheader', { name: 'Colaborador' })).toHaveClass('sticky', 'left-24');
     expect(screen.getByText('Ana Silva').closest('td')).toHaveClass('sticky', 'left-24', 'abs-sticky-edge');

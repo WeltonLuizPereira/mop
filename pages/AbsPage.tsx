@@ -242,7 +242,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
         <div style={{ width: tableWidth, height: 10 }} />
       </div>
       <div ref={gridScrollRef} data-testid="abs-grid-scroll" onScroll={syncFromGrid} className="isolate max-h-[58vh] overflow-auto overscroll-contain">
-        <table data-testid="abs-attendance-table" className="overflow-visible border-separate border-spacing-0 text-xs" style={{ minWidth: tableWidth }}>
+        <table data-testid="abs-attendance-table" className="border-separate border-spacing-0 text-xs" style={{ minWidth: tableWidth, overflow: 'visible' }}>
           <thead>
             <tr>
               {SORT_COLUMNS.map(column => <SortableHeader key={column.key} column={column} activeKey={sort?.key ?? null} direction={sort?.direction ?? null} onSort={cycleSort} />)}
