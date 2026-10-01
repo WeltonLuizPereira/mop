@@ -1,4 +1,4 @@
-import type { AbsStatus } from '../lib/absRules';
+import { calculateAbsMetrics, type AbsStatus } from '../lib/absRules';
 import { supabase } from './supabase';
 
 export interface AbsFilters { month:string; clientId:string; operationId:string; coordinatorId:string; supervisorId:string; ilhaId:string }
@@ -9,7 +9,11 @@ const nullable = (value:string) => value || null;
 export async function getAbsMonth(filters:AbsFilters):Promise<AbsMonthRow[]> {
   const { data, error } = await supabase.rpc('mop_abs_month', { p_month:`${filters.month}-01`, p_client_id:nullable(filters.clientId), p_operation_id:nullable(filters.operationId), p_coordinator_id:nullable(filters.coordinatorId), p_supervisor_id:nullable(filters.supervisorId), p_ilha_id:nullable(filters.ilhaId) });
   if (error) throw new Error(`Não foi possível carregar os dados do ABS: ${error.message}`);
-  return (data ?? []).map((row:any) => ({ matricula:String(row.matricula), collaboratorName:row.collaborator_name, supervisorName:row.supervisor_name ?? '-', ilhaName:row.ilha_name ?? '-', employmentStatus:row.employment_status, justifiedAbsences:Number(row.justified_absences ?? 0), unjustifiedAbsences:Number(row.unjustified_absences ?? 0), totalAbsences:Number(row.total_absences ?? 0), presences:Number(row.presences ?? 0), absRate:Number(row.abs_rate ?? 0), dailyStatuses:row.daily_statuses ?? {} }));
+  return (data ?? []).map((row:any) => {
+    const dailyStatuses: Record<string, AbsStatus> = row.daily_statuses ?? {};
+    const metrics = calculateAbsMetrics(Object.values(dailyStatuses));
+    return { matricula:String(row.matricula), collaboratorName:row.collaborator_name, supervisorName:row.supervisor_name ?? '-', ilhaName:row.ilha_name ?? '-', employmentStatus:row.employment_status, justifiedAbsences:metrics.justified, unjustifiedAbsences:metrics.unjustified, totalAbsences:metrics.absences, presences:metrics.presences, absRate:metrics.rate, dailyStatuses };
+  });
 }
 
 export async function getAbsImportStatus(month:string):Promise<AbsImportStatus|null> {

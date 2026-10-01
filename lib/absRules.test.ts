@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateAbs, classifyRawPunches, normalizeRegistration } from './absRules';
+import { calculateAbs, calculateAbsMetrics, chooseDefaultAbsMonth, classifyRawPunches, normalizeRegistration } from './absRules';
 
 describe('normalizeRegistration', () => {
   it('preserva zeros significativos e remove o sufixo decimal criado pelo Excel', () => {
@@ -47,5 +47,35 @@ describe('calculateAbs', () => {
 
   it('retorna zero quando não há apontamentos', () => {
     expect(calculateAbs(0, 0, 0)).toBe(0);
+  });
+});
+
+describe('regra de faltas FI + FJ', () => {
+  it('classifica a ausencia de marcacao como falta injustificada', () => {
+    expect(classifyRawPunches([])).toEqual({
+      status: 'FI',
+      rawStatus: null,
+      unknown: false,
+    });
+  });
+
+  it('nao contabiliza ferias, licencas e demais marcacoes como faltas', () => {
+    expect(calculateAbsMetrics(['P', 'FI', 'FJ', 'FE', 'LM', 'LP', 'INSS', 'LAM', 'MATRIMONIO', 'FG', 'DES', '-']))
+      .toEqual({ justified: 1, unjustified: 1, absences: 2, presences: 1, rate: 2 / 3 });
+  });
+});
+
+describe('competencia inicial do ABS em D-1', () => {
+  it('mantem o mes anterior no primeiro dia, mesmo que a base ja tenha o dia atual', () => {
+    expect(chooseDefaultAbsMonth('2026-10-01', '2026-10-01')).toBe('2026-09');
+  });
+
+  it('muda para o mes vigente quando existe dado valido de D-1', () => {
+    expect(chooseDefaultAbsMonth('2026-10-02', '2026-10-01')).toBe('2026-10');
+  });
+
+  it('mantem o mes anterior enquanto o vigente ainda nao tem dado valido', () => {
+    expect(chooseDefaultAbsMonth('2026-10-02', null)).toBe('2026-09');
+    expect(chooseDefaultAbsMonth('2026-10-03', '2026-10-01')).toBe('2026-10');
   });
 });

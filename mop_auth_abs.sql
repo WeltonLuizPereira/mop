@@ -108,14 +108,14 @@ select
   max(c.supervisor_name),
   max(c.ilha_name),
   max(c.status::text),
-  count(*) filter (where daily in ('FJ', 'LM', 'LP', 'FE', 'INSS', 'LAM', 'MATRIMONIO')),
+  count(*) filter (where daily = 'FJ'),
   count(*) filter (where daily = 'FI'),
-  count(*) filter (where daily in ('FJ', 'LM', 'LP', 'FE', 'INSS', 'LAM', 'MATRIMONIO', 'FI')),
+  count(*) filter (where daily in ('FJ', 'FI')),
   count(*) filter (where daily = 'P'),
   case
-    when count(*) filter (where daily in ('P', 'FJ', 'LM', 'LP', 'FE', 'INSS', 'LAM', 'MATRIMONIO', 'FI')) = 0 then 0
-    else count(*) filter (where daily in ('FJ', 'LM', 'LP', 'FE', 'INSS', 'LAM', 'MATRIMONIO', 'FI'))::numeric
-      / count(*) filter (where daily in ('P', 'FJ', 'LM', 'LP', 'FE', 'INSS', 'LAM', 'MATRIMONIO', 'FI'))
+    when count(*) filter (where daily in ('P', 'FJ', 'FI')) = 0 then 0
+    else count(*) filter (where daily in ('FJ', 'FI'))::numeric
+      / count(*) filter (where daily in ('P', 'FJ', 'FI'))
   end,
   jsonb_object_agg(
     to_char(c.work_date, 'YYYY-MM-DD'),

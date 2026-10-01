@@ -6,6 +6,7 @@ import { useResource } from '../contexts/DataContext';
 import { Card, Chip, Modal, Table } from '../components/ui';
 import { linhaAtivavel } from '../components/ui/linhaAtivavel';
 import { summarizeAbsRows } from '../lib/absSummary';
+import { chooseDefaultAbsMonth, todayInSaoPaulo } from '../lib/absRules';
 
 const COLORS: Record<string, string> = {
   P: 'bg-emerald-100 text-emerald-800',
@@ -52,9 +53,7 @@ function SortableHeader({ column, activeKey, direction, onSort }: { column: type
   </th>;
 }
 
-const currentMonth = () => new Date().toLocaleDateString('en-CA', {
-  timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit',
-}).slice(0, 7);
+const currentMonth = () => todayInSaoPaulo().slice(0, 7);
 
 const monthDays = (month: string) => {
   const [year, value] = month.split('-').map(Number);
@@ -93,7 +92,11 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const ilhas = useResource('ilhas').data ?? [];
   const supervisors = useResource('supervisors').data ?? [];
   const collaborators = useResource('collaborators').data ?? [];
-  const [filters, setFilters] = useState<AbsFilters>({ month: initialMonth ?? currentMonth(), clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
+  const today = todayInSaoPaulo();
+  const provisionalMonth = initialMonth ?? chooseDefaultAbsMonth(today, null);
+  const [filters, setFilters] = useState<AbsFilters>({ month: provisionalMonth, clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
+  const [defaultMonth, setDefaultMonth] = useState(initialMonth ?? '');
+  const [monthReady, setMonthReady] = useState(Boolean(initialMonth));
   const [rows, setRows] = useState<AbsMonthRow[]>([]);
   const [status, setStatus] = useState<AbsImportStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,6 +107,22 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialMonth) return;
+    let cancelled = false;
+    void getAbsImportStatus(currentMonth()).then(currentStatus => {
+      if (cancelled) return;
+      const selectedMonth = chooseDefaultAbsMonth(today, currentStatus?.maxWorkDate ?? null);
+      setDefaultMonth(selectedMonth);
+      setFilters(old => ({ ...old, month: selectedMonth }));
+    }).catch(() => {
+      if (!cancelled) setDefaultMonth(provisionalMonth);
+    }).finally(() => {
+      if (!cancelled) setMonthReady(true);
+    });
+    return () => { cancelled = true; };
+  }, [initialMonth, provisionalMonth, today]);
 
   const load = async () => {
     setLoading(true);
@@ -119,7 +138,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
     }
   };
 
-  useEffect(() => { void load(); }, [filters.month, filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId]);
+  useEffect(() => { if (monthReady) void load(); }, [monthReady, filters.month, filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId]);
 
   const days = useMemo(() => monthDays(filters.month), [filters.month]);
   const summary = useMemo(() => summarizeAbsRows(rows), [rows]);
@@ -156,8 +175,8 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const filterCoordinators = activeOptions(coordinators, 'coordinatorId');
   const filterSupervisors = activeOptions(supervisors, 'supervisorId');
   const filterIlhas = activeOptions(ilhas, 'ilhaId');
-  const activeFilters = [filters.month !== currentMonth(), filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId].filter(Boolean).length;
-  const clearFilters = () => setFilters({ month: currentMonth(), clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
+  const activeFilters = [defaultMonth && filters.month !== defaultMonth, filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId].filter(Boolean).length;
+  const clearFilters = () => setFilters({ month: defaultMonth || provisionalMonth, clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
   const cycleSort = (key: SortKey) => setSort(current => {
     if (!current || current.key !== key) return { key, direction: 'asc' };
     if (current.direction === 'asc') return { key, direction: 'desc' };

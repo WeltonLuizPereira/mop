@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbsPage } from './AbsPage';
-import { getAbsMonth } from '../services/abs';
+import { getAbsImportStatus, getAbsMonth } from '../services/abs';
 
 const resources = vi.hoisted(() => ({
   clients: [{ id: 'c1', nome: 'Cliente 1', status: 'ATIVO' }, { id: 'c2', nome: 'Cliente 2', status: 'ATIVO' }],
@@ -50,6 +50,31 @@ vi.mock('../services/abs', () => ({
 
 describe('AbsPage', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('abre no mes anterior no dia 1 porque o dia vigente ainda nao vale em D-1', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-10-01T13:00:00Z'));
+    try {
+      render(<AbsPage currentUser={{} as never} />);
+      await waitFor(() => expect(getAbsMonth).toHaveBeenCalledWith(expect.objectContaining({ month: '2026-09' })));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('abre no mes vigente quando a base ja possui o D-1 valido', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-10-02T13:00:00Z'));
+    vi.mocked(getAbsImportStatus)
+      .mockResolvedValueOnce({ status: 'COMPLETED', finishedAt: '2026-10-02', maxWorkDate: '2026-10-01', rowsRead: 10, unmatchedCount: 0 })
+      .mockResolvedValueOnce({ status: 'COMPLETED', finishedAt: '2026-10-02', maxWorkDate: '2026-10-01', rowsRead: 10, unmatchedCount: 0 });
+    try {
+      render(<AbsPage currentUser={{} as never} />);
+      await waitFor(() => expect(getAbsMonth).toHaveBeenCalledWith(expect.objectContaining({ month: '2026-10' })));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it('mantém a navegação horizontal acessível no topo da grade', async () => {
     render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
