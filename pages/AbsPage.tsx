@@ -24,7 +24,7 @@ const COLORS: Record<string, string> = {
 };
 
 const STICKY_REGISTRATION = 'sticky left-0 z-20 w-24 min-w-24 max-w-24';
-const STICKY_NAME = 'sticky left-24 z-20 w-60 min-w-60 max-w-60';
+const STICKY_NAME = 'sticky left-24 z-20 w-60 min-w-60 max-w-60 abs-sticky-edge';
 
 type SortKey = 'matricula' | 'collaboratorName' | 'supervisorName' | 'ilhaName' | 'employmentStatus' | 'justifiedAbsences' | 'unjustifiedAbsences' | 'totalAbsences' | 'presences' | 'absRate';
 type SortDirection = 'asc' | 'desc';
@@ -241,8 +241,8 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
       <div ref={topScrollRef} data-testid="abs-scroll-top" onScroll={syncFromTop} className="overflow-x-auto overflow-y-hidden border-b border-hairline bg-canvas" aria-label="Rolagem horizontal superior da tabela">
         <div style={{ width: tableWidth, height: 10 }} />
       </div>
-      <div ref={gridScrollRef} data-testid="abs-grid-scroll" onScroll={syncFromGrid} className="max-h-[58vh] overflow-auto overscroll-contain">
-        <table className="border-separate border-spacing-0 text-xs" style={{ minWidth: tableWidth }}>
+      <div ref={gridScrollRef} data-testid="abs-grid-scroll" onScroll={syncFromGrid} className="isolate max-h-[58vh] overflow-auto overscroll-contain">
+        <table data-testid="abs-attendance-table" className="overflow-visible border-separate border-spacing-0 text-xs" style={{ minWidth: tableWidth }}>
           <thead>
             <tr>
               {SORT_COLUMNS.map(column => <SortableHeader key={column.key} column={column} activeKey={sort?.key ?? null} direction={sort?.direction ?? null} onSort={cycleSort} />)}

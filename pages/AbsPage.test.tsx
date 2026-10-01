@@ -86,6 +86,16 @@ describe('AbsPage', () => {
     expect(grid.scrollLeft).toBe(480);
   });
 
+  it('mantem matricula e colaborador visiveis durante a rolagem horizontal', async () => {
+    render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
+    await screen.findByText('Ana Silva');
+
+    expect(screen.getByTestId('abs-attendance-table')).toHaveClass('overflow-visible');
+    expect(screen.getByRole('columnheader', { name: 'Matrícula' })).toHaveClass('sticky', 'left-0');
+    expect(screen.getByRole('columnheader', { name: 'Colaborador' })).toHaveClass('sticky', 'left-24');
+    expect(screen.getByText('Ana Silva').closest('td')).toHaveClass('sticky', 'left-24', 'abs-sticky-edge');
+  });
+
   it('mostra indicadores consolidados e a quantidade de colaboradores', async () => {
     render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
     await waitFor(() => expect(screen.getByText('colaborador')).toBeInTheDocument());

@@ -3,6 +3,23 @@ create table if not exists public.mop_abs_import_runs(id uuid primary key defaul
 create table if not exists public.mop_abs_records(id bigint generated always as identity primary key,work_date date not null,matricula text not null,source_name text not null,source_department text,punches jsonb not null default '[]',raw_status text,validated_status text not null,import_run_id uuid not null references public.mop_abs_import_runs(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(work_date,matricula));
 create table if not exists public.mop_abs_unmatched(id bigint generated always as identity primary key,work_date date not null,matricula text not null,source_name text not null,source_department text,reason text not null,import_run_id uuid not null references public.mop_abs_import_runs(id),resolved_at timestamptz,unique(work_date,matricula));
 
+alter table public.mop_abs_import_runs enable row level security;
+alter table public.mop_abs_records enable row level security;
+alter table public.mop_abs_unmatched enable row level security;
+revoke all on table public.mop_abs_import_runs from anon, authenticated;
+revoke all on table public.mop_abs_records from anon, authenticated;
+revoke all on table public.mop_abs_unmatched from anon, authenticated;
+
+drop policy if exists "Deny direct client access" on public.mop_abs_import_runs;
+create policy "Deny direct client access" on public.mop_abs_import_runs
+  for all to anon, authenticated using (false) with check (false);
+drop policy if exists "Deny direct client access" on public.mop_abs_records;
+create policy "Deny direct client access" on public.mop_abs_records
+  for all to anon, authenticated using (false) with check (false);
+drop policy if exists "Deny direct client access" on public.mop_abs_unmatched;
+create policy "Deny direct client access" on public.mop_abs_unmatched
+  for all to anon, authenticated using (false) with check (false);
+
 drop function if exists public.mop_abs_last_import();
 
 create or replace function public.mop_abs_last_import(p_month date)

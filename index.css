@@ -212,6 +212,13 @@ main table thead th {
   white-space: nowrap;
 }
 
+/* A borda luminosa marca o limite entre identidade e apontamentos na grade ABS. */
+.abs-sticky-edge {
+  box-shadow:
+    1px 0 0 var(--hairline),
+    10px 0 16px -14px rgba(4, 22, 38, 0.92);
+}
+
 main table tbody tr {
   transition: background-color 140ms ease;
 }
