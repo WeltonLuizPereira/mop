@@ -8,14 +8,14 @@ Adicionar ao MOP 2.1 uma seção de absenteísmo que substitua o processo manual
 
 O módulo inclui:
 
-- agente local para importação automática da planilha;
+- agente Python local para monitoramento e importação automática da planilha;
 - persistência dos registros de ponto e do histórico de execuções no Supabase;
 - conciliação entre `BASE_ABS.re` e `mop_collaborators.matricula`;
 - motor de classificação diária e totalização mensal;
 - página ABS com filtros, calendário diário e indicadores;
 - tratamento de matrículas não encontradas, divergências e valores desconhecidos;
 - restrição de acesso para o perfil `VISUALIZADOR`;
-- reprocessamento e diagnóstico técnico para administradores.
+- atualização manual, reprocessamento e diagnóstico técnico somente para administradores;
 - migração do login atual para Supabase Auth, necessária para aplicar as permissões no servidor.
 
 Não faz parte do escopo editar a planilha de origem ou manter a `ABS_VR.xlsx` como motor de cálculo após a migração.
@@ -24,22 +24,25 @@ Não faz parte do escopo editar a planilha de origem ou manter a `ABS_VR.xlsx` c
 
 ### Agente ABS local
 
-Um agente Node.js será instalado na máquina Windows indicada pelo usuário. Essa máquina possui acesso ao compartilhamento:
+Um agente Python será instalado no computador Windows em que o MOP é usado. Essa máquina possui acesso ao compartilhamento:
 
 `\\192.168.0.115\Shared\Relatorios_Quality\MIS - Operações\VR\ABS\BASE_ABS.xlsx`
 
-O Agendador de Tarefas do Windows iniciará o agente de segunda a sexta-feira às 10h15. Se o arquivo estiver indisponível, bloqueado para leitura ou ainda não tiver sido atualizado no dia, novas tentativas ocorrerão a cada 15 minutos até 12h.
+O Agendador de Tarefas do Windows iniciará o agente no logon e reiniciará o processo em caso de falha. Enquanto estiver ativo, o agente observará mudanças no arquivo, consultará solicitações administrativas a cada 30 segundos e também conferirá a versão da base a cada 5 minutos, cobrindo eventos perdidos pelo compartilhamento SMB. Ao detectar alteração, aguardará duas leituras estáveis, separadas por 10 segundos, e confirmará que o arquivo pode ser aberto, evitando ler uma gravação incompleta.
+
+Como contingência, uma tarefa periódica executará uma verificação independente. Tanto o observador quanto a contingência usarão a mesma assinatura do arquivo e o mesmo mecanismo de trava, de modo que apenas uma carga seja processada por versão. O relatório não dependerá do navegador aberto nem de clique manual.
 
 O agente:
 
-1. verifica existência e data de atualização do arquivo;
-2. abre o arquivo somente para leitura;
-3. valida a aba e os cabeçalhos obrigatórios;
-4. normaliza datas, matrículas, departamentos e marcações;
-5. classifica o status bruto de cada registro;
-6. envia os dados em lotes ao Supabase;
-7. registra o resultado completo da execução;
-8. encerra com um código de saída compatível com o Agendador do Windows.
+1. verifica existência, tamanho, data de modificação e assinatura do arquivo;
+2. ignora versões já concluídas e impede duas execuções concorrentes;
+3. aguarda a estabilização e abre o arquivo somente para leitura;
+4. valida a aba e os cabeçalhos obrigatórios;
+5. normaliza datas, matrículas, departamentos e marcações;
+6. classifica o status bruto de cada registro;
+7. envia os dados em lotes idempotentes ao Supabase;
+8. registra o resultado completo da execução e notifica a aplicação via banco;
+9. permanece monitorando ou encerra com código compatível com o Agendador, conforme o modo de execução.
 
 A credencial de integração será armazenada apenas na configuração local protegida da máquina. Nenhuma credencial privilegiada será incluída no bundle do navegador ou versionada no repositório.
 
@@ -49,7 +52,9 @@ O Supabase será a fonte de verdade do módulo ABS. O banco armazenará os dados
 
 ### Aplicação MOP
 
-A aplicação React consultará os dados consolidados no Supabase. O navegador não tentará acessar diretamente o compartilhamento SMB. A página ABS exibirá o painel mensal e permitirá ações administrativas sem participar da captura automática do arquivo.
+A aplicação React consultará os dados consolidados no Supabase. O navegador não tentará acessar diretamente o compartilhamento SMB. A página ABS exibirá o painel mensal, assinará a conclusão de novas importações para invalidar sua consulta e permitirá ações administrativas sem participar da captura automática do arquivo.
+
+O botão `Atualizar` será renderizado somente para `ADMIN`. Ao ser acionado, ele criará no backend uma solicitação de atualização; o agente Python consumirá essa solicitação, relerá a base oficial e publicará o resultado. Perfis não administrativos não verão o botão, e tentativas diretas de chamar a operação serão recusadas pelo Supabase.
 
 ## Fonte de dados
 
@@ -93,6 +98,8 @@ Cada tentativa registrará:
 - situação: aguardando, processando, concluída, concluída com pendências ou erro;
 - quantidade de linhas lidas, incluídas, atualizadas, rejeitadas e sem correspondência;
 - maior data de ponto presente no arquivo;
+- assinatura da versão do arquivo;
+- origem do disparo: monitoramento, contingência agendada ou solicitação administrativa;
 - mensagem resumida e detalhes técnicos seguros.
 
 ### `mop_abs_unmatched`
@@ -213,6 +220,7 @@ O topo exibirá:
 - filtros de mês/ano, cliente, operação, supervisor e ilha;
 - acesso ao histórico de importações;
 - contador e acesso aos REs não encontrados;
+- botão `Atualizar`, visível somente para `ADMIN`, que solicita a leitura imediata da base oficial;
 - ação de reprocessamento, visível somente para `ADMIN`.
 
 Os filtros serão dependentes dos dados do MOP. A escolha de cliente limitará operações, supervisores e ilhas aplicáveis.
@@ -246,6 +254,8 @@ A área de pendências exibirá RE, nome da fonte, data, departamento e motivo. 
 - Uma planilha com cabeçalhos ausentes ou estrutura inválida será rejeitada integralmente.
 - Uma linha inválida será isolada e registrada sem impedir linhas válidas, desde que a estrutura do arquivo seja válida.
 - Falhas parciais no envio serão retomáveis e não criarão duplicatas.
+- Eventos repetidos do monitor de arquivos não criarão novas execuções para a mesma assinatura.
+- Se o evento de alteração não chegar pelo SMB, a verificação periódica detectará a nova versão.
 - O agente nunca gravará no arquivo de origem.
 - O painel distinguirá arquivo aguardado, arquivo desatualizado, processamento, sucesso, sucesso com pendências e erro.
 - Logs locais não armazenarão credenciais nem dados pessoais desnecessários.
@@ -255,7 +265,8 @@ A área de pendências exibirá RE, nome da fonte, data, departamento e motivo. 
 A entrega incluirá:
 
 - configuração do agente por variáveis de ambiente locais;
-- script de instalação ou instruções reproduzíveis para o Agendador de Tarefas;
+- ambiente Python isolado e dependências fixadas;
+- script idempotente de instalação do monitor e da contingência no Agendador de Tarefas;
 - verificação de conectividade com o compartilhamento e o Supabase;
 - documentação de execução manual para diagnóstico;
 - documentação de rotação da credencial;
@@ -272,10 +283,13 @@ A entrega incluirá:
 - totais FJ, FI, faltas, presenças e ABS;
 - denominador zero;
 - idempotência por `data + matrícula`;
+- idempotência por assinatura do arquivo e exclusão mútua entre monitor e contingência;
+- estabilização do arquivo antes da leitura e recuperação de evento SMB perdido;
 - identificação e posterior resolução de RE não encontrado;
 - divergência entre departamento da fonte e estrutura do MOP;
 - visibilidade e bloqueio do perfil `VISUALIZADOR`;
 - restrição das ações administrativas;
+- botão `Atualizar` ausente para todos os perfis exceto `ADMIN` e operação recusada no backend para não administradores;
 - autenticação por matrícula com sessão Supabase válida;
 - migração de usuário ativo, bloqueio de inativo e remoção do acesso a senhas legadas;
 - rejeição de consultas ABS feitas sem sessão ou por `VISUALIZADOR`;
@@ -296,5 +310,7 @@ O módulo será aceito quando:
 5. o ABS corresponder à fórmula de faltas sobre presenças mais faltas;
 6. VR BENEFÍCIOS, TIM e Underlabz forem filtrados conforme o cadastro do MOP;
 7. `VISUALIZADOR` não conseguir acessar o módulo;
-8. falhas e última atualização forem claramente auditáveis.
-9. o navegador não consultar nem receber senhas cadastradas de usuários.
+8. falhas e última atualização forem claramente auditáveis;
+9. o navegador não consultar nem receber senhas cadastradas de usuários;
+10. uma nova versão da base, inclusive uma nova competência como outubro, aparecer no relatório automaticamente sem clique e sem reiniciar a aplicação.
+11. o botão `Atualizar` aparecer apenas para `ADMIN` e sempre reler a base oficial por meio do agente.
