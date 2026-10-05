@@ -33,3 +33,6 @@ playwright-report/
 
 # Scratch workspace for the subagent-driven-development skill — never meant to be committed
 .superpowers/
+
+# Python
+__pycache__/
