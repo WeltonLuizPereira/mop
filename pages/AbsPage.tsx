@@ -25,7 +25,7 @@ const COLORS: Record<string, string> = {
 };
 
 const STICKY_REGISTRATION = 'sticky left-0 z-20 w-24 min-w-24 max-w-24';
-const STICKY_NAME = 'sticky left-24 z-20 w-60 min-w-60 max-w-60 abs-sticky-edge';
+const STICKY_NAME = 'sticky left-24 z-20 w-60 min-w-60 max-w-60';
 
 type SortKey = 'matricula' | 'collaboratorName' | 'supervisorName' | 'ilhaName' | 'employmentStatus' | 'justifiedAbsences' | 'unjustifiedAbsences' | 'totalAbsences' | 'presences' | 'absRate';
 type SortDirection = 'asc' | 'desc';
@@ -635,14 +635,14 @@ function AbsDashboard({ days, rows, filters }: { days: ReturnType<typeof monthDa
                 </td>
                 {matrixMonths.map(m => {
                   const val = row[m];
-                  const colorClass = typeof val === 'number' && val > 0 ? 'text-danger font-medium' : val === 0 ? 'text-success font-medium' : 'text-ink-mute';
+                  const colorClass = typeof val === 'number' && val > 0 ? 'text-red-600 font-bold' : val === 0 ? 'text-emerald-600 font-bold' : 'text-ink-mute';
                   return (
                     <td key={m} className={`border-b border-hairline p-3 align-middle text-center tabular-nums ${colorClass} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
                       {typeof val === 'number' ? `${(val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                     </td>
                   );
                 })}
-                <td className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-semibold ${row.accumulated > 0 ? 'text-danger' : row.accumulated === 0 ? 'text-success' : 'text-ink-mute'} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
+                <td className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-bold ${row.accumulated > 0 ? 'text-red-600' : row.accumulated === 0 ? 'text-emerald-600' : 'text-ink-mute'} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
                   {typeof row.accumulated === 'number' ? `${(row.accumulated * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                 </td>
               </tr>
