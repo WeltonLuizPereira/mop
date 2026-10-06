@@ -3,6 +3,8 @@ import { ArrowLeft, Edit2, Trash2, User as UserIcon, Briefcase, Clock, MapPin, K
 import { Collaborator, User, UserRole, HistoryLog, Ilha, Operation, Client, Coordinator, Supervisor, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDateString, formatTime, addDays, getInitials, mensagemErroExclusao } from '../utils';
+import { getAbsMonth } from '../services/abs';
+import { chooseDefaultAbsMonth, todayInSaoPaulo } from '../lib/absRules';
 import { Badge, Button, Modal, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
 import { useAppData, useResource } from '../contexts/DataContext';
@@ -13,6 +15,9 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
     const [currentCollab, setCurrentCollab] = useState(collab);
     const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
     const [vacationHistory, setVacationHistory] = useState<any[]>([]);
+    const [absCurrentMonth, setAbsCurrentMonth] = useState<{rate: number, label: string} | null>(null);
+    const [absAccumulated, setAbsAccumulated] = useState<{rate: number, label: string} | null>(null);
+    const [loadingAbs, setLoadingAbs] = useState(false);
     const store = useAppData();
     const ilhas = useResource('ilhas').data ?? [];
     const operations = useResource('operations').data ?? [];
@@ -45,6 +50,58 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
     }, [currentCollab]);
 
     const calc = useMemo(() => getCollaboratorCalculations(currentCollab.dtEntradaProduto), [currentCollab]);
+
+    useEffect(() => {
+        let active = true;
+        const fetchAbs = async () => {
+            setLoadingAbs(true);
+            try {
+                const currentMonthStr = chooseDefaultAbsMonth(todayInSaoPaulo(), null);
+                const months = [currentMonthStr];
+                let [year, month] = currentMonthStr.split('-').map(Number);
+                for (let i = 0; i < 5; i++) {
+                    month--;
+                    if (month === 0) { month = 12; year--; }
+                    months.push(`${year}-${String(month).padStart(2, '0')}`);
+                }
+                
+                const promises = months.map(m => getAbsMonth({ 
+                    month: m, 
+                    clientId: currentCollab.clientId || '', 
+                    operationId: currentCollab.operationId || '', 
+                    coordinatorId: currentCollab.coordinatorId || '', 
+                    supervisorId: currentCollab.supervisorId || '', 
+                    ilhaId: currentCollab.ilhaId || '' 
+                }));
+                const results = await Promise.all(promises);
+                
+                if (!active) return;
+                
+                const cmData = results[0].find(r => r.matricula === currentCollab.matricula);
+                setAbsCurrentMonth({ rate: cmData ? cmData.absRate : 0, label: currentMonthStr });
+                
+                let totalPres = 0, totalAbs = 0;
+                results.forEach(monthRows => {
+                    const row = monthRows.find(r => r.matricula === currentCollab.matricula);
+                    if (row) {
+                        totalPres += row.presences;
+                        totalAbs += row.totalAbsences;
+                    }
+                });
+                const accTotal = totalPres + totalAbs;
+                const accRate = accTotal > 0 ? (totalAbs / accTotal) : 0;
+                
+                setAbsAccumulated({ rate: accRate, label: 'Últ. 6 meses' });
+            } catch(e) {
+                console.error('Failed to fetch ABS for collaborator', e);
+            } finally {
+                if (active) setLoadingAbs(false);
+            }
+        };
+        fetchAbs();
+        return () => { active = false; };
+    }, [currentCollab.matricula, currentCollab.clientId, currentCollab.operationId, currentCollab.coordinatorId, currentCollab.supervisorId, currentCollab.ilhaId]);
+
     
     const handleUpdate = async (data: Collaborator) => {
         const ilhasList = ilhas;
@@ -268,6 +325,24 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                         <div className="flex gap-8">
                              <Field label="Entrada" value={formatTime(currentCollab.horarioEntrada)} />
                              <Field label="Saída" value={formatTime(currentCollab.horarioSaida)} />
+                        </div>
+                        
+                        <div className="mt-6 border-t border-hairline pt-4">
+                            <h4 className="font-bold text-ink mb-3 text-sm flex items-center gap-2">ABS</h4>
+                            <div className="flex gap-8">
+                                <div>
+                                    <p className="t-eyebrow text-ink-faint mb-1">ABS do mês</p>
+                                    <p className="font-bold text-ink-2 text-lg">
+                                        {loadingAbs ? '...' : absCurrentMonth ? (absCurrentMonth.rate * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1 }) + '%' : '-'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="t-eyebrow text-ink-faint mb-1">ABS Acumulado</p>
+                                    <p className="font-bold text-ink-2 text-lg">
+                                        {loadingAbs ? '...' : absAccumulated ? (absAccumulated.rate * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1 }) + '%' : '-'}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
