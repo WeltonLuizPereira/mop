@@ -21,8 +21,10 @@ $argumentsOnce = "-m agent_abs.cli --once"
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit (New-TimeSpan -Days 1)
 
+$monitorTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+$monitorTrigger.Delay = 'PT5M'
 $monitor = New-ScheduledTask -Action (New-ScheduledTaskAction -Execute $Python -Argument $argumentsMonitor -WorkingDirectory $resolvedProject) `
-  -Trigger (New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME) -Principal $principal -Settings $settings
+  -Trigger $monitorTrigger -Principal $principal -Settings $settings
 Register-ScheduledTask -TaskName "MOP-ABS-Importacao" -InputObject $monitor -Force | Out-Null
 
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 1)
