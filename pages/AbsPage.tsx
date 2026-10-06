@@ -637,14 +637,14 @@ function AbsDashboard({ days, rows, filters }: { days: ReturnType<typeof monthDa
                   const val = row[m];
                   const isNum = typeof val !== 'undefined' && val !== null && val !== '-';
                   const numVal = Number(val);
-                  const colorClass = isNum ? (numVal > 0 ? 'text-brand-hot font-bold' : 'text-st-ativo font-bold') : 'text-ink-mute';
+                  const textColor = isNum ? (numVal > 0 ? 'var(--danger)' : 'var(--ok)') : 'var(--ink-mute)';
                   return (
-                    <td key={m} className={`border-b border-hairline p-3 align-middle text-center tabular-nums ${colorClass} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
+                    <td key={m} style={{ color: textColor }} className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-bold ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
                       {isNum ? `${(numVal * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                     </td>
                   );
                 })}
-                <td className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-bold ${row.accumulated > 0 ? 'text-brand-hot' : row.accumulated === 0 ? 'text-st-ativo' : 'text-ink-mute'} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
+                <td style={{ color: typeof row.accumulated === 'number' && !isNaN(row.accumulated) ? (row.accumulated > 0 ? 'var(--danger)' : 'var(--ok)') : 'var(--ink-mute)' }} className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-bold ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
                   {typeof row.accumulated === 'number' && !isNaN(row.accumulated) ? `${(row.accumulated * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                 </td>
               </tr>
