@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, BookOpen, CheckCircle2, Loader2, RefreshCw, BarChart2, Table as TableIcon } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, BookOpen, CheckCircle2, Loader2, RefreshCw, BarChart2, Table as TableIcon, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { EntityStatus, type User } from '../types';
 import { getAbsImportStatus, getAbsMonth, type AbsFilters, type AbsImportStatus, type AbsMonthRow } from '../services/abs';
@@ -98,6 +98,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const provisionalMonth = initialMonth ?? chooseDefaultAbsMonth(today, null);
   const [filters, setFilters] = useState<AbsFilters>({ month: provisionalMonth, clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
   const [defaultMonth, setDefaultMonth] = useState(initialMonth ?? '');
+  const [legendFilter, setLegendFilter] = useState<string | null>(null);
   const [monthReady, setMonthReady] = useState(Boolean(initialMonth));
   const [rows, setRows] = useState<AbsMonthRow[]>([]);
   const [status, setStatus] = useState<AbsImportStatus | null>(null);
@@ -181,10 +182,16 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const momIcon = momRate > 0 ? '▲' : momRate < 0 ? '▼' : '';
   const momText = `${momIcon} ${Math.abs(momRate).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} p.p. vs. mês anterior`;
   const visibleRows = useMemo(() => {
+    let filtered = rows;
     const term = normalizeSearch(search);
-    if (!term) return rows;
-    return rows.filter(row => normalizeSearch(`${row.collaboratorName} ${row.matricula}`).includes(term));
-  }, [rows, search]);
+    if (term) {
+      filtered = filtered.filter(row => normalizeSearch(`${row.collaboratorName} ${row.matricula}`).includes(term));
+    }
+    if (legendFilter) {
+      filtered = filtered.filter(row => Object.values(row.dailyStatuses).includes(legendFilter as any));
+    }
+    return filtered;
+  }, [rows, search, legendFilter]);
   const sortedRows = useMemo(() => {
     if (!sort) return visibleRows;
     return [...visibleRows].sort((left, right) => {
@@ -213,8 +220,8 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
   const filterCoordinators = activeOptions(coordinators, 'coordinatorId');
   const filterSupervisors = activeOptions(supervisors, 'supervisorId');
   const filterIlhas = activeOptions(ilhas, 'ilhaId');
-  const activeFilters = [defaultMonth && filters.month !== defaultMonth, filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId].filter(Boolean).length;
-  const clearFilters = () => setFilters({ month: defaultMonth || provisionalMonth, clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' });
+  const activeFilters = [defaultMonth && filters.month !== defaultMonth, filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId, legendFilter].filter(Boolean).length;
+  const clearFilters = () => { setFilters({ month: defaultMonth || provisionalMonth, clientId: '', operationId: '', coordinatorId: '', supervisorId: '', ilhaId: '' }); setLegendFilter(null); };
   const cycleSort = (key: SortKey) => setSort(current => {
     if (!current || current.key !== key) return { key, direction: 'asc' };
     if (current.direction === 'asc') return { key, direction: 'desc' };
@@ -235,7 +242,14 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
         contagem={{ n: visibleRows.length, um: 'colaborador', varios: 'colaboradores' }}
         filtrosAtivos={activeFilters}
         aoLimparFiltros={clearFilters}
-        chips={<Chip onClick={() => setLegendOpen(true)}><span className="inline-flex items-center gap-1.5"><BookOpen size={12} />Legenda</span></Chip>}
+        chips={<>
+          <Chip onClick={() => setLegendOpen(true)}><span className="inline-flex items-center gap-1.5"><BookOpen size={12} />Legenda</span></Chip>
+          {legendFilter && (
+            <Chip active onClick={() => setLegendFilter(null)}>
+              <span className="inline-flex items-center gap-1.5">{legendFilter} <X size={12} /></span>
+            </Chip>
+          )}
+        </>}
         acoes={<>
           <div className="text-xs text-ink-mute">{status?.status?.startsWith('COMPLETED') && status.maxWorkDate
             ? <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 size={14} />Atualizado até {formatDate(status.maxWorkDate)}</span>
@@ -355,7 +369,7 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
     </div>
 
     <Modal open={legendOpen} onClose={() => setLegendOpen(false)} title="Legenda do ABS" tamanho="sm">
-      <div className="grid gap-2">{LEGEND.map(([code, label]) => <div key={code} className="flex items-center gap-3 rounded-sm border border-hairline px-3 py-2"><span className={`inline-grid h-7 min-w-12 place-items-center rounded-sm px-2 text-xs font-bold ${COLORS[code]}`}>{code}</span><span className="text-sm text-ink-2">{label}</span></div>)}</div>
+      <div className="grid gap-2">{LEGEND.map(([code, label]) => <button key={code} onClick={() => { setLegendFilter(current => current === code ? null : code); setLegendOpen(false); }} className={`flex items-center gap-3 rounded-sm border px-3 py-2 text-left transition-colors ${legendFilter === code ? 'border-brand bg-brand/5' : 'border-hairline hover:border-hairline-2'}`}><span className={`inline-grid h-7 min-w-12 place-items-center rounded-sm px-2 text-xs font-bold ${COLORS[code]}`}>{code}</span><span className="text-sm text-ink-2">{label}</span></button>)}</div>
     </Modal>
 
     <Modal open={!!selectedRow} onClose={() => setSelectedRow(null)} title={selectedRow?.collaboratorName ?? 'Detalhes do ABS'}>
