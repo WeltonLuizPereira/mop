@@ -635,15 +635,17 @@ function AbsDashboard({ days, rows, filters }: { days: ReturnType<typeof monthDa
                 </td>
                 {matrixMonths.map(m => {
                   const val = row[m];
-                  const colorClass = typeof val === 'number' && val > 0 ? 'text-red-600 font-bold' : val === 0 ? 'text-emerald-600 font-bold' : 'text-ink-mute';
+                  const isNum = typeof val !== 'undefined' && val !== null && val !== '-';
+                  const numVal = Number(val);
+                  const colorClass = isNum ? (numVal > 0 ? 'text-brand-hot font-bold' : 'text-st-ativo font-bold') : 'text-ink-mute';
                   return (
                     <td key={m} className={`border-b border-hairline p-3 align-middle text-center tabular-nums ${colorClass} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
-                      {typeof val === 'number' ? `${(val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
+                      {isNum ? `${(numVal * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                     </td>
                   );
                 })}
-                <td className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-bold ${row.accumulated > 0 ? 'text-red-600' : row.accumulated === 0 ? 'text-emerald-600' : 'text-ink-mute'} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
-                  {typeof row.accumulated === 'number' ? `${(row.accumulated * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
+                <td className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-bold ${row.accumulated > 0 ? 'text-brand-hot' : row.accumulated === 0 ? 'text-st-ativo' : 'text-ink-mute'} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
+                  {typeof row.accumulated === 'number' && !isNaN(row.accumulated) ? `${(row.accumulated * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                 </td>
               </tr>
             ))}
