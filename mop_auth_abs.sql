@@ -10,6 +10,48 @@ revoke all on table public.mop_abs_import_runs from anon, authenticated;
 revoke all on table public.mop_abs_records from anon, authenticated;
 revoke all on table public.mop_abs_unmatched from anon, authenticated;
 
+-- Holidays mechanism
+create table if not exists public.mop_holidays(
+  holiday_date date primary key,
+  description text
+);
+
+alter table public.mop_holidays enable row level security;
+revoke all on table public.mop_holidays from anon, authenticated;
+
+drop policy if exists "Enable read access for authenticated users" on public.mop_holidays;
+create policy "Enable read access for authenticated users" on public.mop_holidays
+  for select to authenticated using (true);
+
+drop policy if exists "Enable insert/update/delete for admins" on public.mop_holidays;
+create policy "Enable insert/update/delete for admins" on public.mop_holidays
+  for all to authenticated
+  using (
+    exists (
+      select 1 from public.mop_users u
+      where u.id = auth.uid()::text and u.role = 'ADMIN'
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.mop_users u
+      where u.id = auth.uid()::text and u.role = 'ADMIN'
+    )
+  );
+
+create or replace function public.mop_add_holiday(p_date date, p_description text default 'Feriado Geral (FG)')
+returns void
+language sql
+security definer
+as $$
+  insert into public.mop_holidays (holiday_date, description)
+  values (p_date, p_description)
+  on conflict (holiday_date) do update set description = excluded.description;
+$$;
+
+revoke all on function public.mop_add_holiday(date, text) from public;
+grant execute on function public.mop_add_holiday(date, text) to authenticated;
+
 drop policy if exists "Deny direct client access" on public.mop_abs_import_runs;
 create policy "Deny direct client access" on public.mop_abs_import_runs
   for all to anon, authenticated using (false) with check (false);
@@ -32,7 +74,7 @@ as $$
   with latest_run as (
     select r.status, r.finished_at, r.unmatched_count
     from public.mop_abs_import_runs r
-    where r.status like 'COMPLETED%'
+    where r.status in ('COMPLETED', 'concluida')
     order by r.finished_at desc nulls last
     limit 1
   )
@@ -65,7 +107,7 @@ with bounds as (
     (date_trunc('month', p_month) + interval '1 month - 1 day')::date as end_date,
     least(
       coalesce(
-        (select max(max_work_date) from public.mop_abs_import_runs where status like 'COMPLETED%'),
+        (select max(max_work_date) from public.mop_abs_import_runs where status in ('COMPLETED', 'concluida')),
         p_month - 1
       ),
       (now() at time zone 'America/Sao_Paulo')::date - 1
