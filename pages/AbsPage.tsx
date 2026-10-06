@@ -525,12 +525,12 @@ function AbsDashboard({ days, rows, filters }: { days: ReturnType<typeof monthDa
     });
   };
 
-  const SortableMatrixHeader = ({ label, sortKey, align = 'left' }: { label: string, sortKey: string, align?: 'left' | 'center' }) => {
+  const SortableMatrixHeader = ({ label, sortKey, align = 'left', sticky }: { label: string, sortKey: string, align?: 'left' | 'center', sticky?: boolean }) => {
     const isActive = sortConfig?.key === sortKey;
     const direction = isActive ? sortConfig.direction : null;
     const Icon = isActive ? (direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
     return (
-      <th className="sticky top-0 z-10 border-b border-hairline bg-canvas-sunk p-0">
+      <th className={`sticky top-0 ${sticky ? 'left-0 z-20 border-r border-hairline/70 bg-canvas' : 'z-10'} border-b border-hairline bg-canvas-sunk p-0`}>
         <button onClick={() => handleSort(sortKey)} className={`flex w-full items-center gap-2 p-3 font-semibold hover:bg-brand/5 focus:outline-none ${align === 'center' ? 'justify-center' : 'justify-start'} ${isActive ? 'text-brand-text' : 'text-ink-2'}`}>
           <span>{label}</span>
           <Icon size={14} className={isActive ? 'text-brand' : 'text-ink-faint'} />
@@ -612,7 +612,7 @@ function AbsDashboard({ days, rows, filters }: { days: ReturnType<typeof monthDa
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
-              <SortableMatrixHeader label="OPERADOR" sortKey="name" align="left" />
+              <SortableMatrixHeader label="OPERADOR" sortKey="name" align="left" sticky />
               {matrixMonths.map(m => {
                 const monthIndex = parseInt(m.split('-')[1], 10) - 1;
                 return <SortableMatrixHeader key={m} label={MONTH_NAMES[monthIndex]} sortKey={m} align="center" />;
@@ -630,19 +630,19 @@ function AbsDashboard({ days, rows, filters }: { days: ReturnType<typeof monthDa
             )}
             {sortedMatrixRows.map((row, index) => (
               <tr key={row.matricula} className="group hover:bg-brand/5">
-                <td className={`border-b border-hairline p-3 font-medium text-ink-2 align-middle text-left ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
+                <td className={`sticky left-0 z-10 border-b border-r border-hairline/70 p-3 font-medium text-ink-2 align-middle text-left ${index % 2 ? 'bg-canvas-soft group-hover:bg-brand/5' : 'bg-canvas group-hover:bg-brand/5'}`}>
                   {row.name}
                 </td>
                 {matrixMonths.map(m => {
                   const val = row[m];
-                  const hasAbs = typeof val === 'number' && val > 0;
+                  const colorClass = typeof val === 'number' && val > 0 ? 'text-danger font-medium' : val === 0 ? 'text-success font-medium' : 'text-ink-mute';
                   return (
-                    <td key={m} className={`border-b border-hairline p-3 align-middle text-center tabular-nums ${hasAbs ? 'bg-rose-100 text-rose-900 font-medium' : index % 2 ? 'bg-canvas-soft text-ink-mute group-hover:bg-transparent' : 'bg-canvas text-ink-mute group-hover:bg-transparent'}`}>
+                    <td key={m} className={`border-b border-hairline p-3 align-middle text-center tabular-nums ${colorClass} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
                       {typeof val === 'number' ? `${(val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                     </td>
                   );
                 })}
-                <td className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-semibold ${row.accumulated > 0 ? 'bg-rose-100 text-rose-900' : index % 2 ? 'bg-canvas-soft text-ink-mute group-hover:bg-transparent' : 'bg-canvas text-ink-mute group-hover:bg-transparent'}`}>
+                <td className={`border-b border-hairline p-3 align-middle text-center tabular-nums font-semibold ${row.accumulated > 0 ? 'text-danger' : row.accumulated === 0 ? 'text-success' : 'text-ink-mute'} ${index % 2 ? 'bg-canvas-soft group-hover:bg-transparent' : 'bg-canvas group-hover:bg-transparent'}`}>
                   {typeof row.accumulated === 'number' ? `${(row.accumulated * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '-'}
                 </td>
               </tr>
