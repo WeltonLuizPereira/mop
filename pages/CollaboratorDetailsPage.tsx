@@ -3,7 +3,7 @@ import { ArrowLeft, Edit2, Trash2, User as UserIcon, Briefcase, Clock, MapPin, K
 import { Collaborator, User, UserRole, HistoryLog, Ilha, Operation, Client, Coordinator, Supervisor, CollaboratorStatus } from '../types';
 import { db } from '../services/mockDb';
 import { getCollaboratorCalculations, formatDateString, formatTime, addDays, getInitials, mensagemErroExclusao } from '../utils';
-import { getAbsMonth } from '../services/abs';
+import { getAbsMonth, getAbsImportStatus } from '../services/abs';
 import { chooseDefaultAbsMonth, todayInSaoPaulo } from '../lib/absRules';
 import { Badge, Button, Modal, Table } from '../components/ui';
 import { CollaboratorFormModal } from '../components/collaborators/CollaboratorFormModal';
@@ -56,14 +56,19 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
         const fetchAbs = async () => {
             setLoadingAbs(true);
             try {
-                const currentMonthStr = chooseDefaultAbsMonth(todayInSaoPaulo(), null);
+                const today = todayInSaoPaulo();
+                const currentStatus = await getAbsImportStatus(today.slice(0, 7));
+                const currentMonthStr = chooseDefaultAbsMonth(today, currentStatus?.maxWorkDate ?? null);
+                
                 const months = [currentMonthStr];
                 let [year, month] = currentMonthStr.split('-').map(Number);
-                for (let i = 0; i < 5; i++) {
+                // Matriz uses last 4 months (current + 3 previous)
+                for (let i = 0; i < 3; i++) {
                     month--;
                     if (month === 0) { month = 12; year--; }
                     months.push(`${year}-${String(month).padStart(2, '0')}`);
                 }
+                months.reverse(); // So results are in chronological order
                 
                 const promises = months.map(m => getAbsMonth({ 
                     month: m, 
@@ -77,7 +82,8 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 
                 if (!active) return;
                 
-                const cmData = results[0].find(r => r.matricula === currentCollab.matricula);
+                // results is in reversed order, so the current month is the last one (index 3)
+                const cmData = results[results.length - 1].find(r => r.matricula === currentCollab.matricula);
                 setAbsCurrentMonth({ rate: cmData ? cmData.absRate : 0, label: currentMonthStr });
                 
                 let totalPres = 0, totalAbs = 0;
@@ -91,7 +97,7 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                 const accTotal = totalPres + totalAbs;
                 const accRate = accTotal > 0 ? (totalAbs / accTotal) : 0;
                 
-                setAbsAccumulated({ rate: accRate, label: 'Últ. 6 meses' });
+                setAbsAccumulated({ rate: accRate, label: 'Últimos 4 meses' });
             } catch(e) {
                 console.error('Failed to fetch ABS for collaborator', e);
             } finally {
@@ -333,13 +339,13 @@ export const CollaboratorDetailsPage: React.FC<{ collab: Collaborator, onBack: (
                                 <div>
                                     <p className="t-eyebrow text-ink-faint mb-1">ABS do mês</p>
                                     <p className="font-bold text-ink-2 text-lg">
-                                        {loadingAbs ? '...' : absCurrentMonth ? (absCurrentMonth.rate * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1 }) + '%' : '-'}
+                                        {loadingAbs ? '...' : absCurrentMonth ? (absCurrentMonth.rate * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '-'}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="t-eyebrow text-ink-faint mb-1">ABS Acumulado</p>
                                     <p className="font-bold text-ink-2 text-lg">
-                                        {loadingAbs ? '...' : absAccumulated ? (absAccumulated.rate * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1 }) + '%' : '-'}
+                                        {loadingAbs ? '...' : absAccumulated ? (absAccumulated.rate * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '-'}
                                     </p>
                                 </div>
                             </div>
