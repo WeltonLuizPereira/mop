@@ -38,7 +38,7 @@ export function chooseDefaultAbsMonth(today: string, maxWorkDate: string | null)
   const dMinusOneMonth = dMinusOne.slice(0, 7);
 
   if (dMinusOneMonth !== currentMonth) return dMinusOneMonth;
-  if (maxWorkDate?.slice(0, 7) === currentMonth && maxWorkDate <= dMinusOne) return currentMonth;
+  if (maxWorkDate?.slice(0, 7) === currentMonth) return currentMonth;
   return previousMonth(currentMonth);
 }
 
