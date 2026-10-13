@@ -11,7 +11,7 @@ if %errorLevel% == 0 (
 
 :RunAdmin
 cd /d "%~dp0"
-echo Instalando Tarefas Agendadas do MOP ABS (Importacao e Contingencia)...
+echo Instalando Tarefa Agendada do MOP ABS (Importacao diaria as 10h e 11h - modo silencioso)...
 powershell -ExecutionPolicy Bypass -File "agent_abs\install_task.ps1"
 echo.
 pause

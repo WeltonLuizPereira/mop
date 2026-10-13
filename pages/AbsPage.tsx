@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, BookOpen, CheckCircle2, Loader2, RefreshCw, BarChart2, Table as TableIcon, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { EntityStatus, type User } from '../types';
-import { getAbsImportStatus, getAbsMonth, type AbsFilters, type AbsImportStatus, type AbsMonthRow } from '../services/abs';
+import { getAbsImportStatus, getAbsMonth, triggerAbsImport, type AbsFilters, type AbsImportStatus, type AbsMonthRow } from '../services/abs';
 import { useResource } from '../contexts/DataContext';
 import { Card, Chip, Modal, Table } from '../components/ui';
 import { linhaAtivavel } from '../components/ui/linhaAtivavel';
@@ -25,7 +25,7 @@ const COLORS: Record<string, string> = {
 };
 
 const STICKY_REGISTRATION = 'sticky left-0 z-20 w-24 min-w-24 max-w-24';
-const STICKY_NAME = 'sticky left-24 z-20 w-60 min-w-60 max-w-60';
+const STICKY_NAME = 'sticky left-24 abs-sticky-edge z-20 w-60 min-w-60 max-w-60';
 
 type SortKey = 'matricula' | 'collaboratorName' | 'supervisorName' | 'ilhaName' | 'employmentStatus' | 'justifiedAbsences' | 'unjustifiedAbsences' | 'totalAbsences' | 'presences' | 'absRate';
 type SortDirection = 'asc' | 'desc';
@@ -172,6 +172,23 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
     }
   };
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await triggerAbsImport();
+      if (!res.success) {
+        alert(res.message);
+      }
+    } catch (err: any) {
+      alert('Erro ao sincronizar da rede: ' + (err?.message || String(err)));
+    } finally {
+      setIsSyncing(false);
+      void load();
+    }
+  };
+
   useEffect(() => { if (monthReady) void load(); }, [monthReady, filters.month, filters.clientId, filters.operationId, filters.coordinatorId, filters.supervisorId, filters.ilhaId]);
 
   const days = useMemo(() => monthDays(filters.month), [filters.month]);
@@ -259,8 +276,14 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
               + Feriado/Folga
             </button>
           )}
-          <button onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-1.5 rounded-sm border border-hairline-2 bg-canvas px-2.5 py-[5px] text-xs font-medium text-ink-2 transition-colors hover:border-ink-faint disabled:opacity-60">
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />Atualizar
+          <button 
+            onClick={() => void handleSync()} 
+            disabled={loading || isSyncing} 
+            title="Sincronizar base oficial do ABS na rede e atualizar a tela" 
+            className="inline-flex items-center gap-1.5 rounded-sm border border-hairline-2 bg-canvas px-2.5 py-[5px] text-xs font-medium text-ink-2 transition-colors hover:border-ink-faint disabled:opacity-60"
+          >
+            <RefreshCw size={12} className={loading || isSyncing ? 'animate-spin' : ''} />
+            {isSyncing ? 'Importando da rede...' : 'Atualizar'}
           </button>
         </>}
         filtros={<>

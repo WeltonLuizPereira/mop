@@ -45,6 +45,16 @@ def main() -> int:
     parser.add_argument("--file")
     args = parser.parse_args()
     
+    # Aguarda até que o sistema tenha pelo menos 5 minutos de atividade (uptime)
+    # Isso evita que o script tente acessar a rede antes que o Windows a tenha reconectado.
+    import ctypes
+    uptime_ms = ctypes.windll.kernel32.GetTickCount64()
+    five_minutes_ms = 300 * 1000
+    if uptime_ms < five_minutes_ms:
+        wait_seconds = (five_minutes_ms - uptime_ms) / 1000.0
+        LOGGER.info(f"Sistema recém iniciado. Aguardando {wait_seconds:.1f} segundos pela rede...")
+        time.sleep(wait_seconds)
+
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).parent / ".env")
     

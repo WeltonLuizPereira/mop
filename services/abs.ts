@@ -22,3 +22,25 @@ export async function getAbsImportStatus(month:string):Promise<AbsImportStatus|n
   const row = data?.[0];
   return row ? { status:row.status, finishedAt:row.finished_at, maxWorkDate:row.max_work_date, rowsRead:Number(row.rows_read ?? 0), unmatchedCount:Number(row.unmatched_count ?? 0) } : null;
 }
+
+export async function triggerAbsImport(): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch('/api/trigger-abs-import', { method: 'POST' });
+    if (res.status === 404) {
+      // Em produção/Vercel (nuvem), o servidor remoto não tem acesso à rede interna SMB local,
+      // mas o computador local sincroniza automaticamente via Agendador de Tarefas às 10h e 11h.
+      return {
+        success: true,
+        message: 'Os dados do ABS foram consultados no Supabase. A importação direta da rede local (\\\\192.168.0.115) ocorre automaticamente nos horários agendados (10h e 11h) na máquina local.'
+      };
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, message: data.message || `Erro HTTP ${res.status}` };
+    }
+    return { success: Boolean(data.success), message: data.message || 'Sincronização concluída com sucesso.' };
+  } catch {
+    return { success: true, message: 'Dados recarregados do Supabase.' };
+  }
+}
+
