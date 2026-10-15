@@ -22,3 +22,75 @@ export async function getAbsImportStatus(month:string):Promise<AbsImportStatus|n
   const row = data?.[0];
   return row ? { status:row.status, finishedAt:row.finished_at, maxWorkDate:row.max_work_date, rowsRead:Number(row.rows_read ?? 0), unmatchedCount:Number(row.unmatched_count ?? 0) } : null;
 }
+
+export const ABS_REFRESH_POLL_MS = 3000;
+export const ABS_REFRESH_TIMEOUT_MS = 120_000;
+export const ABS_REFRESH_TIMEOUT_MESSAGE = 'Pedido enviado; o agente na máquina ainda não respondeu. Tente de novo em alguns minutos.';
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+interface AbsRefreshStatusRow { id: string; status: 'pendente' | 'processando' | 'concluida' | 'erro' | string; result?: unknown; error_message?: string | null }
+
+/**
+ * Produção (Vercel): não há servidor com acesso à rede SMB local, então o pedido vai para a fila
+ * `mop_abs_refresh_requests`. O agente na máquina local faz claim, importa e finaliza; aqui só
+ * acompanhamos o status até concluir, falhar ou estourar o tempo limite.
+ */
+async function requestAbsRefreshViaQueue(): Promise<{ success: boolean; message: string }> {
+  const { data, error } = await supabase.rpc('mop_abs_request_refresh');
+  if (error) {
+    return { success: false, message: `Não foi possível solicitar a atualização do ABS: ${error.message}` };
+  }
+  const requestId: string | undefined = typeof data === 'string' && data ? data : undefined;
+  if (!requestId) {
+    return { success: false, message: 'Não foi possível solicitar a atualização do ABS: resposta sem identificador do pedido.' };
+  }
+
+  const deadline = Date.now() + ABS_REFRESH_TIMEOUT_MS;
+  for (;;) {
+    const { data: statusData, error: statusError } = await supabase.rpc('mop_abs_refresh_status', { p_id: requestId });
+    if (statusError) {
+      return { success: false, message: `Não foi possível consultar a atualização do ABS: ${statusError.message}` };
+    }
+    const row = statusData as AbsRefreshStatusRow | null;
+    if (!row) {
+      return { success: false, message: 'O pedido de atualização do ABS não foi encontrado.' };
+    }
+    if (row.status === 'concluida') {
+      const message = typeof row.result === 'string' && row.result ? row.result : 'Atualização do ABS concluída.';
+      return { success: true, message };
+    }
+    if (row.status === 'erro') {
+      return { success: false, message: row.error_message || 'A atualização do ABS falhou na máquina local.' };
+    }
+
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      return { success: false, message: ABS_REFRESH_TIMEOUT_MESSAGE };
+    }
+    await sleep(Math.min(ABS_REFRESH_POLL_MS, remaining));
+  }
+}
+
+export async function triggerAbsImport(): Promise<{ success: boolean; message: string }> {
+  let res: Response;
+  try {
+    res = await fetch('/api/trigger-abs-import', { method: 'POST' });
+  } catch {
+    // Sem servidor de dev acessível: segue pela fila do Supabase.
+    return requestAbsRefreshViaQueue();
+  }
+
+  // Dev local: o plugin do Vite responde JSON. Produção (Vercel): 404 ou HTML de fallback do SPA.
+  const isJson = res.headers.get('content-type')?.includes('application/json') ?? false;
+  if (res.status === 404 || !isJson) {
+    return requestAbsRefreshViaQueue();
+  }
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { success: false, message: data.message || `Erro HTTP ${res.status}` };
+  }
+  return { success: Boolean(data.success), message: data.message || 'Sincronização concluída com sucesso.' };
+}
+

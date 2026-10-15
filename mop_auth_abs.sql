@@ -141,9 +141,9 @@ calendar as (
     p.status,
     generated.work_date::date as work_date,
     case
-      when generated.work_date::date > b.cutoff then '-'
       when exists (select 1 from public.mop_holidays h where h.holiday_date = generated.work_date::date) then 'FG'
       when extract(isodow from generated.work_date) in (6, 7) then 'FG'
+      when generated.work_date::date > b.cutoff then '-'
       when upper(p.status::text) = 'DESLIGADO'
         and nullif(trim(p.data_fim::text), '') is not null
         and generated.work_date::date >= nullif(trim(p.data_fim::text), '')::date then 'DES'

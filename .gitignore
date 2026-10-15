@@ -36,3 +36,7 @@ playwright-report/
 
 # Python
 __pycache__/
+
+# Ambientes virtuais Python
+.venv/
+venv/

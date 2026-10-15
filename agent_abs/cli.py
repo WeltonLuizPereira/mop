@@ -1,8 +1,10 @@
 import argparse
 from dataclasses import asdict
 import logging
+from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
+import sys
 import time
 
 from .api import SupabaseAbsApi
@@ -12,7 +14,25 @@ from .reader import read_abs_workbook
 from .worker import AbsWorker, stable_file
 
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+def _setup_logging() -> None:
+    # Com pythonw.exe (segundo plano) não existe stderr: o log precisa ir para arquivo.
+    # Monitor e --once gravam em arquivos separados para não disputar a rotação no Windows.
+    handlers: list[logging.Handler] = []
+    name = "agent_abs_once.log" if "--once" in sys.argv else "agent_abs_monitor.log"
+    try:
+        log_dir = Path(__file__).resolve().parent.parent / "logs"
+        log_dir.mkdir(exist_ok=True)
+        handlers.append(RotatingFileHandler(log_dir / name, maxBytes=1_000_000, backupCount=3,
+                                            encoding="utf-8", delay=True))
+    except OSError:
+        pass
+    if sys.stderr is not None:
+        handlers.append(logging.StreamHandler())
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
+                        handlers=handlers)
+
+
+_setup_logging()
 LOGGER = logging.getLogger("mop.abs")
 
 
@@ -45,6 +65,16 @@ def main() -> int:
     parser.add_argument("--file")
     args = parser.parse_args()
     
+    # Aguarda até que o sistema tenha pelo menos 5 minutos de atividade (uptime)
+    # Isso evita que o script tente acessar a rede antes que o Windows a tenha reconectado.
+    import ctypes
+    uptime_ms = ctypes.windll.kernel32.GetTickCount64()
+    five_minutes_ms = 300 * 1000
+    if uptime_ms < five_minutes_ms:
+        wait_seconds = (five_minutes_ms - uptime_ms) / 1000.0
+        LOGGER.info(f"Sistema recém iniciado. Aguardando {wait_seconds:.1f} segundos pela rede...")
+        time.sleep(wait_seconds)
+
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).parent / ".env")
     

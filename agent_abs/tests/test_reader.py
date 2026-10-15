@@ -56,8 +56,8 @@ class ReaderTests(unittest.TestCase):
             sheet = book.active
             sheet.title = "Sheet1"
             sheet.append(HEADERS)
-            # Excel float date (46661 = 1-Oct-2026)
-            sheet.append([46661, "Ana", None, None, None, None, None, None, None, None, None, None, "Op", "0007"])
+            # Excel float date (46296 = 1-Oct-2026)
+            sheet.append([46296, "Ana", None, None, None, None, None, None, None, None, None, None, "Op", "0007"])
             # String date
             sheet.append(["02/10/2026", "Ana", None, None, None, None, None, None, None, None, None, None, "Op", "0007"])
             # ISO date string
