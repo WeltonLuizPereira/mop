@@ -276,15 +276,17 @@ export function AbsPage({ currentUser: _currentUser, initialMonth }: { currentUs
               + Feriado/Folga
             </button>
           )}
-          <button 
-            onClick={() => void handleSync()} 
-            disabled={loading || isSyncing} 
-            title="Sincronizar base oficial do ABS na rede e atualizar a tela" 
-            className="inline-flex items-center gap-1.5 rounded-sm border border-hairline-2 bg-canvas px-2.5 py-[5px] text-xs font-medium text-ink-2 transition-colors hover:border-ink-faint disabled:opacity-60"
-          >
-            <RefreshCw size={12} className={loading || isSyncing ? 'animate-spin' : ''} />
-            {isSyncing ? 'Importando da rede...' : 'Atualizar'}
-          </button>
+          {_currentUser?.role === 'ADMIN' && (
+            <button
+              onClick={() => void handleSync()}
+              disabled={loading || isSyncing}
+              title="Sincronizar base oficial do ABS na rede e atualizar a tela"
+              className="inline-flex items-center gap-1.5 rounded-sm border border-hairline-2 bg-canvas px-2.5 py-[5px] text-xs font-medium text-ink-2 transition-colors hover:border-ink-faint disabled:opacity-60"
+            >
+              <RefreshCw size={12} className={loading || isSyncing ? 'animate-spin' : ''} />
+              {isSyncing ? 'Importando da rede...' : 'Atualizar'}
+            </button>
+          )}
         </>}
         filtros={<>
           <label className="text-xs text-ink-mute">Mês<input aria-label="Mês" type="month" value={filters.month} onChange={event => update('month', event.target.value)} className="mt-1 block w-full rounded-sm border border-hairline bg-canvas px-2 py-2 text-sm" /></label>

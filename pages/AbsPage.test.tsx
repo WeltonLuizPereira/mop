@@ -103,6 +103,17 @@ describe('AbsPage', () => {
     expect(screen.getByTestId('abs-metric-presences')).toHaveTextContent('8');
   });
 
+  it('mostra o botão Atualizar apenas para ADMIN', async () => {
+    const { unmount } = render(<AbsPage currentUser={{ role: 'ADMIN' } as never} initialMonth="2026-09" />);
+    await waitFor(() => expect(screen.getByText('colaborador')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /Atualizar/ })).toBeInTheDocument();
+    unmount();
+
+    render(<AbsPage currentUser={{ role: 'COORDENADOR' } as never} initialMonth="2026-09" />);
+    await waitFor(() => expect(screen.getByText('colaborador')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /Atualizar/ })).not.toBeInTheDocument();
+  });
+
   it('busca por nome ou matrícula sem nova consulta ao banco', async () => {
     const user = userEvent.setup();
     render(<AbsPage currentUser={{} as never} initialMonth="2026-09" />);
